@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Markdown to HTML Renderer</title>
+  <link rel="canonical" href="./"/>
+
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath:  [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']],
+        processEscapes: true,
+        tags: 'ams'
+      },
+      options: {
+        skipHtmlTags: ['script','noscript','style','textarea','pre']
+      },
+      startup: {
+        typeset: false
+      }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
+
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f0f2f5;
+      color: #333;
+      min-height: 100vh;
+    }
+
+    header {
+      background: linear-gradient(135deg, #009999, #007a7a);
+      color: white;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+
+    header svg { width: 32px; height: 32px; fill: white; flex-shrink: 0; }
+    header h1  { font-size: 1.1rem; font-weight: 600; letter-spacing: 0.5px; }
+    header span { font-size: 0.75rem; opacity: 0.85; margin-left: 4px; }
+
+    .toolbar {
+      display: flex;
+      gap: 8px;
+      padding: 10px 16px;
+      background: #fff;
+      border-bottom: 1px solid #dde1e7;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .toolbar-label {
+      font-size: 0.7rem;
+      color: #888;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-right: 4px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 14px;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .btn:hover  { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+    .btn:active { transform: translateY(0); }
+
+    .btn-print { background: #4a90d9; color: white; }
+    .btn-pdf   { background: #e05252; color: white; }
+    .btn-html  { background: #5a9e6f; color: white; }
+    .btn-clear { background: #f0f0f0; color: #555; margin-left: auto; }
+
+    /* View toggle for mobile */
+    .view-toggle {
+      display: none;
+      gap: 4px;
+      margin-left: auto;
+    }
+    .view-toggle .btn {
+      padding: 7px 10px;
+      font-size: 0.75rem;
+      background: #e8e8e8;
+      color: #555;
+    }
+    .view-toggle .btn.active {
+      background: #009999;
+      color: white;
+    }
+
+    .main-layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      height: calc(100vh - 110px);
+    }
+
+    .pane { display: flex; flex-direction: column; overflow: hidden; }
+
+    .pane-header {
+      padding: 8px 14px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .pane-header .dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    .editor-pane .pane-header { background: #2d2d2d; color: #aaa; }
+    .editor-pane .pane-header .dot { background: #f5a623; }
+
+    .preview-pane .pane-header {
+      background: #eef1f5;
+      color: #777;
+      border-bottom: 1px solid #dde1e7;
+    }
+    .preview-pane .pane-header .dot { background: #5a9e6f; }
+
+    #markdown-input {
+      flex: 1;
+      width: 100%;
+      padding: 16px;
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 0.9rem;
+      line-height: 1.7;
+      background: #1e1e1e;
+      color: #d4d4d4;
+      border: none;
+      outline: none;
+      resize: none;
+      tab-size: 2;
+    }
+
+    #markdown-input::placeholder { color: #555; }
+
+    #preview-output {
+      flex: 1;
+      padding: 20px 24px;
+      overflow-y: auto;
+      background: #fff;
+      border-left: 1px solid #dde1e7;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    #preview-output h1,
+    #preview-output h2,
+    #preview-output h3,
+    #preview-output h4,
+    #preview-output h5,
+    #preview-output h6 {
+      margin: 1.2em 0 0.4em;
+      line-height: 1.3;
+      color: #1a1a2e;
+    }
+
+    #preview-output h1 { font-size: 1.6rem; border-bottom: 2px solid #009999; padding-bottom: 6px; }
+    #preview-output h2 { font-size: 1.3rem; border-bottom: 1px solid #e0e0e0; padding-bottom: 5px; }
+    #preview-output h3 { font-size: 1.1rem; }
+
+    #preview-output p  { margin: 0.7em 0; line-height: 1.75; color: #444; }
+    #preview-output a  { color: #009999; text-decoration: none; }
+    #preview-output a:hover { text-decoration: underline; }
+
+    #preview-output ul,
+    #preview-output ol { margin: 0.7em 0 0.7em 1.5em; line-height: 1.8; }
+
+    #preview-output blockquote {
+      border-left: 4px solid #009999;
+      margin: 0.8em 0; padding: 8px 14px;
+      background: #f0fafa; color: #555;
+      border-radius: 0 6px 6px 0;
+    }
+
+    #preview-output code {
+      background: #f4f4f4; padding: 2px 6px;
+      border-radius: 4px; font-family: 'Courier New', monospace;
+      font-size: 0.85em; color: #c7254e;
+    }
+
+    #preview-output pre {
+      background: #1e1e1e; color: #d4d4d4;
+      padding: 14px 16px; border-radius: 8px;
+      overflow-x: auto; margin: 0.8em 0;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    #preview-output pre code {
+      background: none; color: inherit; padding: 0; font-size: 0.85em;
+    }
+
+    #preview-output table {
+      border-collapse: collapse; width: 100%; margin: 0.8em 0; font-size: 0.88rem;
+    }
+
+    #preview-output th {
+      background: #009999; color: white; padding: 8px 10px; text-align: left;
+    }
+
+    #preview-output td { padding: 7px 10px; border-bottom: 1px solid #e8e8e8; }
+    #preview-output tr:nth-child(even) td { background: #f9f9f9; }
+    #preview-output img { max-width: 100%; height: auto; border-radius: 6px; }
+    #preview-output hr  { border: none; border-top: 2px solid #e0e0e0; margin: 1.2em 0; }
+
+    #preview-output mjx-container[display="true"] {
+      overflow-x: auto;
+      margin: 0.8em 0 !important;
+    }
+
+    .char-count {
+      padding: 5px 14px;
+      background: #2d2d2d; color: #666;
+      font-size: 0.7rem; font-family: monospace;
+      border-top: 1px solid #3a3a3a;
+      flex-shrink: 0;
+    }
+
+    .typeset-spinner {
+      display: none;
+      width: 12px; height: 12px;
+      border: 2px solid #555;
+      border-top-color: #aaa;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+      margin-left: auto;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Mobile responsive ──────────────────────────────────────── */
+    @media (max-width: 768px) {
+      header { padding: 10px 12px; gap: 8px; }
+      header h1 { font-size: 0.95rem; }
+      header span { display: none; }
+
+      .toolbar { padding: 8px 12px; gap: 6px; }
+      .btn { padding: 6px 10px; font-size: 0.75rem; gap: 4px; }
+
+      .view-toggle { display: flex; }
+
+      .main-layout {
+        grid-template-columns: 1fr;
+        height: calc(100vh - 110px);
+      }
+
+      /* When in "edit" mode on mobile, hide preview */
+      .main-layout.show-editor .preview-pane { display: none; }
+      .main-layout.show-editor .editor-pane { border-right: none; }
+
+      /* When in "preview" mode on mobile, hide editor */
+      .main-layout.show-preview .editor-pane { display: none; }
+      .main-layout.show-preview .preview-pane { border-left: none; }
+
+      #markdown-input { padding: 12px; font-size: 16px; }
+      #preview-output { padding: 14px 16px; border-left: none; }
+
+      #preview-output h1 { font-size: 1.4rem; }
+      #preview-output h2 { font-size: 1.2rem; }
+      #preview-output h3 { font-size: 1.05rem; }
+    }
+
+    @media (max-width: 480px) {
+      header h1 { font-size: 0.85rem; }
+      .toolbar-label { display: none; }
+      .btn { padding: 6px 8px; font-size: 0.72rem; }
+      .btn-clear { margin-left: 0; }
+    }
+
+    @media print {
+      header, .toolbar, .editor-pane, .pane-header { display: none !important; }
+      .main-layout { display: block; height: auto; }
+      #preview-output { border: none; padding: 20px; overflow: visible; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <a href="index.html" style="color:white;text-decoration:none;display:flex;align-items:center;gap:10px;">
+    <svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg" style="width:32px;height:32px;fill:white;flex-shrink:0;">
+      <rect width="40" height="40" rx="6" fill="rgba(255,255,255,0.15)"/>
+      <text x="5" y="28" font-size="22" font-family="monospace" fill="white" font-weight="bold">M↓</text>
+    </svg>
+  </a>
+  <h1>Markdown Renderer <span>— Preview · Print · Export</span></h1>
+</header>
+
+<div class="toolbar">
+  <span class="toolbar-label">Actions</span>
+  <button class="btn btn-print" onclick="printPreview()">🖨️ Print</button>
+  <button class="btn btn-pdf"   onclick="downloadPDF()">📕 PDF</button>
+  <button class="btn btn-html"  onclick="downloadHTML()">💾 HTML</button>
+  <button class="btn btn-clear" onclick="clearEditor()">🗑️ Clear</button>
+
+  <!-- Mobile view toggle -->
+  <div class="view-toggle">
+    <button class="btn active" id="btn-edit" onclick="showEditor()">✏️ Edit</button>
+    <button class="btn" id="btn-preview" onclick="showPreview()">👁️ Preview</button>
+  </div>
+</div>
+
+<div class="main-layout" id="main-layout">
+
+  <div class="pane editor-pane">
+    <div class="pane-header">
+      <span class="dot"></span> Markdown Input
+    </div>
+    <textarea
+      id="markdown-input"
+      placeholder="Start typing your Markdown here..."
+      spellcheck="false"
+    ></textarea>
+    <div class="char-count" id="char-count">0 characters · 0 words · 0 lines</div>
+  </div>
+
+  <div class="pane preview-pane">
+    <div class="pane-header">
+      <span class="dot"></span> Live Preview
+      <div class="typeset-spinner" id="typeset-spinner"></div>
+    </div>
+    <div id="preview-output"></div>
+  </div>
+
+</div>
+
+<script>
+  marked.setOptions({ breaks: true, gfm: true });
+
+  const textarea = document.getElementById('markdown-input');
+  const output   = document.getElementById('preview-output');
+  const charInfo = document.getElementById('char-count');
+  const spinner  = document.getElementById('typeset-spinner');
+  const mainLayout = document.getElementById('main-layout');
+
+  // ── Mobile view toggle ─────────────────────────────────────────
+  function showEditor() {
+    mainLayout.classList.remove('show-preview');
+    mainLayout.classList.add('show-editor');
+    document.getElementById('btn-edit').classList.add('active');
+    document.getElementById('btn-preview').classList.remove('active');
+  }
+
+  function showPreview() {
+    mainLayout.classList.remove('show-editor');
+    mainLayout.classList.add('show-preview');
+    document.getElementById('btn-preview').classList.add('active');
+    document.getElementById('btn-edit').classList.remove('active');
+  }
+
+  // Auto-switch to split view when screen is wide enough
+  function handleResize() {
+    if (window.innerWidth > 768) {
+      mainLayout.classList.remove('show-editor', 'show-preview');
+      document.getElementById('btn-edit').classList.remove('active');
+      document.getElementById('btn-preview').classList.remove('active');
+    } else if (!mainLayout.classList.contains('show-editor') && !mainLayout.classList.contains('show-preview')) {
+      // Default to editor on first mobile load
+      showEditor();
+    }
+  }
+
+  window.addEventListener('resize', handleResize);
+  window.addEventListener('load', handleResize);
+
+  // ── LaTeX protect / restore ───────────────────────────────────
+  let latexStore = [];
+
+  function protectLatex(src) {
+    latexStore = [];
+    let idx = 0;
+
+    src = src.replace(/\$\$([\s\S]*?)\$\$/g, (_, math) => {
+      const key = `LATEXBLOCK${idx++}END`;
+      latexStore.push({ key, display: true, math });
+      return key;
+    });
+
+    src = src.replace(/\\\[([\s\S]*?)\\\]/g, (_, math) => {
+      const key = `LATEXBLOCK${idx++}END`;
+      latexStore.push({ key, display: true, math });
+      return key;
+    });
+
+    src = src.replace(/\$([^\$\n]+?)\$/g, (_, math) => {
+      const key = `LATEXINLINE${idx++}END`;
+      latexStore.push({ key, display: false, math });
+      return key;
+    });
+
+    src = src.replace(/\\\(([^\)]*?)\\\)/g, (_, math) => {
+      const key = `LATEXINLINE${idx++}END`;
+      latexStore.push({ key, display: false, math });
+      return key;
+    });
+
+    return src;
+  }
+
+  function restoreLatex(html) {
+    latexStore.forEach(({ key, display, math }) => {
+      const escaped = key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const tag = display
+        ? `<span class="math-block">\\[${math}\\]</span>`
+        : `<span class="math-inline">\\(${math}\\)</span>`;
+      html = html.replace(new RegExp(escaped, 'g'), tag);
+    });
+    return html;
+  }
+
+  // ── Debounce & render ─────────────────────────────────────────
+  let renderTimer = null;
+
+  function scheduleRender(delay = 80) {
+    clearTimeout(renderTimer);
+    renderTimer = setTimeout(doRender, delay);
+  }
+
+  function doRender() {
+    const input = textarea.value;
+
+    const chars = input.length;
+    const words = input.trim() === '' ? 0 : input.trim().split(/\s+/).length;
+    const lines = input.split('\n').length;
+    charInfo.textContent = `${chars} characters · ${words} words · ${lines} lines`;
+
+    const protected_src = protectLatex(input);
+    let html = marked.parse(protected_src);
+    html = restoreLatex(html);
+    output.innerHTML = html;
+
+    if (window.MathJax && MathJax.typesetPromise) {
+      spinner.style.display = 'block';
+      MathJax.typesetPromise([output])
+        .catch(err => console.warn('MathJax error:', err))
+        .finally(() => { spinner.style.display = 'none'; });
+    }
+  }
+
+  // ── Textarea event listeners ──────────────────────────────────
+  textarea.addEventListener('input', () => scheduleRender(80));
+  textarea.addEventListener('paste', () => scheduleRender(150));
+  textarea.addEventListener('cut',   () => scheduleRender(150));
+  textarea.addEventListener('drop',  () => scheduleRender(150));
+
+  // ── Print ─────────────────────────────────────────────────────
+  function printPreview() {
+    if (!textarea.value.trim()) {
+      alert('Nothing to print! Please add some Markdown content first.');
+      return;
+    }
+    window.print();
+  }
+
+  // ── Download PDF ──────────────────────────────────────────────
+  function downloadPDF() {
+    if (!textarea.value.trim()) {
+      alert('Nothing to export! Please add some Markdown content first.');
+      return;
+    }
+    const win = window.open('', '_blank');
+    win.document.write(buildStandaloneHTML(output.innerHTML, true));
+    win.document.close();
+    win.onload = () => setTimeout(() => { win.focus(); win.print(); }, 1800);
+  }
+
+  // ── Download HTML ─────────────────────────────────────────────
+  function downloadHTML() {
+    if (!textarea.value.trim()) {
+      alert('Nothing to export! Please add some Markdown content first.');
+      return;
+    }
+    const protected_src = protectLatex(textarea.value);
+    let html = marked.parse(protected_src);
+    html = restoreLatex(html);
+
+    const blob = new Blob([buildStandaloneHTML(html, true)], { type: 'text/html' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href = url;
+    a.download = 'markdown-export.html';
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  // ── Standalone HTML builder ───────────────────────────────────
+  function buildStandaloneHTML(bodyContent, includeMath = false) {
+    const mathScripts = includeMath ? `
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath:  [['\\\\(','\\\\)']],
+        displayMath: [['\\\\[','\\\\]']],
+        processEscapes: true
+      }
+    };
+  <\/script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async><\/script>` : '';
+
+    return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Markdown Export</title>${mathScripts}
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      max-width: 860px; margin: 40px auto;
+      padding: 0 24px 60px; color: #333; line-height: 1.75;
+    }
+    h1 { font-size: 2rem; border-bottom: 2px solid #009999; padding-bottom: 8px; color: #1a1a2e; }
+    h2 { font-size: 1.5rem; border-bottom: 1px solid #e0e0e0; padding-bottom: 6px; color: #1a1a2e; }
+    h3, h4, h5, h6 { color: #1a1a2e; }
+    a { color: #009999; }
+    blockquote {
+      border-left: 4px solid #009999; margin: 1em 0;
+      padding: 10px 20px; background: #f0fafa;
+      color: #555; border-radius: 0 6px 6px 0;
+    }
+    code {
+      background: #f4f4f4; padding: 2px 6px; border-radius: 4px;
+      font-family: monospace; color: #c7254e; font-size: 0.88em;
+    }
+    pre {
+      background: #1e1e1e; color: #d4d4d4;
+      padding: 18px 22px; border-radius: 8px; overflow-x: auto;
+    }
+    pre code { background: none; color: inherit; padding: 0; }
+    table { border-collapse: collapse; width: 100%; margin: 1em 0; }
+    th { background: #009999; color: white; padding: 10px 14px; text-align: left; }
+    td { padding: 9px 14px; border-bottom: 1px solid #e8e8e8; }
+    tr:nth-child(even) td { background: #f9f9f9; }
+    img { max-width: 100%; height: auto; border-radius: 6px; }
+    hr  { border: none; border-top: 2px solid #e0e0e0; margin: 1.5em 0; }
+    @media (max-width: 600px) {
+      body { padding: 0 12px 40px; margin: 20px auto; }
+      h1 { font-size: 1.5rem; }
+      h2 { font-size: 1.25rem; }
+      pre { padding: 12px 14px; }
+      table { font-size: 0.82rem; }
+      th, td { padding: 6px 8px; }
+    }
+  </style>
+</head>
+<body>
+${bodyContent}
+</body>
+</html>`;
+  }
+
+  // ── Clear ─────────────────────────────────────────────────────
+  function clearEditor() {
+    if (!textarea.value.trim()) return;
+    if (confirm('Clear all content?')) {
+      textarea.value = '';
+      textarea.dispatchEvent(new Event('input'));
+    }
+  }
+
+  // ── Load sample on page start ─────────────────────────────────
+  document.addEventListener('DOMContentLoaded', () => {
+    textarea.value = `# Welcome to the Markdown Renderer
+
+## Formatting
+
+**Bold**, *italic*, ~~strikethrough~~, and \`inline code\` are all supported.
+
+---
+
+## Lists
+
+- Item one
+- Item two
+  - Nested item
+
+1. First
+2. Second
+3. Third
+
+---
+
+## Code Block
+
+\`\`\`javascript
+function greet(name) {
+  return \`Hello, \${name}!\`;
+}
+\`\`\`
+
+---
+
+## Math
+
+Inline: $E = mc^2$
+
+Block:
+
+$$\\int_{-\\infty}^{\\infty} e^{-x^2}\\,dx = \\sqrt{\\pi}$$
+
+---
+
+## Table
+
+| Feature     | Supported |
+|-------------|-----------|
+| Markdown    | ✅        |
+| Math        | ✅        |
+| Code blocks | ✅        |
+| Tables      | ✅        |
+
+---
+
+## Blockquote
+
+> "Any sufficiently advanced technology is indistinguishable from magic." — Arthur C. Clarke
+`;
+    textarea.dispatchEvent(new Event('input'));
+  });
+</script>
+
+</body>
+</html>

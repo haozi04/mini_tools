@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Mini Tools</title>
+  <meta name="description" content="A collection of lightweight, browser-based utility tools." />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f0f2f5;
+      color: #333;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Header ──────────────────────────────────────────────── */
+    header {
+      background: linear-gradient(135deg, #009999, #007a7a);
+      color: white;
+      padding: 40px 24px 36px;
+      text-align: center;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+    }
+
+    header h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      margin-bottom: 8px;
+    }
+
+    header p {
+      font-size: 1rem;
+      opacity: 0.85;
+      max-width: 500px;
+      margin: 0 auto;
+      line-height: 1.5;
+    }
+
+    /* ── Tool Grid ───────────────────────────────────────────── */
+    .tools-section {
+      flex: 1;
+      max-width: 900px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 40px 20px 60px;
+    }
+
+    .tools-section h2 {
+      font-size: 1.1rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #888;
+      margin-bottom: 24px;
+      font-weight: 600;
+    }
+
+    .tool-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 20px;
+    }
+
+    .tool-card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 28px 24px;
+      text-decoration: none;
+      color: inherit;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      border: 2px solid transparent;
+      transition: all 0.25s ease;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .tool-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+      border-color: #009999;
+    }
+
+    .tool-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      flex-shrink: 0;
+    }
+
+    .tool-card h3 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #1a1a2e;
+    }
+
+    .tool-card p {
+      font-size: 0.88rem;
+      color: #777;
+      line-height: 1.5;
+    }
+
+    .tool-badge {
+      display: inline-block;
+      font-size: 0.68rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 3px 8px;
+      border-radius: 4px;
+      width: fit-content;
+    }
+
+    /* Markdown Renderer card colors */
+    .tool-card.markdown .tool-icon { background: #e6f7f7; color: #009999; }
+    .tool-card.markdown .tool-badge { background: #e6f7f7; color: #009999; }
+
+    /* Placeholder card styles */
+    .tool-card.placeholder {
+      opacity: 0.45;
+      pointer-events: none;
+      border-style: dashed;
+      border-color: #ccc;
+    }
+    .tool-card.placeholder .tool-icon { background: #f0f0f0; color: #aaa; }
+    .tool-card.placeholder .tool-badge { background: #f0f0f0; color: #aaa; }
+
+    /* ── Footer ──────────────────────────────────────────────── */
+    footer {
+      text-align: center;
+      padding: 24px 16px;
+      font-size: 0.78rem;
+      color: #aaa;
+      border-top: 1px solid #e0e0e0;
+      background: #fff;
+    }
+
+    footer a { color: #009999; text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
+
+    /* ── Mobile ──────────────────────────────────────────────── */
+    @media (max-width: 600px) {
+      header { padding: 28px 16px 24px; }
+      header h1 { font-size: 1.5rem; }
+      header p { font-size: 0.9rem; }
+      .tools-section { padding: 28px 14px 40px; }
+      .tool-grid { grid-template-columns: 1fr; gap: 14px; }
+      .tool-card { padding: 20px 18px; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>🧰 Mini Tools</h1>
+  <p>A collection of lightweight, browser-based utility tools. No sign-up, no tracking — just open and use.</p>
+</header>
+
+<main class="tools-section">
+  <h2>Available Tools</h2>
+
+  <div class="tool-grid">
+
+    <!-- Markdown Renderer -->
+    <a href="markdown-renderer.html" class="tool-card markdown">
+      <div class="tool-icon">M↓</div>
+      <h3>Markdown Renderer</h3>
+      <p>Write Markdown with live preview. Supports LaTeX math, code blocks, tables, and more. Export to HTML or PDF.</p>
+      <span class="tool-badge">Active</span>
+    </a>
+
+    <!-- Placeholder cards for future tools -->
+    <div class="tool-card placeholder">
+      <div class="tool-icon">+</div>
+      <h3>More Tools Coming Soon</h3>
+      <p>New utilities will be added here. Check back later or suggest a tool you'd like to see.</p>
+      <span class="tool-badge">Coming Soon</span>
+    </div>
+
+  </div>
+</main>
+
+<footer>
+  <p>Mini Tools &copy; 2026 &mdash; Built for simplicity. <a href="https://github.com">Source</a></p>
+</footer>
+
+</body>
+</html>
