@@ -6,20 +6,75 @@
   <title>Mini Tools</title>
   <meta name="description" content="A collection of lightweight, browser-based utility tools." />
   <style>
+    /* ══════════════════════════════════════════════
+       CSS CUSTOM PROPERTIES — Light (default)
+       ══════════════════════════════════════════════ */
+    :root {
+      --bg:            #f0f2f5;
+      --surface:       #ffffff;
+      --surface-alt:   #f7fafa;
+      --border:        #e0eeee;
+      --text-primary:  #1a1a2e;
+      --text-muted:    #666666;
+      --text-faint:    #aaaaaa;
+      --accent:        #009999;
+      --accent-dark:   #007a7a;
+      --accent-light:  #e0f5f5;
+      --shadow:        rgba(0,0,0,0.08);
+      --card-border:   transparent;
+      --card-hover:    #009999;
+      --footer-bg:     #ffffff;
+      --footer-border: #e0e0e0;
+      --switcher-bg:      rgba(255,255,255,0.16);
+      --switcher-text:    #ffffff;
+      --switcher-bdr:     rgba(255,255,255,0.35);
+      --switcher-hover:   rgba(255,255,255,0.24);
+      --switcher-act-bg:  #ffffff;
+      --switcher-act-txt: #009999;
+    }
+
+    /* ══════════════════════════════════════════════
+       DARK MODE OVERRIDES
+       ══════════════════════════════════════════════ */
+    [data-theme="dark"] {
+      --bg:            #0f1117;
+      --surface:       #1a1d27;
+      --surface-alt:   #1e2130;
+      --border:        #2a2d3e;
+      --text-primary:  #e2e8f0;
+      --text-muted:    #94a3b8;
+      --text-faint:    #4a5568;
+      --accent:        #00cccc;
+      --accent-dark:   #00aaaa;
+      --accent-light:  #0d2e2e;
+      --shadow:        rgba(0,0,0,0.4);
+      --card-border:   #2a2d3e;
+      --card-hover:    #00cccc;
+      --footer-bg:     #1a1d27;
+      --footer-border: #2a2d3e;
+      --switcher-bg:      rgba(255,255,255,0.10);
+      --switcher-text:    #e2e8f0;
+      --switcher-bdr:     rgba(255,255,255,0.25);
+      --switcher-hover:   rgba(255,255,255,0.18);
+      --switcher-act-bg:  #00cccc;
+      --switcher-act-txt: #0f1117;
+    }
+
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: #f0f2f5;
-      color: #333;
+      background: var(--bg);
+      color: var(--text-primary);
       min-height: 100vh;
       display: flex;
       flex-direction: column;
+      transition: background 0.3s, color 0.3s;
     }
 
     /* ── Header ──────────────────────────────────────────────── */
     header {
-      background: linear-gradient(135deg, #009999, #007a7a);
+      background: linear-gradient(135deg, var(--accent), var(--accent-dark));
       color: white;
       padding: 40px 24px 36px;
       text-align: center;
@@ -35,22 +90,54 @@
       flex-wrap: wrap;
     }
 
-    .lang-switch {
-      border: 1px solid rgba(255,255,255,0.35);
-      background: rgba(255,255,255,0.16);
-      color: #fff;
-      padding: 8px 12px;
+    .switcher {
+      display: flex;
       border-radius: 999px;
+      overflow: hidden;
+      border: 1px solid var(--switcher-bdr);
+    }
+
+    .switcher-btn {
+      padding: 8px 14px;
+      border: none;
+      background: var(--switcher-bg);
+      color: var(--switcher-text);
       font-size: 0.85rem;
       font-weight: 600;
       cursor: pointer;
-      transition: background 0.2s ease, transform 0.2s ease;
+      transition: background 0.2s, color 0.2s;
+      line-height: 1;
     }
 
-    .lang-switch:hover {
-      background: rgba(255,255,255,0.24);
-      transform: translateY(-1px);
+    .switcher-btn + .switcher-btn {
+      border-left: 1px solid var(--switcher-bdr);
     }
+
+    .switcher-btn.active {
+      background: var(--switcher-act-bg);
+      color: var(--switcher-act-txt);
+    }
+
+    .switcher-btn:hover:not(.active) {
+      background: var(--switcher-hover);
+    }
+
+    .dark-toggle {
+      width: 36px;
+      height: 34px;
+      border-radius: 999px;
+      border: 1px solid var(--switcher-bdr);
+      background: var(--switcher-bg);
+      color: var(--switcher-text);
+      font-size: 1rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s;
+    }
+
+    .dark-toggle:hover { background: var(--switcher-hover); }
 
     header h1 {
       font-size: 2rem;
@@ -80,7 +167,7 @@
       font-size: 1.1rem;
       text-transform: uppercase;
       letter-spacing: 1px;
-      color: #888;
+      color: var(--text-faint);
       margin-bottom: 24px;
       font-weight: 600;
     }
@@ -92,13 +179,13 @@
     }
 
     .tool-card {
-      background: #fff;
+      background: var(--surface);
       border-radius: 12px;
       padding: 28px 24px;
       text-decoration: none;
       color: inherit;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-      border: 2px solid transparent;
+      box-shadow: 0 2px 8px var(--shadow);
+      border: 2px solid var(--card-border);
       transition: all 0.25s ease;
       display: flex;
       flex-direction: column;
@@ -107,8 +194,8 @@
 
     .tool-card:hover {
       transform: translateY(-4px);
-      box-shadow: 0 8px 24px rgba(0,0,0,0.12);
-      border-color: #009999;
+      box-shadow: 0 8px 24px var(--shadow);
+      border-color: var(--card-hover);
     }
 
     .tool-icon {
@@ -125,12 +212,12 @@
     .tool-card h3 {
       font-size: 1.1rem;
       font-weight: 600;
-      color: #1a1a2e;
+      color: var(--text-primary);
     }
 
     .tool-card p {
       font-size: 0.88rem;
-      color: #777;
+      color: var(--text-muted);
       line-height: 1.5;
     }
 
@@ -145,31 +232,21 @@
       width: fit-content;
     }
 
-    /* Markdown Renderer card colors */
-    .tool-card.markdown .tool-icon { background: #e6f7f7; color: #009999; }
-    .tool-card.markdown .tool-badge { background: #e6f7f7; color: #009999; }
-
-    /* Placeholder card styles */
-    .tool-card.placeholder {
-      opacity: 0.45;
-      pointer-events: none;
-      border-style: dashed;
-      border-color: #ccc;
-    }
-    .tool-card.placeholder .tool-icon { background: #f0f0f0; color: #aaa; }
-    .tool-card.placeholder .tool-badge { background: #f0f0f0; color: #aaa; }
+    .tool-card.markdown .tool-icon { background: var(--accent-light); color: var(--accent); }
+    .tool-card.markdown .tool-badge { background: var(--accent-light); color: var(--accent); }
 
     /* ── Footer ──────────────────────────────────────────────── */
     footer {
       text-align: center;
       padding: 24px 16px;
       font-size: 0.78rem;
-      color: #aaa;
-      border-top: 1px solid #e0e0e0;
-      background: #fff;
+      color: var(--text-faint);
+      border-top: 1px solid var(--footer-border);
+      background: var(--footer-bg);
+      transition: background 0.3s, color 0.3s;
     }
 
-    footer a { color: #009999; text-decoration: none; }
+    footer a { color: var(--accent); text-decoration: none; }
     footer a:hover { text-decoration: underline; }
 
     /* ── Mobile ──────────────────────────────────────────────── */
@@ -189,7 +266,11 @@
   <h1 id="page-title">🧰 Mini Tools</h1>
   <p id="page-intro">A collection of lightweight, browser-based utility tools. No sign-up, no tracking — just open and use.</p>
   <div class="header-actions">
-    <button id="lang-switch" class="lang-switch" type="button" aria-label="Switch to Simplified Chinese" title="切换到简体中文">中文</button>
+    <div class="switcher">
+      <button class="switcher-btn" id="btn-en" onclick="setLang('en')">EN</button>
+      <button class="switcher-btn" id="btn-zh" onclick="setLang('zh')">中文</button>
+    </div>
+    <button class="dark-toggle" id="darkToggle" onclick="toggleDark()" title="Toggle dark mode">🌙</button>
   </div>
 </header>
 
@@ -207,11 +288,19 @@
     </a>
 
     <!-- FID Toolkit -->
-    <a href="warranty_tool.html" class="tool-card markdown">
+    <a href="warranty-tool.html" class="tool-card markdown">
       <div class="tool-icon">🔧</div>
       <h3 id="warranty-title">FID Toolkit</h3>
       <p id="warranty-desc">Decode and validate Siemens FID numbers. Extract FIDs from text, check warranty status, and export results.</p>
       <span class="tool-badge" id="warranty-badge">Active</span>
+    </a>
+
+    <!-- Excel to Markdown -->
+    <a href="excel-to-markdown.html" class="tool-card markdown">
+      <div class="tool-icon">📊</div>
+      <h3 id="excel-title">Excel to Markdown</h3>
+      <p id="excel-desc">Convert Excel (.xlsx) data into clean Markdown tables. Paste, preview, and copy with one click.</p>
+      <span class="tool-badge" id="excel-badge">Active</span>
     </a>
 
   </div>
@@ -222,7 +311,45 @@
 </footer>
 
 <script>
-  const translations = {
+  // ══════════════════════════════════════════════════
+  // DARK MODE
+  // ══════════════════════════════════════════════════
+  const DARK_KEY = 'miniToolsDark';
+
+  function getInitialTheme() {
+    const saved = localStorage.getItem(DARK_KEY);
+    if (saved !== null) return saved === 'true';
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  }
+
+  let isDark = getInitialTheme();
+
+  function applyTheme(dark) {
+    document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+    const btn = document.getElementById('darkToggle');
+    btn.textContent = dark ? '☀️' : '🌙';
+    btn.title = dark
+      ? (currentLang === 'zh' ? '切换到浅色模式' : 'Switch to light mode')
+      : (currentLang === 'zh' ? '切换到深色模式' : 'Switch to dark mode');
+  }
+
+  function toggleDark() {
+    isDark = !isDark;
+    localStorage.setItem(DARK_KEY, isDark);
+    applyTheme(isDark);
+  }
+
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+    if (localStorage.getItem(DARK_KEY) === null) {
+      isDark = e.matches;
+      applyTheme(isDark);
+    }
+  });
+
+  // ══════════════════════════════════════════════════
+  // i18n
+  // ══════════════════════════════════════════════════
+  const TRANSLATIONS = {
     en: {
       metaDescription: 'A collection of lightweight, browser-based utility tools.',
       pageTitle: '🧰 Mini Tools',
@@ -234,11 +361,13 @@
       warrantyTitle: 'FID Toolkit',
       warrantyDesc: 'Decode and validate Siemens FID numbers. Extract FIDs from text, check warranty status, and export results.',
       warrantyBadge: 'Active',
+      excelTitle: 'Excel to Markdown',
+      excelDesc: 'Convert Excel (.xlsx) data into clean Markdown tables. Paste, preview, and copy with one click.',
+      excelBadge: 'Active',
       footerText: 'Mini Tools © 2026 — Built for simplicity.',
       footerSource: 'Source',
-      langButton: '中文',
-      langButtonLabel: 'Switch to Simplified Chinese',
-      langButtonTitle: '切换到简体中文'
+      dark_on: 'Switch to light mode',
+      dark_off: 'Switch to dark mode',
     },
     zh: {
       metaDescription: '一组轻量级、基于浏览器的实用工具集合。',
@@ -251,66 +380,60 @@
       warrantyTitle: 'FID 工具包',
       warrantyDesc: '解码并验证 Siemens FID 编号。从文本中提取 FID，检查保修状态，并导出结果。',
       warrantyBadge: '可用',
+      excelTitle: 'Excel 转 Markdown',
+      excelDesc: '将 Excel (.xlsx) 数据转换为干净的 Markdown 表格。粘贴、预览、一键复制。',
+      excelBadge: '可用',
       footerText: 'Mini Tools © 2026 — 以简洁为核心。',
       footerSource: '源码',
-      langButton: 'English',
-      langButtonLabel: 'Switch to English',
-      langButtonTitle: 'Switch to English'
+      dark_on: '切换到浅色模式',
+      dark_off: '切换到深色模式',
     }
   };
 
-  const storageKey = 'mini-tools-language';
-  const supportedLanguages = ['en', 'zh'];
+  let currentLang = (navigator.language || navigator.userLanguage || 'en')
+                      .toLowerCase().startsWith('zh') ? 'zh' : 'en';
 
-  function getPreferredLanguage() {
-    const stored = localStorage.getItem(storageKey);
-    if (stored && supportedLanguages.includes(stored)) {
-      return stored;
-    }
-
-    const browserLanguage = (navigator.language || navigator.userLanguage || 'en').toLowerCase();
-    return browserLanguage.startsWith('zh') ? 'zh' : 'en';
+  function t(key) {
+    return TRANSLATIONS[currentLang][key] || TRANSLATIONS['en'][key] || key;
   }
 
-  function applyLanguage(lang) {
-    const text = translations[lang];
-    document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en';
-    document.title = lang === 'zh' ? '迷你工具箱' : 'Mini Tools';
+  function applyTranslations() {
+    document.documentElement.lang = currentLang === 'zh' ? 'zh-CN' : 'en';
+    document.title = currentLang === 'zh' ? '迷你工具箱' : 'Mini Tools';
 
     const metaDescription = document.querySelector('meta[name="description"]');
     if (metaDescription) {
-      metaDescription.setAttribute('content', text.metaDescription);
+      metaDescription.setAttribute('content', t('metaDescription'));
     }
 
-    document.getElementById('page-title').textContent = text.pageTitle;
-    document.getElementById('page-intro').textContent = text.pageIntro;
-    document.getElementById('tools-heading').textContent = text.toolsHeading;
-    document.getElementById('markdown-title').textContent = text.markdownTitle;
-    document.getElementById('markdown-desc').textContent = text.markdownDesc;
-    document.getElementById('markdown-badge').textContent = text.markdownBadge;
-    document.getElementById('warranty-title').textContent = text.warrantyTitle;
-    document.getElementById('warranty-desc').textContent = text.warrantyDesc;
-    document.getElementById('warranty-badge').textContent = text.warrantyBadge;
-    document.getElementById('footer-text').textContent = text.footerText;
-    document.getElementById('footer-source').textContent = text.footerSource;
+    document.getElementById('page-title').textContent = t('pageTitle');
+    document.getElementById('page-intro').textContent = t('pageIntro');
+    document.getElementById('tools-heading').textContent = t('toolsHeading');
+    document.getElementById('markdown-title').textContent = t('markdownTitle');
+    document.getElementById('markdown-desc').textContent = t('markdownDesc');
+    document.getElementById('markdown-badge').textContent = t('markdownBadge');
+    document.getElementById('warranty-title').textContent = t('warrantyTitle');
+    document.getElementById('warranty-desc').textContent = t('warrantyDesc');
+    document.getElementById('warranty-badge').textContent = t('warrantyBadge');
+    document.getElementById('excel-title').textContent = t('excelTitle');
+    document.getElementById('excel-desc').textContent = t('excelDesc');
+    document.getElementById('excel-badge').textContent = t('excelBadge');
+    document.getElementById('footer-text').textContent = t('footerText');
+    document.getElementById('footer-source').textContent = t('footerSource');
 
-    const switchButton = document.getElementById('lang-switch');
-    switchButton.textContent = text.langButton;
-    switchButton.setAttribute('aria-label', text.langButtonLabel);
-    switchButton.setAttribute('title', text.langButtonTitle);
-
-    currentLanguage = lang;
-    localStorage.setItem(storageKey, lang);
+    document.getElementById('btn-en').classList.toggle('active', currentLang === 'en');
+    document.getElementById('btn-zh').classList.toggle('active', currentLang === 'zh');
+    applyTheme(isDark);
   }
 
-  let currentLanguage = getPreferredLanguage();
+  function setLang(lang) {
+    currentLang = lang;
+    applyTranslations();
+  }
 
   document.addEventListener('DOMContentLoaded', () => {
-    applyLanguage(currentLanguage);
-
-    document.getElementById('lang-switch').addEventListener('click', () => {
-      applyLanguage(currentLanguage === 'zh' ? 'en' : 'zh');
-    });
+    applyTheme(isDark);
+    applyTranslations();
   });
 </script>
 

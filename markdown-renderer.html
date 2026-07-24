@@ -27,17 +27,134 @@
   <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
 
   <style>
+    /* ══════════════════════════════════════════════
+       CSS CUSTOM PROPERTIES — Light (default)
+       ══════════════════════════════════════════════ */
+    :root {
+      --bg:            #f0f2f5;
+      --surface:       #ffffff;
+      --text-primary:  #1a1a2e;
+      --text-muted:    #444444;
+      --text-faint:    #aaaaaa;
+      --accent:        #009999;
+      --accent-dark:   #007a7a;
+      --accent-light:  #e0f5f5;
+      --shadow:        rgba(0,0,0,0.08);
+      --toolbar-bg:    #ffffff;
+      --toolbar-bdr:   #dde1e7;
+      --pane-header-editor: #2d2d2d;
+      --pane-header-preview: #eef1f5;
+      --pane-header-text: #777777;
+      --editor-bg:     #1e1e1e;
+      --editor-text:   #d4d4d4;
+      --editor-placeholder: #555555;
+      --preview-bg:    #ffffff;
+      --preview-bdr:   #dde1e7;
+      --preview-h1:    #1a1a2e;
+      --preview-h2:    #1a1a2e;
+      --preview-p:     #444444;
+      --preview-a:     #009999;
+      --preview-blockquote-bg: #f0fafa;
+      --preview-blockquote-text: #555555;
+      --preview-code-bg: #f4f4f4;
+      --preview-code-text: #c7254e;
+      --preview-pre-bg: #1e1e1e;
+      --preview-pre-text: #d4d4d4;
+      --preview-th-bg: #009999;
+      --preview-th-text: #ffffff;
+      --preview-td-bdr: #e8e8e8;
+      --preview-tr-alt: #f9f9f9;
+      --preview-hr:    #e0e0e0;
+      --preview-h2-bdr: #e0e0e0;
+      --char-count-bg: #2d2d2d;
+      --char-count-text: #666666;
+      --char-count-bdr: #3a3a3a;
+      --btn-print-bg:  #4a90d9;
+      --btn-pdf-bg:    #e05252;
+      --btn-html-bg:   #5a9e6f;
+      --btn-clear-bg:  #f0f0f0;
+      --btn-clear-text:#555555;
+      --view-btn-bg:   #e8e8e8;
+      --view-btn-text: #555555;
+      --view-btn-act:  #009999;
+      --switcher-bg:      rgba(255,255,255,0.16);
+      --switcher-text:    #ffffff;
+      --switcher-bdr:     rgba(255,255,255,0.35);
+      --switcher-hover:   rgba(255,255,255,0.24);
+      --switcher-act-bg:  #ffffff;
+      --switcher-act-txt: #009999;
+    }
+
+    /* ══════════════════════════════════════════════
+       DARK MODE OVERRIDES
+       ══════════════════════════════════════════════ */
+    [data-theme="dark"] {
+      --bg:            #0f1117;
+      --surface:       #1a1d27;
+      --text-primary:  #e2e8f0;
+      --text-muted:    #94a3b8;
+      --text-faint:    #4a5568;
+      --accent:        #00cccc;
+      --accent-dark:   #00aaaa;
+      --accent-light:  #0d2e2e;
+      --shadow:        rgba(0,0,0,0.4);
+      --toolbar-bg:    #1a1d27;
+      --toolbar-bdr:   #2a2d3e;
+      --pane-header-editor: #1a1d27;
+      --pane-header-preview: #1a1d27;
+      --pane-header-text: #94a3b8;
+      --editor-bg:     #0f1117;
+      --editor-text:   #e2e8f0;
+      --editor-placeholder: #4a5568;
+      --preview-bg:    #1a1d27;
+      --preview-bdr:   #2a2d3e;
+      --preview-h1:    #e2e8f0;
+      --preview-h2:    #e2e8f0;
+      --preview-p:     #94a3b8;
+      --preview-a:     #00cccc;
+      --preview-blockquote-bg: #0d2e2e;
+      --preview-blockquote-text: #94a3b8;
+      --preview-code-bg: #1e2130;
+      --preview-code-text: #fca5a5;
+      --preview-pre-bg: #0f1117;
+      --preview-pre-text: #e2e8f0;
+      --preview-th-bg: #00cccc;
+      --preview-th-text: #0f1117;
+      --preview-td-bdr: #2a2d3e;
+      --preview-tr-alt: #1e2130;
+      --preview-hr:    #2a2d3e;
+      --preview-h2-bdr: #2a2d3e;
+      --char-count-bg: #1a1d27;
+      --char-count-text: #94a3b8;
+      --char-count-bdr: #2a2d3e;
+      --btn-print-bg:  #1e3a5f;
+      --btn-pdf-bg:    #5c1a1a;
+      --btn-html-bg:   #1a3a2a;
+      --btn-clear-bg:  #1e2130;
+      --btn-clear-text:#94a3b8;
+      --view-btn-bg:   #1e2130;
+      --view-btn-text: #94a3b8;
+      --view-btn-act:  #00cccc;
+      --switcher-bg:      rgba(255,255,255,0.10);
+      --switcher-text:    #e2e8f0;
+      --switcher-bdr:     rgba(255,255,255,0.25);
+      --switcher-hover:   rgba(255,255,255,0.18);
+      --switcher-act-bg:  #00cccc;
+      --switcher-act-txt: #0f1117;
+    }
+
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: #f0f2f5;
-      color: #333;
+      background: var(--bg);
+      color: var(--text-primary);
       min-height: 100vh;
+      transition: background 0.3s, color 0.3s;
     }
 
     header {
-      background: linear-gradient(135deg, #009999, #007a7a);
+      background: linear-gradient(135deg, var(--accent), var(--accent-dark));
       color: white;
       padding: 12px 16px;
       display: flex;
@@ -50,19 +167,76 @@
     header h1  { font-size: 1.1rem; font-weight: 600; letter-spacing: 0.5px; }
     header span { font-size: 0.75rem; opacity: 0.85; margin-left: 4px; }
 
+    .header-actions {
+      margin-left: auto;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .switcher {
+      display: flex;
+      border-radius: 999px;
+      overflow: hidden;
+      border: 1px solid var(--switcher-bdr);
+    }
+
+    .switcher-btn {
+      padding: 6px 12px;
+      border: none;
+      background: var(--switcher-bg);
+      color: var(--switcher-text);
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s;
+      line-height: 1;
+    }
+
+    .switcher-btn + .switcher-btn {
+      border-left: 1px solid var(--switcher-bdr);
+    }
+
+    .switcher-btn.active {
+      background: var(--switcher-act-bg);
+      color: var(--switcher-act-txt);
+    }
+
+    .switcher-btn:hover:not(.active) {
+      background: var(--switcher-hover);
+    }
+
+    .dark-toggle {
+      width: 32px;
+      height: 30px;
+      border-radius: 999px;
+      border: 1px solid var(--switcher-bdr);
+      background: var(--switcher-bg);
+      color: var(--switcher-text);
+      font-size: 0.9rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s;
+    }
+
+    .dark-toggle:hover { background: var(--switcher-hover); }
+
     .toolbar {
       display: flex;
       gap: 8px;
       padding: 10px 16px;
-      background: #fff;
-      border-bottom: 1px solid #dde1e7;
+      background: var(--toolbar-bg);
+      border-bottom: 1px solid var(--toolbar-bdr);
       flex-wrap: wrap;
       align-items: center;
+      transition: background 0.3s;
     }
 
     .toolbar-label {
       font-size: 0.7rem;
-      color: #888;
+      color: var(--text-faint);
       font-weight: 600;
       text-transform: uppercase;
       letter-spacing: 0.5px;
@@ -84,13 +258,13 @@
       -webkit-tap-highlight-color: transparent;
     }
 
-    .btn:hover  { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+    .btn:hover  { transform: translateY(-1px); box-shadow: 0 4px 12px var(--shadow); }
     .btn:active { transform: translateY(0); }
 
-    .btn-print { background: #4a90d9; color: white; }
-    .btn-pdf   { background: #e05252; color: white; }
-    .btn-html  { background: #5a9e6f; color: white; }
-    .btn-clear { background: #f0f0f0; color: #555; margin-left: auto; }
+    .btn-print { background: var(--btn-print-bg); color: white; }
+    .btn-pdf   { background: var(--btn-pdf-bg); color: white; }
+    .btn-html  { background: var(--btn-html-bg); color: white; }
+    .btn-clear { background: var(--btn-clear-bg); color: var(--btn-clear-text); margin-left: auto; }
 
     /* View toggle for mobile */
     .view-toggle {
@@ -101,11 +275,11 @@
     .view-toggle .btn {
       padding: 7px 10px;
       font-size: 0.75rem;
-      background: #e8e8e8;
-      color: #555;
+      background: var(--view-btn-bg);
+      color: var(--view-btn-text);
     }
     .view-toggle .btn.active {
-      background: #009999;
+      background: var(--view-btn-act);
       color: white;
     }
 
@@ -135,13 +309,13 @@
       display: inline-block;
     }
 
-    .editor-pane .pane-header { background: #2d2d2d; color: #aaa; }
+    .editor-pane .pane-header { background: var(--pane-header-editor); color: var(--text-faint); }
     .editor-pane .pane-header .dot { background: #f5a623; }
 
     .preview-pane .pane-header {
-      background: #eef1f5;
-      color: #777;
-      border-bottom: 1px solid #dde1e7;
+      background: var(--pane-header-preview);
+      color: var(--pane-header-text);
+      border-bottom: 1px solid var(--toolbar-bdr);
     }
     .preview-pane .pane-header .dot { background: #5a9e6f; }
 
@@ -152,23 +326,24 @@
       font-family: 'Courier New', Courier, monospace;
       font-size: 0.9rem;
       line-height: 1.7;
-      background: #1e1e1e;
-      color: #d4d4d4;
+      background: var(--editor-bg);
+      color: var(--editor-text);
       border: none;
       outline: none;
       resize: none;
       tab-size: 2;
     }
 
-    #markdown-input::placeholder { color: #555; }
+    #markdown-input::placeholder { color: var(--editor-placeholder); }
 
     #preview-output {
       flex: 1;
       padding: 20px 24px;
       overflow-y: auto;
-      background: #fff;
-      border-left: 1px solid #dde1e7;
+      background: var(--preview-bg);
+      border-left: 1px solid var(--preview-bdr);
       -webkit-overflow-scrolling: touch;
+      transition: background 0.3s;
     }
 
     #preview-output h1,
@@ -179,35 +354,35 @@
     #preview-output h6 {
       margin: 1.2em 0 0.4em;
       line-height: 1.3;
-      color: #1a1a2e;
+      color: var(--preview-h1);
     }
 
-    #preview-output h1 { font-size: 1.6rem; border-bottom: 2px solid #009999; padding-bottom: 6px; }
-    #preview-output h2 { font-size: 1.3rem; border-bottom: 1px solid #e0e0e0; padding-bottom: 5px; }
+    #preview-output h1 { font-size: 1.6rem; border-bottom: 2px solid var(--accent); padding-bottom: 6px; }
+    #preview-output h2 { font-size: 1.3rem; border-bottom: 1px solid var(--preview-h2-bdr); padding-bottom: 5px; }
     #preview-output h3 { font-size: 1.1rem; }
 
-    #preview-output p  { margin: 0.7em 0; line-height: 1.75; color: #444; }
-    #preview-output a  { color: #009999; text-decoration: none; }
+    #preview-output p  { margin: 0.7em 0; line-height: 1.75; color: var(--preview-p); }
+    #preview-output a  { color: var(--preview-a); text-decoration: none; }
     #preview-output a:hover { text-decoration: underline; }
 
     #preview-output ul,
     #preview-output ol { margin: 0.7em 0 0.7em 1.5em; line-height: 1.8; }
 
     #preview-output blockquote {
-      border-left: 4px solid #009999;
+      border-left: 4px solid var(--accent);
       margin: 0.8em 0; padding: 8px 14px;
-      background: #f0fafa; color: #555;
+      background: var(--preview-blockquote-bg); color: var(--preview-blockquote-text);
       border-radius: 0 6px 6px 0;
     }
 
     #preview-output code {
-      background: #f4f4f4; padding: 2px 6px;
+      background: var(--preview-code-bg); padding: 2px 6px;
       border-radius: 4px; font-family: 'Courier New', monospace;
-      font-size: 0.85em; color: #c7254e;
+      font-size: 0.85em; color: var(--preview-code-text);
     }
 
     #preview-output pre {
-      background: #1e1e1e; color: #d4d4d4;
+      background: var(--preview-pre-bg); color: var(--preview-pre-text);
       padding: 14px 16px; border-radius: 8px;
       overflow-x: auto; margin: 0.8em 0;
       -webkit-overflow-scrolling: touch;
@@ -222,13 +397,13 @@
     }
 
     #preview-output th {
-      background: #009999; color: white; padding: 8px 10px; text-align: left;
+      background: var(--preview-th-bg); color: var(--preview-th-text); padding: 8px 10px; text-align: left;
     }
 
-    #preview-output td { padding: 7px 10px; border-bottom: 1px solid #e8e8e8; }
-    #preview-output tr:nth-child(even) td { background: #f9f9f9; }
+    #preview-output td { padding: 7px 10px; border-bottom: 1px solid var(--preview-td-bdr); }
+    #preview-output tr:nth-child(even) td { background: var(--preview-tr-alt); }
     #preview-output img { max-width: 100%; height: auto; border-radius: 6px; }
-    #preview-output hr  { border: none; border-top: 2px solid #e0e0e0; margin: 1.2em 0; }
+    #preview-output hr  { border: none; border-top: 2px solid var(--preview-hr); margin: 1.2em 0; }
 
     #preview-output mjx-container[display="true"] {
       overflow-x: auto;
@@ -237,9 +412,9 @@
 
     .char-count {
       padding: 5px 14px;
-      background: #2d2d2d; color: #666;
+      background: var(--char-count-bg); color: var(--char-count-text);
       font-size: 0.7rem; font-family: monospace;
-      border-top: 1px solid #3a3a3a;
+      border-top: 1px solid var(--char-count-bdr);
       flex-shrink: 0;
     }
 
@@ -271,11 +446,9 @@
         height: calc(100vh - 110px);
       }
 
-      /* When in "edit" mode on mobile, hide preview */
       .main-layout.show-editor .preview-pane { display: none; }
       .main-layout.show-editor .editor-pane { border-right: none; }
 
-      /* When in "preview" mode on mobile, hide editor */
       .main-layout.show-preview .editor-pane { display: none; }
       .main-layout.show-preview .preview-pane { border-left: none; }
 
@@ -310,7 +483,14 @@
       <text x="5" y="28" font-size="22" font-family="monospace" fill="white" font-weight="bold">M↓</text>
     </svg>
   </a>
-  <h1>Markdown Renderer <span>— Preview · Print · Export</span></h1>
+  <h1 id="page-title">Markdown Renderer <span id="page-subtitle">— Preview · Print · Export</span></h1>
+  <div class="header-actions">
+    <div class="switcher">
+      <button class="switcher-btn" id="btn-en" onclick="setLang('en')">EN</button>
+      <button class="switcher-btn" id="btn-zh" onclick="setLang('zh')">中文</button>
+    </div>
+    <button class="dark-toggle" id="darkToggle" onclick="toggleDark()" title="Toggle dark mode">🌙</button>
+  </div>
 </header>
 
 <div class="toolbar">
@@ -643,6 +823,108 @@ $$\\int_{-\\infty}^{\\infty} e^{-x^2}\\,dx = \\sqrt{\\pi}$$
 > "Any sufficiently advanced technology is indistinguishable from magic." — Arthur C. Clarke
 `;
     textarea.dispatchEvent(new Event('input'));
+  });
+</script>
+
+<!-- ══════════════════════════════════════════════
+     UNIFIED DARK MODE + i18n
+     ══════════════════════════════════════════════ -->
+<script>
+  const DARK_KEY = 'miniToolsDark';
+
+  function getInitialTheme() {
+    const saved = localStorage.getItem(DARK_KEY);
+    if (saved !== null) return saved === 'true';
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  }
+
+  let isDark = getInitialTheme();
+
+  function applyTheme(dark) {
+    document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+    const btn = document.getElementById('darkToggle');
+    if (btn) {
+      btn.textContent = dark ? '☀️' : '🌙';
+      btn.title = dark
+        ? (currentLang === 'zh' ? '切换到浅色模式' : 'Switch to light mode')
+        : (currentLang === 'zh' ? '切换到深色模式' : 'Switch to dark mode');
+    }
+  }
+
+  function toggleDark() {
+    isDark = !isDark;
+    localStorage.setItem(DARK_KEY, isDark);
+    applyTheme(isDark);
+  }
+
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+    if (localStorage.getItem(DARK_KEY) === null) {
+      isDark = e.matches;
+      applyTheme(isDark);
+    }
+  });
+
+  const TRANSLATIONS = {
+    en: {
+      pageTitle: 'Markdown Renderer',
+      pageSubtitle: '— Preview · Print · Export',
+      toolbarLabel: 'Actions',
+      btnPrint: '🖨️ Print',
+      btnPdf: '📕 PDF',
+      btnHtml: '💾 HTML',
+      btnClear: '🗑️ Clear',
+      btnEdit: '✏️ Edit',
+      btnPreview: '👁️ Preview',
+      paneEditor: 'Markdown Input',
+      panePreview: 'Live Preview',
+      inputPlaceholder: 'Start typing your Markdown here...',
+    },
+    zh: {
+      pageTitle: 'Markdown 渲染器',
+      pageSubtitle: '— 预览 · 打印 · 导出',
+      toolbarLabel: '操作',
+      btnPrint: '🖨️ 打印',
+      btnPdf: '📕 PDF',
+      btnHtml: '💾 HTML',
+      btnClear: '🗑️ 清除',
+      btnEdit: '✏️ 编辑',
+      btnPreview: '👁️ 预览',
+      paneEditor: 'Markdown 输入',
+      panePreview: '实时预览',
+      inputPlaceholder: '在此输入 Markdown 内容...',
+    }
+  };
+
+  let currentLang = (navigator.language || navigator.userLanguage || 'en')
+                      .toLowerCase().startsWith('zh') ? 'zh' : 'en';
+
+  function t(key) {
+    return TRANSLATIONS[currentLang][key] || TRANSLATIONS['en'][key] || key;
+  }
+
+  function applyTranslations() {
+    document.documentElement.lang = currentLang === 'zh' ? 'zh-CN' : 'en';
+    document.title = currentLang === 'zh' ? 'Markdown 渲染器' : 'Markdown to HTML Renderer';
+
+    const titleEl = document.getElementById('page-title');
+    if (titleEl) titleEl.childNodes[0].textContent = t('pageTitle') + ' ';
+    const subtitleEl = document.getElementById('page-subtitle');
+    if (subtitleEl) subtitleEl.textContent = t('pageSubtitle');
+
+    document.getElementById('btn-en').classList.toggle('active', currentLang === 'en');
+    document.getElementById('btn-zh').classList.toggle('active', currentLang === 'zh');
+
+    applyTheme(isDark);
+  }
+
+  function setLang(lang) {
+    currentLang = lang;
+    applyTranslations();
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    applyTheme(isDark);
+    applyTranslations();
   });
 </script>
 
