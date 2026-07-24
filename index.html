@@ -221,19 +221,7 @@
       line-height: 1.5;
     }
 
-    .tool-badge {
-      display: inline-block;
-      font-size: 0.68rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      padding: 3px 8px;
-      border-radius: 4px;
-      width: fit-content;
-    }
-
     .tool-card.markdown .tool-icon { background: var(--accent-light); color: var(--accent); }
-    .tool-card.markdown .tool-badge { background: var(--accent-light); color: var(--accent); }
 
     /* ── Footer ──────────────────────────────────────────────── */
     footer {
@@ -284,7 +272,6 @@
       <div class="tool-icon">M↓</div>
       <h3 id="markdown-title">Markdown Renderer</h3>
       <p id="markdown-desc">Write Markdown with live preview. Supports LaTeX math, code blocks, tables, and more. Export to HTML or PDF.</p>
-      <span class="tool-badge" id="markdown-badge">Active</span>
     </a>
 
     <!-- FID Toolkit -->
@@ -292,7 +279,6 @@
       <div class="tool-icon">🔧</div>
       <h3 id="warranty-title">FID Toolkit</h3>
       <p id="warranty-desc">Decode and validate Siemens FID numbers. Extract FIDs from text, check warranty status, and export results.</p>
-      <span class="tool-badge" id="warranty-badge">Active</span>
     </a>
 
     <!-- Excel to Markdown -->
@@ -300,7 +286,6 @@
       <div class="tool-icon">📊</div>
       <h3 id="excel-title">Excel to Markdown</h3>
       <p id="excel-desc">Paste Excel data and convert to clean Markdown tables. Preview and copy with one click.</p>
-      <span class="tool-badge" id="excel-badge">Active</span>
     </a>
 
   </div>
@@ -357,13 +342,10 @@
       toolsHeading: 'Available Tools',
       markdownTitle: 'Markdown Renderer',
       markdownDesc: 'Write Markdown with live preview. Supports LaTeX math, code blocks, tables, and more. Export to HTML or PDF.',
-      markdownBadge: 'Active',
       warrantyTitle: 'FID Toolkit',
       warrantyDesc: 'Decode and validate Siemens FID numbers. Extract FIDs from text, check warranty status, and export results.',
-      warrantyBadge: 'Active',
       excelTitle: 'Excel to Markdown',
-      excelDesc: 'Convert Excel (.xlsx) data into clean Markdown tables. Paste, preview, and copy with one click.',
-      excelBadge: 'Active',
+      excelDesc: 'Paste Excel data and convert to clean Markdown tables. Preview and copy with one click.',
       footerText: 'Mini Tools © 2026 — Built for simplicity.',
       footerSource: 'Source',
       dark_on: 'Switch to light mode',
@@ -376,13 +358,10 @@
       toolsHeading: '可用工具',
       markdownTitle: 'Markdown 渲染器',
       markdownDesc: '使用实时预览编写 Markdown。支持 LaTeX 数学公式、代码块、表格等内容。可导出为 HTML 或 PDF。',
-      markdownBadge: '可用',
       warrantyTitle: 'FID 工具包',
       warrantyDesc: '解码并验证 Siemens FID 编号。从文本中提取 FID，检查保修状态，并导出结果。',
-      warrantyBadge: '可用',
       excelTitle: 'Excel 转 Markdown',
       excelDesc: '将 Excel 数据粘贴并转换为干净的 Markdown 表格。预览并一键复制。',
-      excelBadge: '可用',
       footerText: 'Mini Tools © 2026 — 以简洁为核心。',
       footerSource: '源码',
       dark_on: '切换到浅色模式',
@@ -411,13 +390,10 @@
     document.getElementById('tools-heading').textContent = t('toolsHeading');
     document.getElementById('markdown-title').textContent = t('markdownTitle');
     document.getElementById('markdown-desc').textContent = t('markdownDesc');
-    document.getElementById('markdown-badge').textContent = t('markdownBadge');
     document.getElementById('warranty-title').textContent = t('warrantyTitle');
     document.getElementById('warranty-desc').textContent = t('warrantyDesc');
-    document.getElementById('warranty-badge').textContent = t('warrantyBadge');
     document.getElementById('excel-title').textContent = t('excelTitle');
     document.getElementById('excel-desc').textContent = t('excelDesc');
-    document.getElementById('excel-badge').textContent = t('excelBadge');
     document.getElementById('footer-text').textContent = t('footerText');
     document.getElementById('footer-source').textContent = t('footerSource');
 
