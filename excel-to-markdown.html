@@ -4,8 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Excel to Markdown</title>
-  <meta name="description" content="Convert Excel (.xlsx) data into clean Markdown tables." />
-  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <meta name="description" content="Paste Excel data and convert to clean Markdown tables." />
   <style>
     /* ══════════════════════════════════════════════
        CSS CUSTOM PROPERTIES — Light (default)
@@ -33,9 +32,6 @@
       --copy-done-bg:  #d4f8e8;
       --copy-done-text:#1a7a4a;
       --copy-done-bdr: #a8e6c8;
-      --dropzone-bdr:  #cce8e8;
-      --dropzone-bg:   #f7fdfd;
-      --dropzone-hover:#e0f5f5;
       --switcher-bg:      rgba(255,255,255,0.16);
       --switcher-text:    #ffffff;
       --switcher-bdr:     rgba(255,255,255,0.35);
@@ -70,9 +66,6 @@
       --copy-done-bg:  #052e16;
       --copy-done-text:#86efac;
       --copy-done-bdr: #166534;
-      --dropzone-bdr:  #2e4a4a;
-      --dropzone-bg:   #0d1e1e;
-      --dropzone-hover:#1e3a3a;
       --switcher-bg:      rgba(255,255,255,0.10);
       --switcher-text:    #e2e8f0;
       --switcher-bdr:     rgba(255,255,255,0.25);
@@ -175,55 +168,59 @@
       margin-bottom: 16px;
     }
 
-    /* ── Dropzone ── */
-    .dropzone {
-      border: 2px dashed var(--dropzone-bdr);
-      border-radius: 10px;
-      padding: 40px 20px;
-      text-align: center;
-      cursor: pointer;
-      transition: all 0.2s;
-      background: var(--dropzone-bg);
-    }
-
-    .dropzone:hover, .dropzone.drag-over {
-      border-color: var(--accent);
-      background: var(--dropzone-hover);
-    }
-
-    .dropzone-icon { font-size: 2.5rem; margin-bottom: 10px; }
-    .dropzone-text { font-size: 0.95rem; color: var(--text-muted); margin-bottom: 6px; }
-    .dropzone-hint { font-size: 0.78rem; color: var(--text-faint); }
-
-    .dropzone input[type="file"] { display: none; }
-
-    /* ── Sheet Selector ── */
-    .sheet-bar {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      margin-bottom: 16px;
-    }
-
-    .sheet-btn {
-      padding: 6px 14px;
-      border: 1px solid var(--border-input);
-      border-radius: 6px;
+    /* ── Input ── */
+    textarea#excel-input {
+      width: 100%;
+      min-height: 220px;
+      padding: 14px;
+      border: 2px solid var(--border-input);
+      border-radius: 8px;
+      font-family: 'Courier New', monospace;
+      font-size: 0.88rem;
+      line-height: 1.6;
+      resize: vertical;
+      outline: none;
       background: var(--surface);
-      color: var(--text-muted);
-      font-size: 0.82rem;
-      font-weight: 600;
+      color: var(--text-primary);
+      transition: border-color 0.2s;
+    }
+
+    textarea#excel-input:focus { border-color: var(--accent); }
+
+    .toolbar {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+
+    .btn {
+      padding: 8px 18px;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 700;
       cursor: pointer;
       transition: all 0.2s;
     }
 
-    .sheet-btn.active {
-      background: var(--accent);
-      color: white;
-      border-color: var(--accent);
-    }
+    .btn-primary { background: var(--accent); color: white; }
+    .btn-primary:hover { background: var(--accent-dark); }
 
-    .sheet-btn:hover:not(.active) { background: var(--accent-light); }
+    .btn-secondary {
+      background: var(--btn-sec-bg);
+      color: var(--btn-sec-text);
+      border: 1px solid var(--btn-sec-bdr);
+    }
+    .btn-secondary:hover { background: var(--btn-sec-hover); }
+
+    .btn-danger {
+      background: #fde8e8;
+      color: #a93226;
+      border: 1px solid #f5b7b1;
+    }
+    .btn-danger:hover { background: #fbd0ce; }
 
     /* ── Preview Table ── */
     .table-wrapper {
@@ -295,38 +292,25 @@
     .copy-btn:hover { background: var(--btn-sec-bg); color: var(--btn-sec-text); border-color: var(--btn-sec-bdr); }
     .copy-btn.copied { background: var(--copy-done-bg); color: var(--copy-done-text); border-color: var(--copy-done-bdr); }
 
-    .toolbar {
+    .info-bar {
       display: flex;
-      gap: 10px;
+      gap: 16px;
       flex-wrap: wrap;
       align-items: center;
       margin-bottom: 14px;
-    }
-
-    .btn {
-      padding: 8px 18px;
-      border: none;
-      border-radius: 8px;
-      font-size: 0.85rem;
-      font-weight: 700;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-
-    .btn-primary { background: var(--accent); color: white; }
-    .btn-primary:hover { background: var(--accent-dark); }
-
-    .btn-secondary {
-      background: var(--btn-sec-bg);
-      color: var(--btn-sec-text);
-      border: 1px solid var(--btn-sec-bdr);
-    }
-    .btn-secondary:hover { background: var(--btn-sec-hover); }
-
-    .file-info {
       font-size: 0.82rem;
       color: var(--text-muted);
-      margin-left: auto;
+    }
+
+    .info-bar .stat {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .info-bar .stat-value {
+      font-weight: 700;
+      color: var(--accent);
     }
 
     .empty-state {
@@ -340,9 +324,7 @@
     @media (max-width: 640px) {
       .container { padding: 20px 12px 40px; }
       .card { padding: 16px; }
-      .dropzone { padding: 24px 14px; }
-      .dropzone-icon { font-size: 2rem; }
-      .file-info { margin-left: 0; width: 100%; }
+      textarea#excel-input { min-height: 160px; }
     }
   </style>
 </head>
@@ -364,28 +346,31 @@
 
 <div class="container">
 
-  <!-- Upload -->
+  <!-- Paste Input -->
   <div class="card">
-    <h2 id="upload-heading">Upload Excel File</h2>
-    <div class="dropzone" id="dropzone">
-      <div class="dropzone-icon">📂</div>
-      <div class="dropzone-text" id="dropzone-text">Drop an .xlsx file here or click to browse</div>
-      <div class="dropzone-hint" id="dropzone-hint">Supports .xlsx files up to 10 MB</div>
-      <input type="file" id="fileInput" accept=".xlsx,.xls" />
+    <h2 id="input-heading">Paste Excel Data</h2>
+    <textarea id="excel-input" spellcheck="false"
+      placeholder="Copy cells from Excel and paste them here...&#10;&#10;The tool will automatically detect rows and columns and convert them to a Markdown table."></textarea>
+    <div class="toolbar">
+      <button class="btn btn-primary" onclick="convert()" id="btn-convert">🔄 Convert</button>
+      <button class="btn btn-secondary" onclick="loadSample()" id="btn-sample">📋 Sample</button>
+      <button class="btn btn-danger" onclick="clearAll()" id="btn-clear">🗑 Clear</button>
     </div>
   </div>
 
-  <!-- Sheet selector + preview -->
-  <div class="card" id="data-card" style="display:none;">
+  <!-- Preview -->
+  <div class="card" id="preview-card" style="display:none;">
     <div class="toolbar">
       <h2 id="preview-heading">Preview</h2>
-      <span class="file-info" id="file-info"></span>
+      <div class="info-bar" id="info-bar">
+        <span class="stat"><span class="stat-value" id="stat-rows">0</span> <span id="stat-rows-label">rows</span></span>
+        <span class="stat"><span class="stat-value" id="stat-cols">0</span> <span id="stat-cols-label">cols</span></span>
+      </div>
     </div>
-    <div class="sheet-bar" id="sheet-bar"></div>
     <div class="table-wrapper" id="preview-table-wrapper">
       <div class="empty-state">
         <div class="icon">📋</div>
-        <div id="empty-preview-text">Select a sheet to preview</div>
+        <div id="empty-preview-text">Paste data and click Convert to preview</div>
       </div>
     </div>
   </div>
@@ -445,37 +430,35 @@
   const TRANSLATIONS = {
     en: {
       pageTitle: 'Excel to Markdown',
-      uploadHeading: 'Upload Excel File',
-      dropzoneText: 'Drop an .xlsx file here or click to browse',
-      dropzoneHint: 'Supports .xlsx files up to 10 MB',
+      inputHeading: 'Paste Excel Data',
+      inputPlaceholder: 'Copy cells from Excel and paste them here...\n\nThe tool will automatically detect rows and columns and convert them to a Markdown table.',
+      btnConvert: '🔄 Convert',
+      btnSample: '📋 Sample',
+      btnClear: '🗑 Clear',
       previewHeading: 'Preview',
-      emptyPreviewText: 'Select a sheet to preview',
+      emptyPreviewText: 'Paste data and click Convert to preview',
       outputHeading: 'Markdown Output',
       outputPlaceholder: 'Markdown table will appear here...',
       copyBtn: '📋 Copy',
       copiedBtn: '✅ Copied',
-      rows: 'rows',
-      cols: 'cols',
-      sheet: 'Sheet',
-      noData: 'No data found in this sheet.',
-      fileInfo: (name, sheets) => `${name} — ${sheets} sheet(s)`,
+      rowsLabel: 'rows',
+      colsLabel: 'cols',
     },
     zh: {
       pageTitle: 'Excel 转 Markdown',
-      uploadHeading: '上传 Excel 文件',
-      dropzoneText: '将 .xlsx 文件拖放到此处或点击浏览',
-      dropzoneHint: '支持最大 10 MB 的 .xlsx 文件',
+      inputHeading: '粘贴 Excel 数据',
+      inputPlaceholder: '从 Excel 中复制单元格并粘贴到此处...\n\n工具将自动检测行和列，并将其转换为 Markdown 表格。',
+      btnConvert: '🔄 转换',
+      btnSample: '📋 示例',
+      btnClear: '🗑 清除',
       previewHeading: '预览',
-      emptyPreviewText: '选择一个工作表进行预览',
+      emptyPreviewText: '粘贴数据并点击转换以预览',
       outputHeading: 'Markdown 输出',
       outputPlaceholder: 'Markdown 表格将显示在此处...',
       copyBtn: '📋 复制',
       copiedBtn: '✅ 已复制',
-      rows: '行',
-      cols: '列',
-      sheet: '工作表',
-      noData: '此工作表中未找到数据。',
-      fileInfo: (name, sheets) => `${name} — ${sheets} 个工作表`,
+      rowsLabel: '行',
+      colsLabel: '列',
     }
   };
 
@@ -493,14 +476,18 @@
     const titleEl = document.getElementById('page-title');
     if (titleEl) titleEl.textContent = t('pageTitle');
 
-    document.getElementById('upload-heading').textContent = t('uploadHeading');
-    document.getElementById('dropzone-text').textContent = t('dropzoneText');
-    document.getElementById('dropzone-hint').textContent = t('dropzoneHint');
+    document.getElementById('input-heading').textContent = t('inputHeading');
+    document.getElementById('excel-input').placeholder = t('inputPlaceholder');
+    document.getElementById('btn-convert').textContent = t('btnConvert');
+    document.getElementById('btn-sample').textContent = t('btnSample');
+    document.getElementById('btn-clear').textContent = t('btnClear');
     document.getElementById('preview-heading').textContent = t('previewHeading');
     document.getElementById('empty-preview-text').textContent = t('emptyPreviewText');
     document.getElementById('output-heading').textContent = t('outputHeading');
     document.getElementById('markdown-output').placeholder = t('outputPlaceholder');
     document.getElementById('copy-btn').textContent = t('copyBtn');
+    document.getElementById('stat-rows-label').textContent = t('rowsLabel');
+    document.getElementById('stat-cols-label').textContent = t('colsLabel');
 
     document.getElementById('btn-en').classList.toggle('active', currentLang === 'en');
     document.getElementById('btn-zh').classList.toggle('active', currentLang === 'zh');
@@ -511,116 +498,71 @@
   function setLang(lang) {
     currentLang = lang;
     applyTranslations();
-    // Re-render UI with new language
-    if (currentWorkbook) {
-      renderSheetBar();
-      renderPreview(currentSheetName);
-      renderMarkdown();
-    }
   }
 
   // ══════════════════════════════════════════════════
-  // Excel Logic
+  // Conversion Logic
   // ══════════════════════════════════════════════════
-  let currentWorkbook = null;
-  let currentSheetName = null;
   let currentData = [];
 
-  const dropzone = document.getElementById('dropzone');
-  const fileInput = document.getElementById('fileInput');
+  function parsePastedText(text) {
+    const lines = text.split('\n').filter(line => line.trim() !== '');
+    if (lines.length === 0) return [];
 
-  // ── Drag & Drop ──
-  dropzone.addEventListener('dragover', e => {
-    e.preventDefault();
-    dropzone.classList.add('drag-over');
-  });
-
-  dropzone.addEventListener('dragleave', () => {
-    dropzone.classList.remove('drag-over');
-  });
-
-  dropzone.addEventListener('drop', e => {
-    e.preventDefault();
-    dropzone.classList.remove('drag-over');
-    const files = e.dataTransfer.files;
-    if (files.length > 0) handleFile(files[0]);
-  });
-
-  dropzone.addEventListener('click', () => fileInput.click());
-  fileInput.addEventListener('change', e => {
-    if (e.target.files.length > 0) handleFile(e.target.files[0]);
-  });
-
-  function handleFile(file) {
-    if (!file.name.match(/\.xlsx?$/i)) {
-      alert('Please select an .xlsx file.');
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = function(e) {
-      try {
-        const data = new Uint8Array(e.target.result);
-        currentWorkbook = XLSX.read(data, { type: 'array' });
-        currentSheetName = currentWorkbook.SheetNames[0];
-        loadSheet(currentSheetName);
-        document.getElementById('data-card').style.display = 'block';
-        document.getElementById('output-card').style.display = 'block';
-        renderSheetBar();
-        renderPreview(currentSheetName);
-        renderMarkdown();
-        updateFileInfo(file.name);
-      } catch (err) {
-        alert('Error reading file: ' + err.message);
+    return lines.map(line => {
+      // Split by tab (Excel paste) or by pipe (already markdown-ish)
+      if (line.includes('\t')) {
+        return line.split('\t').map(cell => cell.trim());
       }
-    };
-    reader.readAsArrayBuffer(file);
-  }
-
-  function loadSheet(name) {
-    currentSheetName = name;
-    const sheet = currentWorkbook.Sheets[name];
-    const json = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
-    // Filter out completely empty rows
-    currentData = json.filter(row => row.some(cell => cell !== ''));
-  }
-
-  function renderSheetBar() {
-    const bar = document.getElementById('sheet-bar');
-    bar.innerHTML = '';
-    currentWorkbook.SheetNames.forEach(name => {
-      const btn = document.createElement('button');
-      btn.className = 'sheet-btn' + (name === currentSheetName ? ' active' : '');
-      btn.textContent = name;
-      btn.onclick = () => {
-        loadSheet(name);
-        renderSheetBar();
-        renderPreview(name);
-        renderMarkdown();
-      };
-      bar.appendChild(btn);
+      // Try splitting by pipe for markdown-like input
+      if (line.includes('|')) {
+        return line.split('|').map(cell => cell.trim()).filter(c => c !== '');
+      }
+      // Fallback: split by comma
+      return line.split(',').map(cell => cell.trim());
     });
   }
 
-  function renderPreview(name) {
-    const wrapper = document.getElementById('preview-table-wrapper');
+  function convert() {
+    const input = document.getElementById('excel-input');
+    const text = input.value.trim();
+    if (!text) return;
+
+    currentData = parsePastedText(text);
+
     if (currentData.length === 0) {
-      wrapper.innerHTML = `<div class="empty-state"><div class="icon">📋</div><div>${t('noData')}</div></div>`;
+      document.getElementById('preview-card').style.display = 'none';
+      document.getElementById('output-card').style.display = 'none';
       return;
     }
+
+    renderPreview();
+    renderMarkdown();
+
+    document.getElementById('preview-card').style.display = 'block';
+    document.getElementById('output-card').style.display = 'block';
+  }
+
+  function renderPreview() {
+    const wrapper = document.getElementById('preview-table-wrapper');
+
+    const maxCols = Math.max(...currentData.map(row => row.length));
+
+    document.getElementById('stat-rows').textContent = currentData.length;
+    document.getElementById('stat-cols').textContent = maxCols;
 
     let html = '<table><thead><tr>';
     const headers = currentData[0];
-    headers.forEach(h => {
-      html += `<th>${escapeHtml(String(h))}</th>`;
-    });
+    for (let i = 0; i < maxCols; i++) {
+      html += `<th>${escapeHtml(headers[i] || '')}</th>`;
+    }
     html += '</tr></thead><tbody>';
 
     for (let i = 1; i < currentData.length; i++) {
       html += '<tr>';
-      currentData[i].forEach(cell => {
-        html += `<td>${escapeHtml(String(cell))}</td>`;
-      });
+      for (let j = 0; j < maxCols; j++) {
+        html += `<td>${escapeHtml(currentData[i][j] || '')}</td>`;
+      }
       html += '</tr>';
     }
 
@@ -630,28 +572,37 @@
 
   function renderMarkdown() {
     const output = document.getElementById('markdown-output');
-    if (currentData.length < 2) {
+
+    if (currentData.length < 1) {
       output.value = '';
       return;
     }
 
+    const maxCols = Math.max(...currentData.map(row => row.length));
     const headers = currentData[0];
-    const rows = currentData.slice(1);
 
     // Build header row
-    let md = '| ' + headers.map(h => escapeMdCell(String(h))).join(' | ') + ' |\n';
+    let md = '| ';
+    for (let i = 0; i < maxCols; i++) {
+      md += escapeMdCell(headers[i] || '') + ' | ';
+    }
+    md = md.trimEnd() + '\n';
 
     // Build separator row
-    md += '| ' + headers.map(() => '---').join(' | ') + ' |\n';
+    md += '| ';
+    for (let i = 0; i < maxCols; i++) {
+      md += '--- | ';
+    }
+    md = md.trimEnd() + '\n';
 
     // Build data rows
-    rows.forEach(row => {
+    for (let i = 1; i < currentData.length; i++) {
       md += '| ';
-      for (let i = 0; i < headers.length; i++) {
-        md += escapeMdCell(String(row[i] || '')) + ' | ';
+      for (let j = 0; j < maxCols; j++) {
+        md += escapeMdCell(currentData[i][j] || '') + ' | ';
       }
       md = md.trimEnd() + '\n';
-    });
+    }
 
     output.value = md;
   }
@@ -664,11 +615,6 @@
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
-  }
-
-  function updateFileInfo(name) {
-    const info = document.getElementById('file-info');
-    info.textContent = t('fileInfo')(name, currentWorkbook.SheetNames.length);
   }
 
   // ── Copy ──
@@ -689,6 +635,26 @@
       output.select();
       document.execCommand('copy');
     }
+  }
+
+  // ── Sample ──
+  function loadSample() {
+    document.getElementById('excel-input').value =
+`Product\tCategory\tPrice\tStock
+Widget A\tElectronics\t$19.99\t120
+Widget B\tElectronics\t$29.99\t85
+Gadget X\tHome\t$49.99\t200
+Gadget Y\tHome\t$39.99\t150
+Accessory Z\tAccessories\t$9.99\t500`;
+    convert();
+  }
+
+  // ── Clear ──
+  function clearAll() {
+    document.getElementById('excel-input').value = '';
+    document.getElementById('preview-card').style.display = 'none';
+    document.getElementById('output-card').style.display = 'none';
+    currentData = [];
   }
 
   // ══════════════════════════════════════════════════
