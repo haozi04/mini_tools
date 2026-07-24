@@ -222,35 +222,6 @@
     }
     .btn-danger:hover { background: #fbd0ce; }
 
-    /* ── Preview Table ── */
-    .table-wrapper {
-      overflow-x: auto;
-      margin-bottom: 16px;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 0.85rem;
-    }
-
-    table th {
-      background: var(--accent);
-      color: white;
-      padding: 8px 10px;
-      text-align: left;
-      font-weight: 700;
-      white-space: nowrap;
-    }
-
-    table td {
-      padding: 7px 10px;
-      border-bottom: 1px solid var(--border);
-      color: var(--text-primary);
-    }
-
-    table tr:nth-child(even) td { background: var(--surface-alt); }
-
     /* ── Markdown Output ── */
     .output-area {
       position: relative;
@@ -292,35 +263,6 @@
     .copy-btn:hover { background: var(--btn-sec-bg); color: var(--btn-sec-text); border-color: var(--btn-sec-bdr); }
     .copy-btn.copied { background: var(--copy-done-bg); color: var(--copy-done-text); border-color: var(--copy-done-bdr); }
 
-    .info-bar {
-      display: flex;
-      gap: 16px;
-      flex-wrap: wrap;
-      align-items: center;
-      margin-bottom: 14px;
-      font-size: 0.82rem;
-      color: var(--text-muted);
-    }
-
-    .info-bar .stat {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    }
-
-    .info-bar .stat-value {
-      font-weight: 700;
-      color: var(--accent);
-    }
-
-    .empty-state {
-      text-align: center;
-      padding: 30px 20px;
-      color: var(--text-faint);
-    }
-
-    .empty-state .icon { font-size: 2rem; margin-bottom: 8px; }
-
     @media (max-width: 640px) {
       .container { padding: 20px 12px 40px; }
       .card { padding: 16px; }
@@ -355,23 +297,6 @@
       <button class="btn btn-primary" onclick="convert()" id="btn-convert">🔄 Convert</button>
       <button class="btn btn-secondary" onclick="loadSample()" id="btn-sample">📋 Sample</button>
       <button class="btn btn-danger" onclick="clearAll()" id="btn-clear">🗑 Clear</button>
-    </div>
-  </div>
-
-  <!-- Preview -->
-  <div class="card" id="preview-card" style="display:none;">
-    <div class="toolbar">
-      <h2 id="preview-heading">Preview</h2>
-      <div class="info-bar" id="info-bar">
-        <span class="stat"><span class="stat-value" id="stat-rows">0</span> <span id="stat-rows-label">rows</span></span>
-        <span class="stat"><span class="stat-value" id="stat-cols">0</span> <span id="stat-cols-label">cols</span></span>
-      </div>
-    </div>
-    <div class="table-wrapper" id="preview-table-wrapper">
-      <div class="empty-state">
-        <div class="icon">📋</div>
-        <div id="empty-preview-text">Paste data and click Convert to preview</div>
-      </div>
     </div>
   </div>
 
@@ -435,14 +360,10 @@
       btnConvert: '🔄 Convert',
       btnSample: '📋 Sample',
       btnClear: '🗑 Clear',
-      previewHeading: 'Preview',
-      emptyPreviewText: 'Paste data and click Convert to preview',
       outputHeading: 'Markdown Output',
       outputPlaceholder: 'Markdown table will appear here...',
       copyBtn: '📋 Copy',
       copiedBtn: '✅ Copied',
-      rowsLabel: 'rows',
-      colsLabel: 'cols',
     },
     zh: {
       pageTitle: 'Excel 转 Markdown',
@@ -451,14 +372,10 @@
       btnConvert: '🔄 转换',
       btnSample: '📋 示例',
       btnClear: '🗑 清除',
-      previewHeading: '预览',
-      emptyPreviewText: '粘贴数据并点击转换以预览',
       outputHeading: 'Markdown 输出',
       outputPlaceholder: 'Markdown 表格将显示在此处...',
       copyBtn: '📋 复制',
       copiedBtn: '✅ 已复制',
-      rowsLabel: '行',
-      colsLabel: '列',
     }
   };
 
@@ -481,13 +398,9 @@
     document.getElementById('btn-convert').textContent = t('btnConvert');
     document.getElementById('btn-sample').textContent = t('btnSample');
     document.getElementById('btn-clear').textContent = t('btnClear');
-    document.getElementById('preview-heading').textContent = t('previewHeading');
-    document.getElementById('empty-preview-text').textContent = t('emptyPreviewText');
     document.getElementById('output-heading').textContent = t('outputHeading');
     document.getElementById('markdown-output').placeholder = t('outputPlaceholder');
     document.getElementById('copy-btn').textContent = t('copyBtn');
-    document.getElementById('stat-rows-label').textContent = t('rowsLabel');
-    document.getElementById('stat-cols-label').textContent = t('colsLabel');
 
     document.getElementById('btn-en').classList.toggle('active', currentLang === 'en');
     document.getElementById('btn-zh').classList.toggle('active', currentLang === 'zh');
@@ -531,43 +444,13 @@
     currentData = parsePastedText(text);
 
     if (currentData.length === 0) {
-      document.getElementById('preview-card').style.display = 'none';
       document.getElementById('output-card').style.display = 'none';
       return;
     }
 
-    renderPreview();
     renderMarkdown();
 
-    document.getElementById('preview-card').style.display = 'block';
     document.getElementById('output-card').style.display = 'block';
-  }
-
-  function renderPreview() {
-    const wrapper = document.getElementById('preview-table-wrapper');
-
-    const maxCols = Math.max(...currentData.map(row => row.length));
-
-    document.getElementById('stat-rows').textContent = currentData.length;
-    document.getElementById('stat-cols').textContent = maxCols;
-
-    let html = '<table><thead><tr>';
-    const headers = currentData[0];
-    for (let i = 0; i < maxCols; i++) {
-      html += `<th>${escapeHtml(headers[i] || '')}</th>`;
-    }
-    html += '</tr></thead><tbody>';
-
-    for (let i = 1; i < currentData.length; i++) {
-      html += '<tr>';
-      for (let j = 0; j < maxCols; j++) {
-        html += `<td>${escapeHtml(currentData[i][j] || '')}</td>`;
-      }
-      html += '</tr>';
-    }
-
-    html += '</tbody></table>';
-    wrapper.innerHTML = html;
   }
 
   function renderMarkdown() {
@@ -611,12 +494,6 @@
     return text.replace(/\|/g, '\\|').replace(/\n/g, '<br>');
   }
 
-  function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-  }
-
   // ── Copy ──
   async function copyMarkdown() {
     const output = document.getElementById('markdown-output');
@@ -652,7 +529,6 @@ Accessory Z\tAccessories\t$9.99\t500`;
   // ── Clear ──
   function clearAll() {
     document.getElementById('excel-input').value = '';
-    document.getElementById('preview-card').style.display = 'none';
     document.getElementById('output-card').style.display = 'none';
     currentData = [];
   }
