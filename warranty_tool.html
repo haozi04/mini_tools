@@ -1,0 +1,1955 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>FID Toolkit</title>
+  <style>
+    /* ══════════════════════════════════════════════
+       CSS CUSTOM PROPERTIES — Light (default)
+       ══════════════════════════════════════════════ */
+    :root {
+      --bg:            #f0f4f8;
+      --surface:       #ffffff;
+      --surface-alt:   #f7fafa;
+      --border:        #e0eeee;
+      --border-input:  #cce8e8;
+      --border-accent: #c0e8e8;
+      --text-primary:  #1a1a2e;
+      --text-muted:    #666666;
+      --text-faint:    #aaaaaa;
+      --accent:        #009999;
+      --accent-dark:   #007777;
+      --accent-light:  #e0f5f5;
+      --accent-lighter:#f0fafa;
+
+      /* check-item states */
+      --pass-bg:       #f0fdf4;
+      --pass-border:   #bbf7d0;
+      --pass-text:     #166534;
+      --fail-bg:       #fef2f2;
+      --fail-border:   #fecaca;
+      --fail-text:     #991b1b;
+      --idle-bg:       #f7f7f7;
+      --idle-border:   #eeeeee;
+      --idle-text:     #888888;
+
+      /* badges */
+      --badge-valid-bg:   #d4f8e8;
+      --badge-valid-text: #1a7a4a;
+      --badge-valid-bdr:  #a8e6c8;
+      --badge-inv-bg:     #fde8e8;
+      --badge-inv-text:   #a93226;
+      --badge-inv-bdr:    #f5b7b1;
+      --badge-na-bg:      #f0f0f0;
+      --badge-na-text:    #999999;
+      --badge-na-bdr:     #dddddd;
+      --badge-dup-bg:     #fff8e1;
+      --badge-dup-text:   #856404;
+      --badge-dup-bdr:    #ffe082;
+
+      /* anatomy chars */
+      --char-default-bg:  #f5f5f5;
+      --char-default-bdr: #dddddd;
+      --char-default-txt: #555555;
+      --char-prefix-bg:   #e8f4fd;
+      --char-prefix-bdr:  #90caf9;
+      --char-prefix-txt:  #1565c0;
+      --char-year-bg:     #fff8e1;
+      --char-year-bdr:    #ffe082;
+      --char-year-txt:    #e65100;
+      --char-month-bg:    #f3e5f5;
+      --char-month-bdr:   #ce93d8;
+      --char-month-txt:   #6a1b9a;
+      --char-day-bg:      #e8f5e9;
+      --char-day-bdr:     #a5d6a7;
+      --char-day-txt:     #1b5e20;
+      --char-group-bg:    #fce4ec;
+      --char-group-bdr:   #f48fb1;
+      --char-group-txt:   #880e4f;
+      --char-serial-bg:   #e0f2f1;
+      --char-serial-bdr:  #80cbc4;
+      --char-serial-txt:  #004d40;
+      --char-unknown-bg:  #fff3e0;
+      --char-unknown-bdr: #ffcc80;
+      --char-unknown-txt: #bf360c;
+      --char-invalid-bg:  #fde8e8;
+      --char-invalid-bdr: #e74c3c;
+      --char-invalid-txt: #c0392b;
+
+      /* tables */
+      --table-head-bg:    #e0f5f5;
+      --table-head-text:  #007777;
+      --table-head-bdr:   #c0e8e8;
+      --table-row-alt:    #f9fdfd;
+      --table-row-bdr:    #eeeeee;
+      --table-hl-bg:      #fff3cd;
+      --table-hl-text:    #856404;
+
+      /* valid banner */
+      --banner-valid-bg:  #d4f8e8;
+      --banner-valid-txt: #1a7a4a;
+      --banner-valid-bdr: #a8e6c8;
+      --banner-inv-bg:    #fde8e8;
+      --banner-inv-txt:   #a93226;
+      --banner-inv-bdr:   #f5b7b1;
+      --banner-idle-bg:   #f0f0f0;
+      --banner-idle-txt:  #999999;
+      --banner-idle-bdr:  #dddddd;
+
+      /* input states */
+      --input-valid-bdr:  #27ae60;
+      --input-valid-bg:   #f4fff8;
+      --input-inv-bdr:    #e74c3c;
+      --input-inv-bg:     #fff5f5;
+
+      /* buttons */
+      --btn-sec-bg:       #e0f5f5;
+      --btn-sec-text:     #007777;
+      --btn-sec-bdr:      #b2e0e0;
+      --btn-sec-hover:    #c5ecec;
+      --btn-danger-bg:    #fde8e8;
+      --btn-danger-text:  #a93226;
+      --btn-danger-bdr:   #f5b7b1;
+      --btn-danger-hover: #fbd0ce;
+
+      /* copy btn */
+      --copy-bg:          #f0f0f0;
+      --copy-bdr:         #dddddd;
+      --copy-text:        #555555;
+      --copy-done-bg:     #d4f8e8;
+      --copy-done-text:   #1a7a4a;
+      --copy-done-bdr:    #a8e6c8;
+
+      /* shadow */
+      --shadow:           rgba(0,0,0,0.08);
+
+      /* tab bar */
+      --tab-bar-bdr:      #c0e8e8;
+      --tab-idle-text:    #888888;
+      --tab-hover-bg:     #e0f5f5;
+
+      /* stat */
+      --stat-label:       #888888;
+
+      /* export label */
+      --export-label:     #888888;
+
+      /* empty state */
+      --empty-text:       #aaaaaa;
+      --empty-hint:       #bbbbbb;
+
+      /* divider */
+      --divider:          #eeeeee;
+
+      /* field label */
+      --field-label:      #888888;
+
+      /* lang/dark switcher */
+      --switcher-bg:      #ffffff;
+      --switcher-bdr:     #b2e0e0;
+      --switcher-text:    #009999;
+      --switcher-act-bg:  #009999;
+      --switcher-act-txt: #ffffff;
+      --switcher-hover:   #e0f5f5;
+    }
+
+    /* ══════════════════════════════════════════════
+       DARK MODE OVERRIDES
+       ══════════════════════════════════════════════ */
+    [data-theme="dark"] {
+      --bg:            #0f1117;
+      --surface:       #1a1d27;
+      --surface-alt:   #1e2130;
+      --border:        #2a2d3e;
+      --border-input:  #2e4a4a;
+      --border-accent: #1e3a3a;
+      --text-primary:  #e2e8f0;
+      --text-muted:    #94a3b8;
+      --text-faint:    #4a5568;
+      --accent:        #00cccc;
+      --accent-dark:   #00aaaa;
+      --accent-light:  #0d2e2e;
+      --accent-lighter:#0a2020;
+
+      --pass-bg:       #052e16;
+      --pass-border:   #166534;
+      --pass-text:     #86efac;
+      --fail-bg:       #2d0a0a;
+      --fail-border:   #991b1b;
+      --fail-text:     #fca5a5;
+      --idle-bg:       #1e2130;
+      --idle-border:   #2a2d3e;
+      --idle-text:     #64748b;
+
+      --badge-valid-bg:   #052e16;
+      --badge-valid-text: #86efac;
+      --badge-valid-bdr:  #166534;
+      --badge-inv-bg:     #2d0a0a;
+      --badge-inv-text:   #fca5a5;
+      --badge-inv-bdr:    #991b1b;
+      --badge-na-bg:      #1e2130;
+      --badge-na-text:    #64748b;
+      --badge-na-bdr:     #2a2d3e;
+      --badge-dup-bg:     #2d2000;
+      --badge-dup-text:   #fbbf24;
+      --badge-dup-bdr:    #92400e;
+
+      --char-default-bg:  #1e2130;
+      --char-default-bdr: #2a2d3e;
+      --char-default-txt: #94a3b8;
+      --char-prefix-bg:   #0d1f3c;
+      --char-prefix-bdr:  #1e3a6e;
+      --char-prefix-txt:  #93c5fd;
+      --char-year-bg:     #2d1f00;
+      --char-year-bdr:    #78350f;
+      --char-year-txt:    #fbbf24;
+      --char-month-bg:    #1e0d2e;
+      --char-month-bdr:   #581c87;
+      --char-month-txt:   #d8b4fe;
+      --char-day-bg:      #052e16;
+      --char-day-bdr:     #166534;
+      --char-day-txt:     #86efac;
+      --char-group-bg:    #2d0a1e;
+      --char-group-bdr:   #9d174d;
+      --char-group-txt:   #f9a8d4;
+      --char-serial-bg:   #042f2e;
+      --char-serial-bdr:  #115e59;
+      --char-serial-txt:  #5eead4;
+      --char-unknown-bg:  #2d1500;
+      --char-unknown-bdr: #92400e;
+      --char-unknown-txt: #fb923c;
+      --char-invalid-bg:  #2d0a0a;
+      --char-invalid-bdr: #991b1b;
+      --char-invalid-txt: #fca5a5;
+
+      --table-head-bg:    #0d2e2e;
+      --table-head-text:  #00cccc;
+      --table-head-bdr:   #1e3a3a;
+      --table-row-alt:    #1a1d27;
+      --table-row-bdr:    #2a2d3e;
+      --table-hl-bg:      #2d2000;
+      --table-hl-text:    #fbbf24;
+
+      --banner-valid-bg:  #052e16;
+      --banner-valid-txt: #86efac;
+      --banner-valid-bdr: #166534;
+      --banner-inv-bg:    #2d0a0a;
+      --banner-inv-txt:   #fca5a5;
+      --banner-inv-bdr:   #991b1b;
+      --banner-idle-bg:   #1e2130;
+      --banner-idle-txt:  #64748b;
+      --banner-idle-bdr:  #2a2d3e;
+
+      --input-valid-bdr:  #166534;
+      --input-valid-bg:   #052e16;
+      --input-inv-bdr:    #991b1b;
+      --input-inv-bg:     #2d0a0a;
+
+      --btn-sec-bg:       #0d2e2e;
+      --btn-sec-text:     #00cccc;
+      --btn-sec-bdr:      #1e3a3a;
+      --btn-sec-hover:    #1e4a4a;
+      --btn-danger-bg:    #2d0a0a;
+      --btn-danger-text:  #fca5a5;
+      --btn-danger-bdr:   #991b1b;
+      --btn-danger-hover: #3d1010;
+
+      --copy-bg:          #1e2130;
+      --copy-bdr:         #2a2d3e;
+      --copy-text:        #94a3b8;
+      --copy-done-bg:     #052e16;
+      --copy-done-text:   #86efac;
+      --copy-done-bdr:    #166534;
+
+      --shadow:           rgba(0,0,0,0.4);
+
+      --tab-bar-bdr:      #1e3a3a;
+      --tab-idle-text:    #64748b;
+      --tab-hover-bg:     #0d2e2e;
+
+      --stat-label:       #64748b;
+      --export-label:     #64748b;
+      --empty-text:       #4a5568;
+      --empty-hint:       #374151;
+      --divider:          #2a2d3e;
+      --field-label:      #64748b;
+
+      --switcher-bg:      #1a1d27;
+      --switcher-bdr:     #1e3a3a;
+      --switcher-text:    #00cccc;
+      --switcher-act-bg:  #00cccc;
+      --switcher-act-txt: #0f1117;
+      --switcher-hover:   #0d2e2e;
+    }
+
+    /* ══════════════════════════════════════════════
+       BASE STYLES
+       ══════════════════════════════════════════════ */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: var(--bg);
+      color: var(--text-primary);
+      padding: 30px 20px;
+      transition: background 0.3s, color 0.3s;
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 1.6rem;
+      color: var(--accent);
+      margin-bottom: 6px;
+    }
+
+    .subtitle {
+      text-align: center;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-bottom: 24px;
+    }
+
+    /* ── Top Controls Bar (lang + dark) ── */
+    .top-controls {
+      position: fixed;
+      top: 16px;
+      right: 20px;
+      z-index: 999;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .switcher {
+      display: flex;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px var(--shadow);
+      border: 1.5px solid var(--switcher-bdr);
+    }
+
+    .switcher-btn {
+      padding: 6px 13px;
+      border: none;
+      background: var(--switcher-bg);
+      color: var(--switcher-text);
+      font-size: 0.82rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.18s, color 0.18s;
+      letter-spacing: 0.03em;
+      line-height: 1;
+    }
+
+    .switcher-btn + .switcher-btn {
+      border-left: 1.5px solid var(--switcher-bdr);
+    }
+
+    .switcher-btn.active {
+      background: var(--switcher-act-bg);
+      color: var(--switcher-act-txt);
+    }
+
+    .switcher-btn:hover:not(.active) {
+      background: var(--switcher-hover);
+    }
+
+    /* dark toggle is a single icon button */
+    .dark-toggle {
+      width: 36px;
+      height: 32px;
+      border-radius: 8px;
+      border: 1.5px solid var(--switcher-bdr);
+      background: var(--switcher-bg);
+      color: var(--switcher-text);
+      font-size: 1rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 8px var(--shadow);
+      transition: background 0.18s, color 0.18s, border-color 0.18s;
+    }
+
+    .dark-toggle:hover { background: var(--switcher-hover); }
+
+    /* ── Tab Bar ── */
+    .tab-bar {
+      display: flex;
+      max-width: 960px;
+      margin: 0 auto;
+      border-bottom: 2px solid var(--tab-bar-bdr);
+      gap: 4px;
+    }
+
+    .tab-btn {
+      padding: 10px 28px;
+      border: none;
+      border-bottom: 3px solid transparent;
+      background: transparent;
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--tab-idle-text);
+      cursor: pointer;
+      border-radius: 8px 8px 0 0;
+      transition: all 0.2s;
+      margin-bottom: -2px;
+      letter-spacing: 0.02em;
+    }
+
+    .tab-btn:hover { background: var(--tab-hover-bg); color: var(--accent); }
+
+    .tab-btn.active {
+      color: var(--accent);
+      border-bottom: 3px solid var(--accent);
+      background: var(--surface);
+    }
+
+    /* ── Tab Panels ── */
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* ── Container ── */
+    .container {
+      max-width: 960px;
+      margin: 0 auto;
+      padding-top: 20px;
+    }
+
+    /* ── Cards ── */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    .card {
+      background: var(--surface);
+      border-radius: 12px;
+      padding: 22px 24px;
+      box-shadow: 0 2px 12px var(--shadow);
+      margin-bottom: 20px;
+      transition: background 0.3s, box-shadow 0.3s;
+    }
+
+    .card.full-width { grid-column: 1 / -1; }
+
+    .card h2 {
+      font-size: 0.95rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--accent);
+      border-bottom: 2px solid var(--accent-light);
+      padding-bottom: 8px;
+      margin-bottom: 16px;
+    }
+
+    /* ── Inputs ── */
+    .input-group {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .input-group label {
+      font-weight: 600;
+      font-size: 0.95rem;
+      white-space: nowrap;
+      min-width: 40px;
+      color: var(--text-primary);
+    }
+
+    input[type="text"] {
+      flex: 1;
+      padding: 10px 14px;
+      border: 2px solid var(--border-input);
+      border-radius: 8px;
+      font-size: 1rem;
+      font-family: 'Courier New', monospace;
+      letter-spacing: 0.08em;
+      transition: border-color 0.2s, background 0.3s, color 0.3s;
+      outline: none;
+      background: var(--surface);
+      color: var(--text-primary);
+    }
+
+    input[type="text"]:focus   { border-color: var(--accent); }
+    input[type="text"].invalid { border-color: var(--input-inv-bdr); background: var(--input-inv-bg); }
+    input[type="text"].valid   { border-color: var(--input-valid-bdr); background: var(--input-valid-bg); }
+
+    textarea {
+      width: 100%;
+      min-height: 160px;
+      padding: 12px 14px;
+      border: 2px solid var(--border-input);
+      border-radius: 8px;
+      font-size: 0.95rem;
+      font-family: 'Courier New', monospace;
+      resize: vertical;
+      outline: none;
+      transition: border-color 0.2s, background 0.3s, color 0.3s;
+      color: var(--text-primary);
+      background: var(--surface);
+      line-height: 1.6;
+    }
+
+    textarea:focus { border-color: var(--accent); }
+
+    .error-msg {
+      color: var(--badge-inv-text);
+      font-size: 0.8rem;
+      margin-top: 6px;
+      min-height: 18px;
+    }
+
+    /* ── Buttons ── */
+    .toolbar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-top: 12px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      padding: 9px 22px;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s, color 0.2s;
+    }
+
+    button:active { transform: scale(0.97); }
+
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-primary:hover { background: var(--accent-dark); }
+
+    .btn-secondary {
+      background: var(--btn-sec-bg);
+      color: var(--btn-sec-text);
+      border: 1px solid var(--btn-sec-bdr);
+    }
+    .btn-secondary:hover { background: var(--btn-sec-hover); }
+
+    .btn-danger {
+      background: var(--btn-danger-bg);
+      color: var(--btn-danger-text);
+      border: 1px solid var(--btn-danger-bdr);
+    }
+    .btn-danger:hover { background: var(--btn-danger-hover); }
+
+    /* ── FID Anatomy ── */
+    .fid-anatomy {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      margin-top: 14px;
+      font-family: 'Courier New', monospace;
+      font-size: 0.82rem;
+    }
+
+    .fid-char {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+    }
+
+    .fid-char .char-box {
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 5px;
+      font-weight: 700;
+      font-size: 0.9rem;
+      border: 1.5px solid var(--char-default-bdr);
+      background: var(--char-default-bg);
+      color: var(--char-default-txt);
+      transition: all 0.2s;
+    }
+
+    .fid-char .char-label {
+      font-size: 0.6rem;
+      color: var(--text-faint);
+      text-align: center;
+      line-height: 1.1;
+    }
+
+    .fid-char.role-prefix  .char-box { background: var(--char-prefix-bg);  border-color: var(--char-prefix-bdr);  color: var(--char-prefix-txt); }
+    .fid-char.role-year    .char-box { background: var(--char-year-bg);    border-color: var(--char-year-bdr);    color: var(--char-year-txt); }
+    .fid-char.role-month   .char-box { background: var(--char-month-bg);   border-color: var(--char-month-bdr);   color: var(--char-month-txt); }
+    .fid-char.role-day     .char-box { background: var(--char-day-bg);     border-color: var(--char-day-bdr);     color: var(--char-day-txt); }
+    .fid-char.role-group   .char-box { background: var(--char-group-bg);   border-color: var(--char-group-bdr);   color: var(--char-group-txt); }
+    .fid-char.role-serial  .char-box { background: var(--char-serial-bg);  border-color: var(--char-serial-bdr);  color: var(--char-serial-txt); }
+    .fid-char.role-unknown .char-box { background: var(--char-unknown-bg); border-color: var(--char-unknown-bdr); color: var(--char-unknown-txt); }
+    .fid-char.role-invalid .char-box { background: var(--char-invalid-bg); border-color: var(--char-invalid-bdr); color: var(--char-invalid-txt); }
+
+    /* ── Fields Grid ── */
+    .fields-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px 20px;
+    }
+
+    .field-item {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .field-item .field-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--field-label);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .field-value {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      font-family: 'Courier New', monospace;
+      background: var(--surface-alt);
+      padding: 6px 10px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      min-height: 34px;
+      transition: background 0.3s, color 0.3s;
+    }
+
+    .field-value.true  { color: var(--pass-text); }
+    .field-value.false { color: var(--fail-text); }
+    .field-value.empty { color: var(--text-faint); font-style: italic; font-weight: 400; }
+
+    /* ── Checklist ── */
+    .checklist { display: flex; flex-direction: column; gap: 7px; }
+
+    .check-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.85rem;
+      padding: 6px 10px;
+      border-radius: 7px;
+      background: var(--idle-bg);
+      border: 1px solid var(--idle-border);
+      color: var(--idle-text);
+      transition: background 0.2s, border-color 0.2s, color 0.2s;
+    }
+
+    .check-item.pass { background: var(--pass-bg); border-color: var(--pass-border); color: var(--pass-text); }
+    .check-item.fail { background: var(--fail-bg); border-color: var(--fail-border); color: var(--fail-text); }
+
+    .check-icon   { font-size: 1rem; flex-shrink: 0; }
+    .check-text   { flex: 1; }
+    .check-detail { font-size: 0.75rem; opacity: 0.75; margin-left: auto; font-family: 'Courier New', monospace; }
+
+    /* ── Badges ── */
+    .badge {
+      display: inline-block;
+      padding: 5px 14px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      text-align: center;
+    }
+
+    .badge.in-warranty  { background: var(--badge-valid-bg); color: var(--badge-valid-text); border: 1px solid var(--badge-valid-bdr); }
+    .badge.out-warranty { background: var(--badge-inv-bg);   color: var(--badge-inv-text);   border: 1px solid var(--badge-inv-bdr); }
+    .badge.unknown      { background: var(--badge-na-bg);    color: var(--badge-na-text);    border: 1px solid var(--badge-na-bdr); }
+
+    .badge-valid        { background: var(--badge-valid-bg); color: var(--badge-valid-text); border: 1px solid var(--badge-valid-bdr); }
+    .badge-invalid      { background: var(--badge-inv-bg);   color: var(--badge-inv-text);   border: 1px solid var(--badge-inv-bdr); }
+    .badge-warranty-in  { background: var(--badge-valid-bg); color: var(--badge-valid-text); border: 1px solid var(--badge-valid-bdr); }
+    .badge-warranty-out { background: var(--badge-inv-bg);   color: var(--badge-inv-text);   border: 1px solid var(--badge-inv-bdr); }
+    .badge-warranty-na  { background: var(--badge-na-bg);    color: var(--badge-na-text);    border: 1px solid var(--badge-na-bdr); }
+
+    /* ── Valid Banner ── */
+    .valid-banner {
+      padding: 10px 16px;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 0.95rem;
+      text-align: center;
+      margin-bottom: 14px;
+      transition: all 0.3s;
+    }
+
+    .valid-banner.valid   { background: var(--banner-valid-bg); color: var(--banner-valid-txt); border: 1px solid var(--banner-valid-bdr); }
+    .valid-banner.invalid { background: var(--banner-inv-bg);   color: var(--banner-inv-txt);   border: 1px solid var(--banner-inv-bdr); }
+    .valid-banner.idle    { background: var(--banner-idle-bg);  color: var(--banner-idle-txt);  border: 1px solid var(--banner-idle-bdr); }
+
+    /* ── Legend ── */
+    .legend { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .legend-dot { width: 12px; height: 12px; border-radius: 3px; flex-shrink: 0; }
+
+    /* ── Reference Tables ── */
+    .ref-wrapper { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+
+    table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+
+    table th {
+      background: var(--table-head-bg);
+      color: var(--table-head-text);
+      font-weight: 700;
+      padding: 7px 10px;
+      text-align: center;
+      border: 1px solid var(--table-head-bdr);
+    }
+
+    table td {
+      padding: 5px 10px;
+      border: 1px solid var(--table-row-bdr);
+      text-align: center;
+      color: var(--text-primary);
+      background: var(--surface);
+      transition: background 0.3s, color 0.3s;
+    }
+
+    table tr:nth-child(even) td { background: var(--table-row-alt); }
+
+    table tr.highlight td {
+      background: var(--table-hl-bg);
+      font-weight: 700;
+      color: var(--table-hl-text);
+    }
+
+    /* ── Divider ── */
+    .divider { border: none; border-top: 1px solid var(--divider); margin: 14px 0; }
+
+    /* ── Stats ── */
+    .stats-bar { display: flex; gap: 20px; flex-wrap: wrap; margin-left: auto; }
+    .stat { display: flex; flex-direction: column; align-items: center; }
+    .stat-value { font-size: 1.3rem; font-weight: 800; color: var(--accent); line-height: 1; }
+    .stat-label { font-size: 0.7rem; color: var(--stat-label); text-transform: uppercase; letter-spacing: 0.04em; }
+
+    /* ── Results Table ── */
+    .table-wrapper { overflow-x: auto; }
+
+    #resultsTable th { text-align: left; padding: 10px 12px; white-space: nowrap; }
+    #resultsTable td { padding: 8px 12px; vertical-align: middle; white-space: nowrap;}
+    #resultsTable tr:hover td { background: var(--accent-lighter);}
+    #resultsTable { table-layout: auto; width: auto; min-width: 100%;}
+
+    td.fid-cell {
+      font-family: 'Courier New', monospace;
+      font-weight: 700;
+      font-size: 0.95rem;
+      letter-spacing: 0.06em;
+      color: var(--text-primary);
+    }
+
+    /* ── Anatomy Mini ── */
+    .fid-anatomy-mini { display: flex; gap: 2px; flex-wrap: nowrap; }
+    .fid-char-mini { display: flex; flex-direction: column; align-items: center; }
+
+    .char-box-mini {
+      width: 22px; height: 22px;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 4px;
+      font-weight: 700; font-size: 0.72rem;
+      border: 1px solid var(--char-default-bdr);
+      background: var(--char-default-bg);
+      color: var(--char-default-txt);
+    }
+
+    .role-prefix .char-box-mini { background: var(--char-prefix-bg);  border-color: var(--char-prefix-bdr);  color: var(--char-prefix-txt); }
+    .role-year   .char-box-mini { background: var(--char-year-bg);    border-color: var(--char-year-bdr);    color: var(--char-year-txt); }
+    .role-month  .char-box-mini { background: var(--char-month-bg);   border-color: var(--char-month-bdr);   color: var(--char-month-txt); }
+    .role-day    .char-box-mini { background: var(--char-day-bg);     border-color: var(--char-day-bdr);     color: var(--char-day-txt); }
+    .role-group  .char-box-mini { background: var(--char-group-bg);   border-color: var(--char-group-bdr);   color: var(--char-group-txt); }
+    .role-serial .char-box-mini { background: var(--char-serial-bg);  border-color: var(--char-serial-bdr);  color: var(--char-serial-txt); }
+
+    /* ── Copy Button ── */
+    .copy-btn {
+      padding: 3px 10px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      background: var(--copy-bg);
+      border: 1px solid var(--copy-bdr);
+      border-radius: 6px;
+      cursor: pointer;
+      color: var(--copy-text);
+      transition: background 0.15s, color 0.15s;
+    }
+
+    .copy-btn:hover  { background: var(--btn-sec-bg); color: var(--btn-sec-text); border-color: var(--btn-sec-bdr); }
+    .copy-btn.copied { background: var(--copy-done-bg); color: var(--copy-done-text); border-color: var(--copy-done-bdr); }
+
+    /* ── Export Bar ── */
+    .export-bar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 14px; }
+    .export-label { font-size: 0.8rem; color: var(--export-label); font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
+
+    /* ── Empty State ── */
+    .empty-state { text-align: center; padding: 40px 20px; color: var(--empty-text); font-size: 0.95rem; }
+    .empty-state .empty-icon { font-size: 2.5rem; margin-bottom: 10px; }
+
+    /* ── Responsive ── */
+    @media (max-width: 640px) {
+      .grid-2      { grid-template-columns: 1fr; }
+      .card.full-width { grid-column: 1; }
+      .ref-wrapper { grid-template-columns: 1fr; }
+      .fields-grid { grid-template-columns: 1fr; }
+      .stats-bar   { margin-left: 0; }
+      .toolbar     { flex-direction: column; align-items: flex-start; }
+      .tab-btn     { padding: 10px 16px; font-size: 0.85rem; }
+      .top-controls { top: 10px; right: 10px; gap: 6px; }
+      .switcher-btn { padding: 6px 9px; font-size: 0.78rem; }
+
+      body { padding: 20px 12px; }
+      h1 { font-size: 1.3rem; }
+      .subtitle { font-size: 0.78rem; margin-bottom: 18px; }
+      .card { padding: 16px; border-radius: 10px; margin-bottom: 14px; }
+      .card h2 { font-size: 0.85rem; padding-bottom: 6px; margin-bottom: 12px; }
+
+      .input-group { flex-direction: column; align-items: stretch; gap: 6px; }
+      .input-group label { min-width: auto; font-size: 0.85rem; }
+      input[type="text"] { font-size: 0.9rem; padding: 9px 12px; letter-spacing: 0.06em; }
+
+      textarea { min-height: 120px; font-size: 0.85rem; padding: 10px 12px; }
+
+      .fid-anatomy { gap: 3px; margin-top: 10px; font-size: 0.75rem; }
+      .fid-char .char-box { width: 24px; height: 24px; font-size: 0.78rem; border-radius: 4px; }
+      .fid-char .char-label { font-size: 0.5rem; }
+
+      .legend { gap: 5px; margin-top: 8px; }
+      .legend-item { font-size: 0.68rem; gap: 4px; }
+      .legend-dot { width: 10px; height: 10px; }
+
+      .check-item { font-size: 0.78rem; padding: 5px 8px; gap: 7px; }
+      .check-icon { font-size: 0.85rem; }
+      .check-detail { font-size: 0.68rem; }
+
+      .field-item .field-label { font-size: 0.68rem; }
+      .field-value { font-size: 0.88rem; padding: 5px 8px; min-height: 30px; }
+
+      .valid-banner { font-size: 0.85rem; padding: 8px 12px; margin-bottom: 10px; }
+
+      .badge { font-size: 0.75rem; padding: 4px 10px; }
+
+      table { font-size: 0.72rem; }
+      table th { padding: 5px 6px; }
+      table td { padding: 4px 6px; }
+
+      .export-bar { flex-direction: column; align-items: flex-start; gap: 6px; margin-bottom: 10px; }
+      .export-label { font-size: 0.72rem; }
+
+      .stats-bar { gap: 10px; width: 100%; justify-content: space-around; }
+      .stat-value { font-size: 1.1rem; }
+      .stat-label { font-size: 0.62rem; }
+
+      .empty-state { padding: 24px 14px; font-size: 0.85rem; }
+      .empty-state .empty-icon { font-size: 2rem; }
+
+      .tab-bar { gap: 2px; }
+      .tab-btn { padding: 8px 12px; font-size: 0.78rem; border-radius: 6px 6px 0 0; }
+
+      .fid-anatomy-mini { gap: 1px; }
+      .char-box-mini { width: 18px; height: 18px; font-size: 0.6rem; }
+
+      .copy-btn { padding: 2px 8px; font-size: 0.68rem; }
+
+      button { padding: 8px 16px; font-size: 0.82rem; }
+
+      .toolbar { gap: 8px; margin-top: 8px; }
+      .toolbar button { width: 100%; }
+
+      .divider { margin: 10px 0; }
+
+      /* Results table: hide less important columns on very small screens */
+      #resultsTable th:nth-child(3),
+      #resultsTable td:nth-child(3),
+      #resultsTable th:nth-child(7),
+      #resultsTable td:nth-child(7),
+      #resultsTable th:nth-child(8),
+      #resultsTable td:nth-child(8),
+      #resultsTable th:nth-child(10),
+      #resultsTable td:nth-child(10),
+      #resultsTable th:nth-child(13),
+      #resultsTable td:nth-child(13) {
+        display: none;
+      }
+    }
+
+    @media (max-width: 480px) {
+      body { padding: 14px 8px; }
+      h1 { font-size: 1.15rem; }
+      .card { padding: 12px; border-radius: 8px; margin-bottom: 10px; }
+      .card h2 { font-size: 0.8rem; }
+
+      .top-controls { top: 6px; right: 6px; gap: 4px; }
+      .switcher-btn { padding: 5px 7px; font-size: 0.7rem; }
+      .dark-toggle { width: 30px; height: 28px; font-size: 0.85rem; }
+
+      .tab-btn { padding: 6px 10px; font-size: 0.72rem; }
+
+      input[type="text"] { font-size: 0.82rem; padding: 8px 10px; }
+      textarea { min-height: 100px; font-size: 0.8rem; padding: 8px 10px; }
+
+      .fid-char .char-box { width: 20px; height: 20px; font-size: 0.7rem; }
+      .fid-char .char-label { font-size: 0.45rem; }
+
+      .field-value { font-size: 0.82rem; padding: 4px 7px; min-height: 26px; }
+
+      .check-item { font-size: 0.72rem; padding: 4px 7px; }
+      .check-detail { font-size: 0.62rem; }
+
+      .valid-banner { font-size: 0.78rem; padding: 6px 10px; }
+
+      .badge { font-size: 0.68rem; padding: 3px 8px; }
+
+      table { font-size: 0.65rem; }
+      table th { padding: 4px 4px; }
+      table td { padding: 3px 4px; }
+
+      .stat-value { font-size: 1rem; }
+      .stat-label { font-size: 0.58rem; }
+
+      .char-box-mini { width: 15px; height: 15px; font-size: 0.52rem; }
+
+      button { padding: 7px 14px; font-size: 0.78rem; }
+
+      /* Hide even more columns on very small screens */
+      #resultsTable th:nth-child(5),
+      #resultsTable td:nth-child(5),
+      #resultsTable th:nth-child(6),
+      #resultsTable td:nth-child(6),
+      #resultsTable th:nth-child(9),
+      #resultsTable td:nth-child(9),
+      #resultsTable th:nth-child(11),
+      #resultsTable td:nth-child(11),
+      #resultsTable th:nth-child(12),
+      #resultsTable td:nth-child(12) {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Top Controls: Language + Dark Mode ── -->
+<div class="top-controls">
+  <!-- Language switcher -->
+  <div class="switcher">
+    <button class="switcher-btn" id="btn-en" onclick="setLang('en')">EN</button>
+    <button class="switcher-btn" id="btn-zh" onclick="setLang('zh')">中文</button>
+  </div>
+  <!-- Dark mode toggle -->
+  <button class="dark-toggle" id="darkToggle" onclick="toggleDark()" title="Toggle dark mode">🌙</button>
+</div>
+
+<h1>🔧 FID Toolkit</h1>
+<p class="subtitle" data-i18n="subtitle"></p>
+
+<!-- ── Tab Bar ── -->
+<div class="tab-bar">
+  <button class="tab-btn active" onclick="switchTab('decoder', this)"   data-i18n="tab_decoder"></button>
+  <button class="tab-btn"        onclick="switchTab('extractor', this)" data-i18n="tab_extractor"></button>
+</div>
+
+<!-- ════════════════════════════════════════════════
+     TAB 1 — DECODER
+     ════════════════════════════════════════════════ -->
+<div id="tab-decoder" class="tab-panel active">
+  <div class="container">
+
+    <div class="card">
+      <h2 data-i18n="dec_input"></h2>
+      <div class="input-group">
+        <label>FID:</label>
+        <input type="text" id="fidInput"
+               data-i18n-placeholder="dec_placeholder"
+               maxlength="14" autocomplete="off" spellcheck="false"/>
+      </div>
+      <div class="error-msg" id="errorMsg"></div>
+      <div class="fid-anatomy" id="fidAnatomy"></div>
+      <div class="legend" id="fidLegend" style="display:none;">
+        <div class="legend-item">
+          <div class="legend-dot" style="background:var(--char-prefix-bg);border:1px solid var(--char-prefix-bdr);"></div>
+          <span data-i18n="legend_prefix"></span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-dot" style="background:var(--char-year-bg);border:1px solid var(--char-year-bdr);"></div>
+          <span data-i18n="legend_year"></span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-dot" style="background:var(--char-month-bg);border:1px solid var(--char-month-bdr);"></div>
+          <span data-i18n="legend_month"></span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-dot" style="background:var(--char-day-bg);border:1px solid var(--char-day-bdr);"></div>
+          <span data-i18n="legend_day"></span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-dot" style="background:var(--char-group-bg);border:1px solid var(--char-group-bdr);"></div>
+          <span data-i18n="legend_group"></span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-dot" style="background:var(--char-serial-bg);border:1px solid var(--char-serial-bdr);"></div>
+          <span data-i18n="legend_serial"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2 data-i18n="dec_validation"></h2>
+      <div class="valid-banner idle" id="validBanner" data-i18n="banner_idle"></div>
+      <div class="checklist" id="checklist">
+        <div class="check-item idle" id="chk-length">
+          <span class="check-icon">○</span>
+          <span class="check-text" data-i18n="chk_length"></span>
+          <span class="check-detail" id="chk-length-detail"></span>
+        </div>
+        <div class="check-item idle" id="chk-prefix">
+          <span class="check-icon">○</span>
+          <span class="check-text" data-i18n="chk_prefix"></span>
+          <span class="check-detail" id="chk-prefix-detail"></span>
+        </div>
+        <div class="check-item idle" id="chk-year">
+          <span class="check-icon">○</span>
+          <span class="check-text" data-i18n="chk_year"></span>
+          <span class="check-detail" id="chk-year-detail"></span>
+        </div>
+        <div class="check-item idle" id="chk-month">
+          <span class="check-icon">○</span>
+          <span class="check-text" data-i18n="chk_month"></span>
+          <span class="check-detail" id="chk-month-detail"></span>
+        </div>
+        <div class="check-item idle" id="chk-day">
+          <span class="check-icon">○</span>
+          <span class="check-text" data-i18n="chk_day"></span>
+          <span class="check-detail" id="chk-day-detail"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <h2 data-i18n="dec_calc_fields"></h2>
+        <div class="fields-grid">
+          <div class="field-item">
+            <span class="field-label" data-i18n="field_is_valid"></span>
+            <span class="field-value" id="isValidFID"><span class="empty">—</span></span>
+          </div>
+          <div class="field-item">
+            <span class="field-label" data-i18n="field_is_sedl"></span>
+            <span class="field-value" id="isSEDL"><span class="empty">—</span></span>
+          </div>
+          <div class="field-item">
+            <span class="field-label" data-i18n="field_year"></span>
+            <span class="field-value" id="calcYear"><span class="empty">—</span></span>
+          </div>
+          <div class="field-item">
+            <span class="field-label" data-i18n="field_month"></span>
+            <span class="field-value" id="calcMonth"><span class="empty">—</span></span>
+          </div>
+          <div class="field-item">
+            <span class="field-label" data-i18n="field_day"></span>
+            <span class="field-value" id="calcDay"><span class="empty">—</span></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2 data-i18n="dec_judgement"></h2>
+        <div style="display:flex;flex-direction:column;gap:12px;">
+          <div class="field-item">
+            <span class="field-label" data-i18n="field_prod_date"></span>
+            <span class="field-value" id="prodDate"><span class="empty">—</span></span>
+          </div>
+          <hr class="divider"/>
+          <div style="display:grid;grid-template-columns:1fr auto;gap:8px 16px;align-items:center;">
+            <div>
+              <div class="field-label" data-i18n="field_exp18"></div>
+              <div class="field-value" id="expDate18" style="margin-top:3px;"><span class="empty">—</span></div>
+            </div>
+            <div style="text-align:center;">
+              <div class="field-label" data-i18n="field_warranty_q"></div>
+              <div id="warranty18" class="badge unknown" style="margin-top:3px;">—</div>
+            </div>
+            <div>
+              <div class="field-label" data-i18n="field_exp24"></div>
+              <div class="field-value" id="expDate24" style="margin-top:3px;"><span class="empty">—</span></div>
+            </div>
+            <div style="text-align:center;">
+              <div class="field-label" data-i18n="field_warranty_q"></div>
+              <div id="warranty24" class="badge unknown" style="margin-top:3px;">—</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2 data-i18n="dec_ref_tables"></h2>
+      <div class="ref-wrapper">
+        <div>
+          <table id="yearTable">
+            <thead>
+              <tr>
+                <th data-i18n="ref_year_col0"></th>
+                <th data-i18n="ref_year_col1"></th>
+                <th data-i18n="ref_year_col2"></th>
+                <th data-i18n="ref_year_col3"></th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <div>
+          <table id="monthTable">
+            <thead>
+              <tr>
+                <th data-i18n="ref_month_col0"></th>
+                <th data-i18n="ref_month_col1"></th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════
+     TAB 2 — EXTRACTOR
+     ════════════════════════════════════════════════ -->
+<div id="tab-extractor" class="tab-panel">
+  <div class="container">
+
+    <div class="card">
+      <h2 data-i18n="ext_input"></h2>
+      <textarea id="inputText" data-i18n-placeholder="ext_placeholder"></textarea>
+      <div class="toolbar">
+        <button class="btn-primary"   onclick="extractFIDs()"    data-i18n="btn_extract"></button>
+        <button class="btn-secondary" onclick="loadSample()"     data-i18n="btn_sample"></button>
+        <button class="btn-danger"    onclick="clearExtractor()" data-i18n="btn_clear"></button>
+        <div class="stats-bar" id="statsBar" style="display:none;">
+          <div class="stat">
+            <span class="stat-value" id="statTotal">0</span>
+            <span class="stat-label" data-i18n="stat_found"></span>
+          </div>
+          <div class="stat">
+            <span class="stat-value" id="statValid">0</span>
+            <span class="stat-label" data-i18n="stat_valid"></span>
+          </div>
+          <div class="stat">
+            <span class="stat-value" id="statInvalid">0</span>
+            <span class="stat-label" data-i18n="stat_invalid"></span>
+          </div>
+          <div class="stat">
+            <span class="stat-value" id="statUnique">0</span>
+            <span class="stat-label" data-i18n="stat_unique"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" id="resultsCard" style="display:none;">
+      <h2 data-i18n="ext_results"></h2>
+      <div class="export-bar">
+        <span class="export-label" data-i18n="export_label"></span>
+        <button class="btn-secondary" onclick="exportCSV()"   data-i18n="btn_csv"></button>
+        <button class="btn-secondary" onclick="exportJSON()"  data-i18n="btn_json"></button>
+        <button class="btn-secondary" onclick="copyAllFIDs()" data-i18n="btn_copy_all"></button>
+      </div>
+      <div class="table-wrapper">
+        <table id="resultsTable">
+          <thead>
+            <tr>
+              <th data-i18n="col_num"></th>
+              <th>FID</th>
+              <th data-i18n="col_anatomy"></th>
+              <th data-i18n="col_valid"></th>
+              <th data-i18n="col_year"></th>
+              <th data-i18n="col_month"></th>
+              <th data-i18n="col_day"></th>
+              <th data-i18n="col_prod_date"></th>
+              <th data-i18n="col_exp18"></th>
+              <th data-i18n="col_warranty18"></th>
+              <th data-i18n="col_exp24"></th>
+              <th data-i18n="col_warranty24"></th>
+              <th data-i18n="col_dup"></th>
+              <th data-i18n="col_action"></th>
+            </tr>
+          </thead>
+          <tbody id="resultsBody"></tbody>
+        </table>
+      </div>
+      <div id="emptyState" class="empty-state" style="display:none;">
+        <div class="empty-icon">📭</div>
+        <div data-i18n="empty_main"></div>
+        <div style="font-size:0.8rem;margin-top:6px;" data-i18n="empty_hint"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════
+     SCRIPT
+     ════════════════════════════════════════════════ -->
+<script>
+  // ══════════════════════════════════════════════════
+  // DARK MODE
+  // ══════════════════════════════════════════════════
+  const DARK_KEY = 'fidToolkitDark';
+
+  // Resolve initial theme:
+  // 1. Check localStorage (user override)
+  // 2. Fall back to OS preference
+  function getInitialTheme() {
+    const saved = localStorage.getItem(DARK_KEY);
+    if (saved !== null) return saved === 'true';
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  }
+
+  let isDark = getInitialTheme();
+
+  function applyTheme(dark) {
+    document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+    document.getElementById('darkToggle').textContent = dark ? '☀️' : '🌙';
+    document.getElementById('darkToggle').title = dark
+      ? (currentLang === 'zh' ? '切换到浅色模式' : 'Switch to light mode')
+      : (currentLang === 'zh' ? '切换到深色模式' : 'Switch to dark mode');
+  }
+
+  function toggleDark() {
+    isDark = !isDark;
+    localStorage.setItem(DARK_KEY, isDark);
+    applyTheme(isDark);
+  }
+
+  // Listen for OS-level changes (only applies if user hasn't overridden)
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+    if (localStorage.getItem(DARK_KEY) === null) {
+      isDark = e.matches;
+      applyTheme(isDark);
+    }
+  });
+
+  // ══════════════════════════════════════════════════
+  // i18n
+  // ══════════════════════════════════════════════════
+  const TRANSLATIONS = {
+    en: {
+      subtitle:        'Siemens FID Decoder & Extractor — validate, decode, and bulk-extract FID numbers',
+      tab_decoder:     '🔍 FID Decoder',
+      tab_extractor:   '📋 FID Extractor',
+      dec_input:       'Input',
+      dec_placeholder: 'e.g. ZYN32967500024',
+      dec_validation:  'FID Validation',
+      dec_calc_fields: 'Calculated Fields',
+      dec_judgement:   'Judgement',
+      dec_ref_tables:  'Reference Tables',
+      banner_idle:     'Enter a FID to validate',
+      banner_valid:    '✅ Valid FID',
+      banner_invalid:  '❌ Invalid FID',
+      chk_length:  'Exact length (= 14 characters)',
+      chk_prefix:  'Starts with "ZY" (SEDL prefix)',
+      chk_year:    'Valid year code at position 3',
+      chk_month:   'Valid month code at position 4',
+      chk_day:     'Valid day digits (01–31) at positions 5–6',
+      field_is_valid:  'Is Valid FID',
+      field_is_sedl:   'Is SEDL',
+      field_year:      'Year',
+      field_month:     'Month',
+      field_day:       'Day',
+      field_prod_date: 'Date of Production (Latest)',
+      field_exp18:     'Exp. Date (18 months)',
+      field_exp24:     'Exp. Date (24 months)',
+      field_warranty_q:'In Warranty?',
+      legend_prefix:   'Prefix (ZY)',
+      legend_year:     'Year',
+      legend_month:    'Month',
+      legend_day:      'Day',
+      legend_group:    'Product Group',
+      legend_serial:   'Serial',
+      ref_year_col0:   '3rd Letter',
+      ref_year_col1:   'Year 1',
+      ref_year_col2:   'Year 2',
+      ref_year_col3:   'Year 3',
+      ref_month_col0:  '4th Letter',
+      ref_month_col1:  'Month',
+      ext_input:       'Input Text',
+      ext_placeholder: 'Paste any text here — emails, reports, logs containing FID numbers like ZYN32967500024 ...',
+      ext_results:     'Extraction Results',
+      btn_extract:     '🔍 Extract FIDs',
+      btn_sample:      '📋 Load Sample',
+      btn_clear:       '🗑 Clear',
+      btn_csv:         '⬇ CSV',
+      btn_json:        '⬇ JSON',
+      btn_copy_all:    '📋 Copy All FIDs',
+      stat_found:      'Found',
+      stat_valid:      'Valid',
+      stat_invalid:    'Invalid',
+      stat_unique:     'Unique',
+      export_label:    'Export:',
+      col_num:         '#',
+      col_anatomy:     'Anatomy',
+      col_valid:       'Valid',
+      col_year:        'Year',
+      col_month:       'Month',
+      col_day:         'Day',
+      col_prod_date:   'Production Date',
+      col_exp18:       'Exp. (18 mo)',
+      col_warranty18:  'In Warranty (18 mo)',
+      col_exp24:       'Exp. (24 mo)',
+      col_warranty24:  'In Warranty (24 mo)',
+      col_dup:         'Duplicate',
+      col_action:      'Action',
+      empty_main:      'No FID numbers found in the provided text.',
+      empty_hint:      'FIDs must be exactly 14 characters starting with ZY',
+      badge_valid:     '✅ Valid',
+      badge_invalid:   '❌ Invalid',
+      badge_w_yes:     '✅ Yes',
+      badge_w_no:      '❌ No',
+      badge_w_true:    '✅ TRUE',
+      badge_w_false:   '❌ FALSE',
+      badge_dup:       '⚠ Yes',
+      btn_copy:        'Copy',
+      btn_copied:      '✅ Copied',
+      dark_on:         'Switch to light mode',
+      dark_off:        'Switch to dark mode',
+      copied_alert:    (n) => `✅ ${n} FID(s) copied to clipboard!`,
+    },
+    zh: {
+      subtitle:        'Siemens FID 解码器与提取器 — 验证、解码并批量提取 FID 编号',
+      tab_decoder:     '🔍 FID 解码器',
+      tab_extractor:   '📋 FID 提取器',
+      dec_input:       '输入',
+      dec_placeholder: '例如 ZYN32967500024',
+      dec_validation:  'FID 验证',
+      dec_calc_fields: '计算字段',
+      dec_judgement:   '判断结果',
+      dec_ref_tables:  '参考表',
+      banner_idle:     '请输入 FID 进行验证',
+      banner_valid:    '✅ 有效 FID',
+      banner_invalid:  '❌ 无效 FID',
+      chk_length:  '长度必须为 14 个字符',
+      chk_prefix:  '以 "ZY" 开头（SEDL 前缀）',
+      chk_year:    '第 3 位为有效年份代码',
+      chk_month:   '第 4 位为有效月份代码',
+      chk_day:     '第 5–6 位为有效日期数字（01–31）',
+      field_is_valid:  '是否有效 FID',
+      field_is_sedl:   '是否 SEDL',
+      field_year:      '年份',
+      field_month:     '月份',
+      field_day:       '日期',
+      field_prod_date: '生产日期（最新）',
+      field_exp18:     '到期日期（18 个月）',
+      field_exp24:     '到期日期（24 个月）',
+      field_warranty_q:'在保修期内？',
+      legend_prefix:   '前缀 (ZY)',
+      legend_year:     '年份',
+      legend_month:    '月份',
+      legend_day:      '日期',
+      legend_group:    '产品组',
+      legend_serial:   '序列号',
+      ref_year_col0:   '第3位字母',
+      ref_year_col1:   '年份 1',
+      ref_year_col2:   '年份 2',
+      ref_year_col3:   '年份 3',
+      ref_month_col0:  '第4位字母',
+      ref_month_col1:  '月份',
+      ext_input:       '输入文本',
+      ext_placeholder: '在此粘贴任意文本 — 邮件、报告、日志，包含如 ZYN32967500024 的 FID 编号 ...',
+      ext_results:     '提取结果',
+      btn_extract:     '🔍 提取 FID',
+      btn_sample:      '📋 加载示例',
+      btn_clear:       '🗑 清除',
+      btn_csv:         '⬇ CSV',
+      btn_json:        '⬇ JSON',
+      btn_copy_all:    '📋 复制全部 FID',
+      stat_found:      '已找到',
+      stat_valid:      '有效',
+      stat_invalid:    '无效',
+      stat_unique:     '唯一',
+      export_label:    '导出：',
+      col_num:         '序号',
+      col_anatomy:     '结构',
+      col_valid:       '有效',
+      col_year:        '年份',
+      col_month:       '月份',
+      col_day:         '日期',
+      col_prod_date:   '生产日期',
+      col_exp18:       '到期（18月）',
+      col_warranty18:  '保修期内（18月）',
+      col_exp24:       '到期（24月）',
+      col_warranty24:  '保修期内（24月）',
+      col_dup:         '重复',
+      col_action:      '操作',
+      empty_main:      '在提供的文本中未找到 FID 编号。',
+      empty_hint:      'FID 必须恰好为 14 个字符且以 ZY 开头',
+      badge_valid:     '✅ 有效',
+      badge_invalid:   '❌ 无效',
+      badge_w_yes:     '✅ 是',
+      badge_w_no:      '❌ 否',
+      badge_w_true:    '✅ 是',
+      badge_w_false:   '❌ 否',
+      badge_dup:       '⚠ 是',
+      btn_copy:        '复制',
+      btn_copied:      '✅ 已复制',
+      dark_on:         '切换到浅色模式',
+      dark_off:        '切换到深色模式',
+      copied_alert:    (n) => `✅ 已复制 ${n} 个 FID 到剪贴板！`,
+    }
+  };
+
+  let currentLang = (navigator.language || navigator.userLanguage || 'en')
+                      .toLowerCase().startsWith('zh') ? 'zh' : 'en';
+
+  function t(key) {
+    return TRANSLATIONS[currentLang][key] || TRANSLATIONS['en'][key] || key;
+  }
+
+  function applyTranslations() {
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+      el.textContent = t(el.getAttribute('data-i18n'));
+    });
+    document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+      el.placeholder = t(el.getAttribute('data-i18n-placeholder'));
+    });
+    document.getElementById('btn-en').classList.toggle('active', currentLang === 'en');
+    document.getElementById('btn-zh').classList.toggle('active', currentLang === 'zh');
+    document.documentElement.lang = currentLang === 'zh' ? 'zh-CN' : 'en';
+    // Update dark toggle tooltip in new language
+    applyTheme(isDark);
+    // Refresh dynamic content
+    const fidVal = document.getElementById('fidInput').value;
+    if (fidVal) runDecoder(fidVal);
+    if (lastResults.length > 0) renderResults();
+  }
+
+  function setLang(lang) {
+    currentLang = lang;
+    applyTranslations();
+  }
+
+  // ── Tab Switching ────────────────────────────────────────────────
+  function switchTab(name, btn) {
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('tab-' + name).classList.add('active');
+    btn.classList.add('active');
+  }
+
+  // ── Reference Data ───────────────────────────────────────────────
+  const YEAR_MAP = [
+    { letter: 'H', y1: 1996, y2: 2016, y3: null },
+    { letter: 'G', y1: null, y2: 2016, y3: null },
+    { letter: 'J', y1: 1997, y2: 2017, y3: null },
+    { letter: 'K', y1: 1998, y2: 2018, y3: null },
+    { letter: 'L', y1: 1999, y2: 2019, y3: null },
+    { letter: 'M', y1: 2000, y2: 2020, y3: null },
+    { letter: 'N', y1: 2001, y2: 2021, y3: null },
+    { letter: 'P', y1: 2002, y2: 2022, y3: null },
+    { letter: 'R', y1: 2003, y2: 2023, y3: null },
+    { letter: 'S', y1: null, y2: 2004, y3: 2024 },
+    { letter: 'T', y1: null, y2: 2005, y3: 2025 },
+    { letter: 'U', y1: null, y2: 2006, y3: 2026 },
+    { letter: 'V', y1: null, y2: 2007, y3: 2027 },
+    { letter: 'W', y1: null, y2: 2008, y3: 2028 },
+    { letter: 'X', y1: null, y2: 2009, y3: 2029 },
+    { letter: 'A', y1: null, y2: 2010, y3: null },
+    { letter: 'B', y1: null, y2: 2011, y3: null },
+    { letter: 'C', y1: null, y2: 2012, y3: null },
+    { letter: 'D', y1: null, y2: 2013, y3: null },
+    { letter: 'E', y1: null, y2: 2014, y3: null },
+    { letter: 'F', y1: null, y2: 2015, y3: null },
+  ];
+
+  const MONTH_MAP = [
+    { letter: '1', month: 1  }, { letter: '2', month: 2  },
+    { letter: '3', month: 3  }, { letter: '4', month: 4  },
+    { letter: '5', month: 5  }, { letter: '6', month: 6  },
+    { letter: '7', month: 7  }, { letter: '8', month: 8  },
+    { letter: '9', month: 9  }, { letter: 'O', month: 10 },
+    { letter: 'N', month: 11 }, { letter: 'D', month: 12 },
+  ];
+
+  // ── Helpers ──────────────────────────────────────────────────────
+  function formatDate(d) {
+    if (!d || isNaN(d)) return null;
+    return `${d.getMonth()+1}/${d.getDate()}/${d.getFullYear()}`;
+  }
+
+  function addMonths(date, months) {
+    const d = new Date(date);
+    d.setMonth(d.getMonth() + months);
+    if (d.getDate() < date.getDate()) d.setDate(0);
+    return d;
+  }
+
+  function resolveYear(yearEntry) {
+    const currentYear   = new Date().getFullYear();
+    const possibleYears = [yearEntry.y1, yearEntry.y2, yearEntry.y3].filter(y => y !== null);
+    const validYears    = possibleYears.filter(y => y <= currentYear);
+    return validYears.length > 0 ? Math.max(...validYears) : Math.min(...possibleYears);
+  }
+
+  // ── Validation ───────────────────────────────────────────────────
+  function validateFID(fid) {
+    const results = {
+      length:  { pass: false, detail: '' },
+      prefix:  { pass: false, detail: '' },
+      year:    { pass: false, detail: '' },
+      month:   { pass: false, detail: '' },
+      day:     { pass: false, detail: '' },
+      isValid: false,
+    };
+    if (!fid || fid.trim() === '') return results;
+    fid = fid.trim().toUpperCase();
+    results.length.pass   = fid.length === 14;
+    results.length.detail = `${fid.length} chars`;
+    if (!results.length.pass) return results;
+    results.prefix.pass   = fid.startsWith('ZY');
+    results.prefix.detail = `"${fid.substring(0, 2)}"`;
+    if (!results.prefix.pass) return results;
+    const char2     = fid[2];
+    const yearEntry = YEAR_MAP.find(r => r.letter === char2);
+    results.year.pass   = !!yearEntry;
+    results.year.detail = `"${char2}"`;
+    if (!results.year.pass) return results;
+    const char3      = fid[3];
+    const monthEntry = MONTH_MAP.find(r => r.letter === char3);
+    results.month.pass   = !!monthEntry;
+    results.month.detail = `"${char3}"`;
+    if (!results.month.pass) return results;
+    const dayStr = fid.substring(4, 6);
+    const dayNum = parseInt(dayStr, 10);
+    results.day.pass   = /^\d{2}$/.test(dayStr) && dayNum >= 1 && dayNum <= 31;
+    results.day.detail = `"${dayStr}"`;
+    results.isValid = results.length.pass && results.prefix.pass &&
+                      results.year.pass   && results.month.pass  && results.day.pass;
+    return results;
+  }
+
+  // ── Decode ───────────────────────────────────────────────────────
+  function decodeFIDFields(fid) {
+    fid = fid.toUpperCase();
+    const v = validateFID(fid);
+    if (!v.isValid) return { isValid: false };
+    const yearEntry  = YEAR_MAP.find(r => r.letter === fid[2]);
+    const monthEntry = MONTH_MAP.find(r => r.letter === fid[3]);
+    const dayNum     = parseInt(fid.substring(4, 6), 10);
+    const year       = resolveYear(yearEntry);
+    const prodDate   = new Date(year, monthEntry.month - 1, dayNum);
+    const today      = new Date(); today.setHours(0,0,0,0);
+    const exp18      = addMonths(prodDate, 18);
+    const exp24      = addMonths(prodDate, 24);
+    return {
+      isValid: true,
+      year, month: monthEntry.month, day: dayNum,
+      prodDate, exp18, exp24,
+      w18: today <= exp18,
+      w24: today <= exp24,
+    };
+  }
+
+  // ════════════════════════════════════════════════
+  // DECODER TAB
+  // ════════════════════════════════════════════════
+  const CHAR_ROLES_DECODER = [
+    { role: 'prefix', label: 'P1' }, { role: 'prefix', label: 'P2' },
+    { role: 'year',   label: 'Year' }, { role: 'month', label: 'Mon' },
+    { role: 'day',    label: 'D1' },  { role: 'day',   label: 'D2' },
+    { role: 'group',  label: 'G1' },  { role: 'group', label: 'G2' },
+    { role: 'group',  label: 'G3' },  { role: 'group', label: 'G4' },
+    { role: 'serial', label: 'S1' },  { role: 'serial', label: 'S2' },
+    { role: 'serial', label: 'S3' },  { role: 'serial', label: 'S4' },
+  ];
+
+  function buildTables() {
+    const yTbody = document.querySelector('#yearTable tbody');
+    yTbody.innerHTML = '';
+    YEAR_MAP.forEach(row => {
+      const tr = document.createElement('tr');
+      tr.id = `yr-${row.letter}`;
+      const letterDisplay = row.letter === 'G'
+        ? `<strong>G</strong> <span style="font-size:0.7rem;color:var(--text-muted);">(alt)</span>`
+        : `<strong>${row.letter}</strong>`;
+      tr.innerHTML = `
+        <td>${letterDisplay}</td>
+        <td>${row.y1 ?? ''}</td>
+        <td>${row.y2 ?? ''}</td>
+        <td>${row.y3 ?? ''}</td>`;
+      yTbody.appendChild(tr);
+    });
+    const mTbody = document.querySelector('#monthTable tbody');
+    mTbody.innerHTML = '';
+    MONTH_MAP.forEach(row => {
+      const tr = document.createElement('tr');
+      tr.id = `mo-${row.letter}`;
+      tr.innerHTML = `<td><strong>${row.letter}</strong></td><td>${row.month}</td>`;
+      mTbody.appendChild(tr);
+    });
+  }
+
+  function clearHighlights() {
+    document.querySelectorAll('#yearTable tbody tr, #monthTable tbody tr')
+      .forEach(r => r.classList.remove('highlight'));
+  }
+
+  function setField(id, value, extraClass = '') {
+    const el = document.getElementById(id);
+    if (value === null || value === undefined || value === '') {
+      el.innerHTML = '<span class="empty">—</span>';
+      el.className = 'field-value';
+    } else {
+      el.textContent = value;
+      el.className = 'field-value ' + extraClass;
+    }
+  }
+
+  function setWarrantyBadge(id, inWarranty) {
+    const el = document.getElementById(id);
+    if (inWarranty === null) {
+      el.textContent = '—'; el.className = 'badge unknown';
+    } else if (inWarranty) {
+      el.textContent = t('badge_w_true'); el.className = 'badge in-warranty';
+    } else {
+      el.textContent = t('badge_w_false'); el.className = 'badge out-warranty';
+    }
+  }
+
+  function setCheckItem(id, state, detail = '') {
+    const el    = document.getElementById(id);
+    const icon  = el.querySelector('.check-icon');
+    const detEl = el.querySelector('.check-detail');
+    el.className = `check-item ${state}`;
+    icon.textContent = state === 'pass' ? '✅' : state === 'fail' ? '❌' : '○';
+    detEl.textContent = detail;
+  }
+
+  function resetDecoder() {
+    ['isValidFID','isSEDL','calcYear','calcMonth','calcDay','prodDate','expDate18','expDate24']
+      .forEach(id => setField(id, null));
+    setWarrantyBadge('warranty18', null);
+    setWarrantyBadge('warranty24', null);
+    clearHighlights();
+    ['chk-length','chk-prefix','chk-year','chk-month','chk-day']
+      .forEach(id => setCheckItem(id, 'idle'));
+    const banner = document.getElementById('validBanner');
+    banner.textContent = t('banner_idle');
+    banner.className = 'valid-banner idle';
+    document.getElementById('fidAnatomy').innerHTML = '';
+    document.getElementById('fidLegend').style.display = 'none';
+    document.getElementById('fidInput').className = '';
+  }
+
+  function renderAnatomy(fid, validation) {
+    const container = document.getElementById('fidAnatomy');
+    const legend    = document.getElementById('fidLegend');
+    container.innerHTML = '';
+    if (!fid) { legend.style.display = 'none'; return; }
+    legend.style.display = 'flex';
+    fid = fid.trim().toUpperCase();
+    fid.split('').forEach((ch, i) => {
+      const roleDef = CHAR_ROLES_DECODER[i];
+      let role  = roleDef ? roleDef.role  : 'unknown';
+      let label = roleDef ? roleDef.label : `P${i+1}`;
+      if (i === 0 && !validation.prefix.pass) role = 'invalid';
+      if (i === 1 && !validation.prefix.pass) role = 'invalid';
+      if (i === 2 && validation.prefix.pass && !validation.year.pass)  role = 'invalid';
+      if (i === 3 && validation.year.pass   && !validation.month.pass) role = 'invalid';
+      if ((i === 4 || i === 5) && validation.month.pass && !validation.day.pass) role = 'invalid';
+      const div = document.createElement('div');
+      div.className = `fid-char role-${role}`;
+      div.innerHTML = `<div class="char-box">${ch}</div><div class="char-label">${label}</div>`;
+      container.appendChild(div);
+    });
+  }
+
+  function runDecoder(rawFid) {
+    const errorEl = document.getElementById('errorMsg');
+    const inputEl = document.getElementById('fidInput');
+    errorEl.textContent = '';
+    inputEl.classList.remove('invalid', 'valid');
+    clearHighlights();
+    if (!rawFid || rawFid.trim() === '') { resetDecoder(); return; }
+    const fid        = rawFid.trim().toUpperCase();
+    const validation = validateFID(fid);
+    renderAnatomy(fid, validation);
+    const allRules = ['length','prefix','year','month','day'];
+    let firstFail  = null;
+    allRules.forEach(rule => {
+      const r = validation[rule];
+      if (firstFail) {
+        setCheckItem(`chk-${rule}`, 'idle', '');
+      } else {
+        const state = r.pass ? 'pass' : 'fail';
+        setCheckItem(`chk-${rule}`, state, r.detail);
+        if (!r.pass) firstFail = rule;
+      }
+    });
+    const banner = document.getElementById('validBanner');
+    if (validation.isValid) {
+      banner.textContent = t('banner_valid');
+      banner.className   = 'valid-banner valid';
+      inputEl.classList.add('valid');
+      setField('isValidFID', currentLang === 'zh' ? '是' : 'TRUE', 'true');
+    } else {
+      banner.textContent = t('banner_invalid');
+      banner.className   = 'valid-banner invalid';
+      inputEl.classList.add('invalid');
+      setField('isValidFID', currentLang === 'zh' ? '否' : 'FALSE', 'false');
+    }
+    const isSEDL = fid.startsWith('ZY');
+    setField('isSEDL',
+      isSEDL ? (currentLang === 'zh' ? '是' : 'TRUE') : (currentLang === 'zh' ? '否' : 'FALSE'),
+      isSEDL ? 'true' : 'false');
+    if (!validation.isValid) {
+      ['calcYear','calcMonth','calcDay','prodDate','expDate18','expDate24']
+        .forEach(id => setField(id, null));
+      setWarrantyBadge('warranty18', null);
+      setWarrantyBadge('warranty24', null);
+      return;
+    }
+    const d = decodeFIDFields(fid);
+    setField('calcYear',  d.year);
+    setField('calcMonth', d.month);
+    setField('calcDay',   d.day);
+    setField('prodDate',  formatDate(d.prodDate));
+    setField('expDate18', formatDate(d.exp18));
+    setField('expDate24', formatDate(d.exp24));
+    setWarrantyBadge('warranty18', d.w18);
+    setWarrantyBadge('warranty24', d.w24);
+    const yrRow = document.getElementById(`yr-${fid[2]}`);
+    if (yrRow) yrRow.classList.add('highlight');
+    const moRow = document.getElementById(`mo-${fid[3]}`);
+    if (moRow) moRow.classList.add('highlight');
+  }
+
+  document.getElementById('fidInput').addEventListener('input', function () {
+    runDecoder(this.value);
+  });
+
+  // ════════════════════════════════════════════════
+  // EXTRACTOR TAB
+  // ════════════════════════════════════════════════
+  const FID_REGEX = /\bS?(ZY[A-Z0-9]{12})\b/gi;
+
+  const CHAR_ROLES_EXT = [
+    'prefix','prefix','year','month','day','day',
+    'group','group','group','group',
+    'serial','serial','serial','serial'
+  ];
+
+  function renderAnatomyMini(fid) {
+    return fid.toUpperCase().split('').map((ch, i) => {
+      const role = CHAR_ROLES_EXT[i] || 'unknown';
+      return `<div class="fid-char-mini role-${role}"><div class="char-box-mini">${ch}</div></div>`;
+    }).join('');
+  }
+
+  function warrantyBadge(inWarranty) {
+    if (inWarranty === null) return `<span class="badge badge-warranty-na">—</span>`;
+    return inWarranty
+      ? `<span class="badge badge-warranty-in">${t('badge_w_yes')}</span>`
+      : `<span class="badge badge-warranty-out">${t('badge_w_no')}</span>`;
+  }
+
+  let lastResults = [];
+
+  function extractFIDs() {
+    const text    = document.getElementById('inputText').value;
+    const matches = [...text.matchAll(FID_REGEX)].map(m => ({
+      raw:     m[0].toUpperCase(),          // full match e.g. "SZYN329..."
+      fid:     m[1].toUpperCase(),          // capture group 1 — always the ZY... part
+      hadLeadingS: m[0].toUpperCase().startsWith('S') && m[1].toUpperCase().startsWith('ZY'),
+    }));
+
+    const seen    = {};
+    const results = matches.map((item, idx) => {
+      const { fid, raw, hadLeadingS } = item;
+      const isDuplicate = seen[fid] !== undefined;
+      if (!isDuplicate) seen[fid] = idx;
+      const d = decodeFIDFields(fid);
+      return { fid, raw, hadLeadingS, isDuplicate, ...d };
+    });
+
+    lastResults = results;
+
+    const total   = results.length;
+    const valid   = results.filter(r => r.isValid).length;
+    const invalid = total - valid;
+    const unique  = Object.keys(seen).length;
+
+    document.getElementById('statTotal').textContent   = total;
+    document.getElementById('statValid').textContent   = valid;
+    document.getElementById('statInvalid').textContent = invalid;
+    document.getElementById('statUnique').textContent  = unique;
+    document.getElementById('statsBar').style.display  = total > 0 ? 'flex' : 'none';
+
+    renderResults();
+  }
+
+  function renderResults() {
+    const hasText = document.getElementById('inputText').value.trim().length > 0;
+    document.getElementById('resultsCard').style.display =
+      (lastResults.length > 0 || hasText) ? 'block' : 'none';
+    const tbody      = document.getElementById('resultsBody');
+    const emptyState = document.getElementById('emptyState');
+    tbody.innerHTML  = '';
+    if (lastResults.length === 0) {
+      emptyState.style.display = 'block';
+      document.querySelector('#resultsTable thead').style.display = 'none';
+      return;
+    }
+    emptyState.style.display = 'none';
+    document.querySelector('#resultsTable thead').style.display = '';
+    lastResults.forEach((r, i) => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td style="text-align:center;color:var(--text-faint);font-size:0.8rem;">${i + 1}</td>
+        <td class="fid-cell">
+          ${r.hadLeadingS
+            ? `<span style="color:var(--text-faint);font-size:0.8rem;font-family:'Courier New',monospace;">S</span>${r.fid}`
+            : r.fid}
+          ${r.hadLeadingS
+            ? `<span style="font-size:0.68rem;background:var(--badge-dup-bg);color:var(--badge-dup-text);border:1px solid var(--badge-dup-bdr);border-radius:4px;padding:1px 5px;margin-left:4px;font-family:sans-serif;font-weight:700;">S stripped</span>`
+            : ''}
+        </td>
+        <td><div class="fid-anatomy-mini">${renderAnatomyMini(r.fid)}</div></td>
+        <td style="text-align:center;">
+          ${r.isValid
+            ? `<span class="badge badge-valid">${t('badge_valid')}</span>`
+            : `<span class="badge badge-invalid">${t('badge_invalid')}</span>`}
+        </td>
+        <td style="text-align:center;">${r.isValid ? r.year  : '—'}</td>
+        <td style="text-align:center;">${r.isValid ? r.month : '—'}</td>
+        <td style="text-align:center;">${r.isValid ? r.day   : '—'}</td>
+        <td style="text-align:center;">${r.isValid ? formatDate(r.prodDate) : '—'}</td>
+        <td style="text-align:center;">${r.isValid ? formatDate(r.exp18)    : '—'}</td>
+        <td style="text-align:center;">${r.isValid ? warrantyBadge(r.w18)   : warrantyBadge(null)}</td>
+        <td style="text-align:center;">${r.isValid ? formatDate(r.exp24)    : '—'}</td>
+        <td style="text-align:center;">${r.isValid ? warrantyBadge(r.w24)   : warrantyBadge(null)}</td>
+        <td style="text-align:center;">
+          ${r.isDuplicate
+            ? `<span class="badge" style="background:var(--badge-dup-bg);color:var(--badge-dup-text);border:1px solid var(--badge-dup-bdr);">${t('badge_dup')}</span>`
+            : `<span style="color:var(--text-faint);font-size:0.8rem;">—</span>`}
+        </td>
+        <td style="text-align:center;">
+          <button class="copy-btn" onclick="copyFID(this,'${r.fid}')">${t('btn_copy')}</button>
+        </td>`;
+      tbody.appendChild(tr);
+    });
+  }
+
+  function copyFID(btn, fid) {
+    navigator.clipboard.writeText(fid).then(() => {
+      btn.textContent = t('btn_copied');
+      btn.classList.add('copied');
+      setTimeout(() => { btn.textContent = t('btn_copy'); btn.classList.remove('copied'); }, 1500);
+    });
+  }
+
+  function copyAllFIDs() {
+    const fids = lastResults.map(r => r.fid).join('\n');
+    navigator.clipboard.writeText(fids).then(() =>
+      alert(t('copied_alert')(lastResults.length)));
+  }
+
+  function exportCSV() {
+    if (!lastResults.length) return;
+    const headers = ['#','FID','Valid','Year','Month','Day','Production Date',
+                     'Exp (18mo)','In Warranty (18mo)','Exp (24mo)','In Warranty (24mo)','Duplicate'];
+    const rows = lastResults.map((r, i) => [
+      i + 1, r.fid,
+      r.isValid ? 'TRUE' : 'FALSE',
+      r.isValid ? r.year  : '',
+      r.isValid ? r.month : '',
+      r.isValid ? r.day   : '',
+      r.isValid ? formatDate(r.prodDate) : '',
+      r.isValid ? formatDate(r.exp18)    : '',
+      r.isValid ? (r.w18 ? 'TRUE' : 'FALSE') : '',
+      r.isValid ? formatDate(r.exp24)    : '',
+      r.isValid ? (r.w24 ? 'TRUE' : 'FALSE') : '',
+      r.isDuplicate ? 'TRUE' : 'FALSE',
+    ].map(v => `"${v}"`).join(','));
+    const csv  = [headers.join(','), ...rows].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href = url; a.download = 'fid_extraction.csv'; a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function exportJSON() {
+    if (!lastResults.length) return;
+    const data = lastResults.map((r, i) => ({
+      index: i + 1, fid: r.fid, isValid: r.isValid,
+      year:  r.isValid ? r.year  : null,
+      month: r.isValid ? r.month : null,
+      day:   r.isValid ? r.day   : null,
+      productionDate:  r.isValid ? formatDate(r.prodDate) : null,
+      expiry18months:  r.isValid ? formatDate(r.exp18)    : null,
+      inWarranty18:    r.isValid ? r.w18 : null,
+      expiry24months:  r.isValid ? formatDate(r.exp24)    : null,
+      inWarranty24:    r.isValid ? r.w24 : null,
+      isDuplicate:     r.isDuplicate,
+    }));
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href = url; a.download = 'fid_extraction.json'; a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function loadSample() {
+    document.getElementById('inputText').value =
+`Service Report - Batch Inspection Q2
+
+Unit A: FID ZYN32967500024 passed visual check.
+Unit B: FID ZYK19875300018 flagged for review.
+Unit C: Serial ZYP2O15123400 — awaiting calibration.
+Duplicate entry: ZYN32967500024 (same as Unit A).
+Invalid entry: ZY1234 (too short, should be ignored).
+Unit D: ZYR3967500099X — check date codes.
+Unit E: ZYS41267500031 — newly received.
+Random text: ABC123 XYZ HELLO WORLD 12345678901234
+Unit F: ZYT52167500042 — in storage.
+Note: FID ZYXXXXXXYYYYYY is not a real FID.`;
+    extractFIDs();
+  }
+
+  function clearExtractor() {
+    document.getElementById('inputText').value = '';
+    document.getElementById('resultsCard').style.display = 'none';
+    document.getElementById('statsBar').style.display    = 'none';
+    lastResults = [];
+  }
+
+  document.getElementById('inputText').addEventListener('paste', () => {
+    setTimeout(extractFIDs, 50);
+  });
+
+  // ── Init ─────────────────────────────────────────────────────────
+  applyTheme(isDark);       // apply dark/light first (no flash)
+  buildTables();
+  applyTranslations();      // apply language
+  const defaultFID = 'ZYN32967500024';
+  document.getElementById('fidInput').value = defaultFID;
+  runDecoder(defaultFID);
+</script>
+</body>
+</html>
