@@ -26,6 +26,32 @@
       box-shadow: 0 2px 12px rgba(0,0,0,0.15);
     }
 
+    .header-actions {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 12px;
+      margin-top: 16px;
+      flex-wrap: wrap;
+    }
+
+    .lang-switch {
+      border: 1px solid rgba(255,255,255,0.35);
+      background: rgba(255,255,255,0.16);
+      color: #fff;
+      padding: 8px 12px;
+      border-radius: 999px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s ease, transform 0.2s ease;
+    }
+
+    .lang-switch:hover {
+      background: rgba(255,255,255,0.24);
+      transform: translateY(-1px);
+    }
+
     header h1 {
       font-size: 2rem;
       font-weight: 700;
@@ -160,37 +186,133 @@
 <body>
 
 <header>
-  <h1>🧰 Mini Tools</h1>
-  <p>A collection of lightweight, browser-based utility tools. No sign-up, no tracking — just open and use.</p>
+  <h1 id="page-title">🧰 Mini Tools</h1>
+  <p id="page-intro">A collection of lightweight, browser-based utility tools. No sign-up, no tracking — just open and use.</p>
+  <div class="header-actions">
+    <button id="lang-switch" class="lang-switch" type="button" aria-label="Switch to Simplified Chinese" title="切换到简体中文">中文</button>
+  </div>
 </header>
 
 <main class="tools-section">
-  <h2>Available Tools</h2>
+  <h2 id="tools-heading">Available Tools</h2>
 
   <div class="tool-grid">
 
     <!-- Markdown Renderer -->
     <a href="markdown-renderer.html" class="tool-card markdown">
       <div class="tool-icon">M↓</div>
-      <h3>Markdown Renderer</h3>
-      <p>Write Markdown with live preview. Supports LaTeX math, code blocks, tables, and more. Export to HTML or PDF.</p>
-      <span class="tool-badge">Active</span>
+      <h3 id="markdown-title">Markdown Renderer</h3>
+      <p id="markdown-desc">Write Markdown with live preview. Supports LaTeX math, code blocks, tables, and more. Export to HTML or PDF.</p>
+      <span class="tool-badge" id="markdown-badge">Active</span>
     </a>
 
     <!-- FID Toolkit -->
     <a href="warranty_tool.html" class="tool-card markdown">
       <div class="tool-icon">🔧</div>
-      <h3>FID Toolkit</h3>
-      <p>Decode and validate Siemens FID numbers. Extract FIDs from text, check warranty status, and export results.</p>
-      <span class="tool-badge">Active</span>
+      <h3 id="warranty-title">FID Toolkit</h3>
+      <p id="warranty-desc">Decode and validate Siemens FID numbers. Extract FIDs from text, check warranty status, and export results.</p>
+      <span class="tool-badge" id="warranty-badge">Active</span>
     </a>
 
   </div>
 </main>
 
 <footer>
-  <p>Mini Tools &copy; 2026 &mdash; Built for simplicity. <a href="https://github.com">Source</a></p>
+  <p><span id="footer-text">Mini Tools &copy; 2026 &mdash; Built for simplicity.</span> <a id="footer-source" href="https://github.com">Source</a></p>
 </footer>
+
+<script>
+  const translations = {
+    en: {
+      metaDescription: 'A collection of lightweight, browser-based utility tools.',
+      pageTitle: '🧰 Mini Tools',
+      pageIntro: 'A collection of lightweight, browser-based utility tools. No sign-up, no tracking — just open and use.',
+      toolsHeading: 'Available Tools',
+      markdownTitle: 'Markdown Renderer',
+      markdownDesc: 'Write Markdown with live preview. Supports LaTeX math, code blocks, tables, and more. Export to HTML or PDF.',
+      markdownBadge: 'Active',
+      warrantyTitle: 'FID Toolkit',
+      warrantyDesc: 'Decode and validate Siemens FID numbers. Extract FIDs from text, check warranty status, and export results.',
+      warrantyBadge: 'Active',
+      footerText: 'Mini Tools © 2026 — Built for simplicity.',
+      footerSource: 'Source',
+      langButton: '中文',
+      langButtonLabel: 'Switch to Simplified Chinese',
+      langButtonTitle: '切换到简体中文'
+    },
+    zh: {
+      metaDescription: '一组轻量级、基于浏览器的实用工具集合。',
+      pageTitle: '🧰 迷你工具箱',
+      pageIntro: '一组轻量级、基于浏览器的实用工具集合。无需注册、无需跟踪 —— 直接打开即可使用。',
+      toolsHeading: '可用工具',
+      markdownTitle: 'Markdown 渲染器',
+      markdownDesc: '使用实时预览编写 Markdown。支持 LaTeX 数学公式、代码块、表格等内容。可导出为 HTML 或 PDF。',
+      markdownBadge: '可用',
+      warrantyTitle: 'FID 工具包',
+      warrantyDesc: '解码并验证 Siemens FID 编号。从文本中提取 FID，检查保修状态，并导出结果。',
+      warrantyBadge: '可用',
+      footerText: 'Mini Tools © 2026 — 以简洁为核心。',
+      footerSource: '源码',
+      langButton: 'English',
+      langButtonLabel: 'Switch to English',
+      langButtonTitle: 'Switch to English'
+    }
+  };
+
+  const storageKey = 'mini-tools-language';
+  const supportedLanguages = ['en', 'zh'];
+
+  function getPreferredLanguage() {
+    const stored = localStorage.getItem(storageKey);
+    if (stored && supportedLanguages.includes(stored)) {
+      return stored;
+    }
+
+    const browserLanguage = (navigator.language || navigator.userLanguage || 'en').toLowerCase();
+    return browserLanguage.startsWith('zh') ? 'zh' : 'en';
+  }
+
+  function applyLanguage(lang) {
+    const text = translations[lang];
+    document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en';
+    document.title = lang === 'zh' ? '迷你工具箱' : 'Mini Tools';
+
+    const metaDescription = document.querySelector('meta[name="description"]');
+    if (metaDescription) {
+      metaDescription.setAttribute('content', text.metaDescription);
+    }
+
+    document.getElementById('page-title').textContent = text.pageTitle;
+    document.getElementById('page-intro').textContent = text.pageIntro;
+    document.getElementById('tools-heading').textContent = text.toolsHeading;
+    document.getElementById('markdown-title').textContent = text.markdownTitle;
+    document.getElementById('markdown-desc').textContent = text.markdownDesc;
+    document.getElementById('markdown-badge').textContent = text.markdownBadge;
+    document.getElementById('warranty-title').textContent = text.warrantyTitle;
+    document.getElementById('warranty-desc').textContent = text.warrantyDesc;
+    document.getElementById('warranty-badge').textContent = text.warrantyBadge;
+    document.getElementById('footer-text').textContent = text.footerText;
+    document.getElementById('footer-source').textContent = text.footerSource;
+
+    const switchButton = document.getElementById('lang-switch');
+    switchButton.textContent = text.langButton;
+    switchButton.setAttribute('aria-label', text.langButtonLabel);
+    switchButton.setAttribute('title', text.langButtonTitle);
+
+    currentLanguage = lang;
+    localStorage.setItem(storageKey, lang);
+  }
+
+  let currentLanguage = getPreferredLanguage();
+
+  document.addEventListener('DOMContentLoaded', () => {
+    applyLanguage(currentLanguage);
+
+    document.getElementById('lang-switch').addEventListener('click', () => {
+      applyLanguage(currentLanguage === 'zh' ? 'en' : 'zh');
+    });
+  });
+</script>
 
 </body>
 </html>
