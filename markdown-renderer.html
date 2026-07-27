@@ -650,6 +650,12 @@
   textarea.addEventListener('cut',   () => scheduleRender(150));
   textarea.addEventListener('drop',  () => scheduleRender(150));
 
+  // ── Extract title from markdown content ──────────────────────
+  function getMarkdownTitle() {
+    const match = textarea.value.trim().match(/^#\s+(.+)/m);
+    return match ? match[1].trim() : null;
+  }
+
   // ── Print ─────────────────────────────────────────────────────
   function printPreview() {
     if (!textarea.value.trim()) {
@@ -665,8 +671,9 @@
       alert('Nothing to export! Please add some Markdown content first.');
       return;
     }
+    const title = getMarkdownTitle() || 'markdown-export';
     const win = window.open('', '_blank');
-    win.document.write(buildStandaloneHTML(output.innerHTML, true));
+    win.document.write(buildStandaloneHTML(output.innerHTML, true, title));
     win.document.close();
     win.onload = () => setTimeout(() => { win.focus(); win.print(); }, 1800);
   }
@@ -677,21 +684,22 @@
       alert('Nothing to export! Please add some Markdown content first.');
       return;
     }
+    const title = getMarkdownTitle() || 'markdown-export';
     const protected_src = protectLatex(textarea.value);
     let html = marked.parse(protected_src);
     html = restoreLatex(html);
 
-    const blob = new Blob([buildStandaloneHTML(html, true)], { type: 'text/html' });
+    const blob = new Blob([buildStandaloneHTML(html, true, title)], { type: 'text/html' });
     const url  = URL.createObjectURL(blob);
     const a    = document.createElement('a');
     a.href = url;
-    a.download = 'markdown-export.html';
+    a.download = title + '.html';
     a.click();
     URL.revokeObjectURL(url);
   }
 
   // ── Standalone HTML builder ───────────────────────────────────
-  function buildStandaloneHTML(bodyContent, includeMath = false) {
+  function buildStandaloneHTML(bodyContent, includeMath = false, title = 'Markdown Export') {
     const mathScripts = includeMath ? `
   <script>
     window.MathJax = {
@@ -709,7 +717,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Markdown Export</title>${mathScripts}
+  <title>${title}</title>${mathScripts}
   <style>
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
