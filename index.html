@@ -348,6 +348,8 @@
       warrantyDesc: 'Decode and validate Siemens FID numbers. Extract FIDs from text, check warranty status, and export results.',
       excelTitle: 'Excel to Markdown',
       excelDesc: 'Paste Excel data and convert to clean Markdown tables. Preview and copy with one click.',
+      mlfbTitle: 'MLFB & Option Code Processor',
+      mlfbDesc: 'Paste Excel data with MLFB codes and option codes, validate and normalize them for PMD.',
       footerText: 'Mini Tools © 2026 — Built for simplicity.',
       footerSource: 'Source',
       dark_on: 'Switch to light mode',
@@ -364,6 +366,8 @@
       warrantyDesc: '解码并验证 Siemens FID 编号。从文本中提取 FID，检查保修状态，并导出结果。',
       excelTitle: 'Excel 转 Markdown',
       excelDesc: '将 Excel 数据粘贴并转换为干净的 Markdown 表格。预览并一键复制。',
+      mlfbTitle: 'MLFB 与选型代码处理器',
+      mlfbDesc: '粘贴包含 MLFB 编码和选型代码的 Excel 数据，验证并规范化为 PMD 格式。',
       footerText: 'Mini Tools © 2026 — 以简洁为核心。',
       footerSource: '源码',
       dark_on: '切换到浅色模式',
@@ -396,6 +400,8 @@
     document.getElementById('warranty-desc').textContent = t('warrantyDesc');
     document.getElementById('excel-title').textContent = t('excelTitle');
     document.getElementById('excel-desc').textContent = t('excelDesc');
+    document.getElementById('mlfb-title').textContent = t('mlfbTitle');
+    document.getElementById('mlfb-desc').textContent = t('mlfbDesc');
     document.getElementById('footer-text').textContent = t('footerText');
     document.getElementById('footer-source').textContent = t('footerSource');
 
@@ -418,6 +424,7 @@
     { href: 'markdown-renderer.html', icon: 'M↓',   id: 'markdown', titleKey: 'markdownTitle', descKey: 'markdownDesc' },
     { href: 'warranty-tool.html',     icon: '🔧',   id: 'warranty', titleKey: 'warrantyTitle', descKey: 'warrantyDesc' },
     { href: 'excel-to-markdown.html', icon: '📊',   id: 'excel',    titleKey: 'excelTitle',    descKey: 'excelDesc' },
+    { href: 'mlfb-option-code-processor.html', icon: '⚙️', id: 'mlfb', titleKey: 'mlfbTitle', descKey: 'mlfbDesc' },
   ];
 
   function renderCards() {

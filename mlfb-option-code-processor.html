@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>MLFB & Option Code Processor</title>
+  <meta name="description" content="Paste Excel data with MLFB codes and option codes, validate and normalize them for PMD." />
+  <style>
+    /* ══════════════════════════════════════════════
+       CSS CUSTOM PROPERTIES — Light (default)
+       ══════════════════════════════════════════════ */
+    :root {
+      --bg:            #f0f2f5;
+      --surface:       #ffffff;
+      --surface-alt:   #f7fafa;
+      --border:        #e0eeee;
+      --border-input:  #cce8e8;
+      --text-primary:  #1a1a2e;
+      --text-muted:    #666666;
+      --text-faint:    #aaaaaa;
+      --accent:        #009999;
+      --accent-dark:   #007a7a;
+      --accent-light:  #e0f5f5;
+      --shadow:        rgba(0,0,0,0.08);
+      --btn-sec-bg:    #e0f5f5;
+      --btn-sec-text:  #007777;
+      --btn-sec-bdr:   #b2e0e0;
+      --btn-sec-hover: #c5ecec;
+      --copy-bg:       #f0f0f0;
+      --copy-bdr:      #dddddd;
+      --copy-text:     #555555;
+      --copy-done-bg:  #d4f8e8;
+      --copy-done-text:#1a7a4a;
+      --copy-done-bdr: #a8e6c8;
+      --switcher-bg:      rgba(255,255,255,0.16);
+      --switcher-text:    #ffffff;
+      --switcher-bdr:     rgba(255,255,255,0.35);
+      --switcher-hover:   rgba(255,255,255,0.24);
+      --switcher-act-bg:  #ffffff;
+      --switcher-act-txt: #009999;
+      --status-ok-bg:    #d4f8e8;
+      --status-ok-text:  #1a7a4a;
+      --status-ok-bdr:   #a8e6c8;
+      --status-warn-bg:  #fdf1d4;
+      --status-warn-text:#8a5a00;
+      --status-warn-bdr: #f3d999;
+    }
+
+    /* ══════════════════════════════════════════════
+       DARK MODE OVERRIDES
+       ══════════════════════════════════════════════ */
+    [data-theme="dark"] {
+      --bg:            #0f1117;
+      --surface:       #1a1d27;
+      --surface-alt:   #1e2130;
+      --border:        #2a2d3e;
+      --border-input:  #2e4a4a;
+      --text-primary:  #e2e8f0;
+      --text-muted:    #94a3b8;
+      --text-faint:    #4a5568;
+      --accent:        #00cccc;
+      --accent-dark:   #00aaaa;
+      --accent-light:  #0d2e2e;
+      --shadow:        rgba(0,0,0,0.4);
+      --btn-sec-bg:    #0d2e2e;
+      --btn-sec-text:  #00cccc;
+      --btn-sec-bdr:   #1e3a3a;
+      --btn-sec-hover: #1e4a4a;
+      --copy-bg:       #1e2130;
+      --copy-bdr:      #2a2d3e;
+      --copy-text:     #94a3b8;
+      --copy-done-bg:  #052e16;
+      --copy-done-text:#86efac;
+      --copy-done-bdr: #166534;
+      --switcher-bg:      rgba(255,255,255,0.10);
+      --switcher-text:    #e2e8f0;
+      --switcher-bdr:     rgba(255,255,255,0.25);
+      --switcher-hover:   rgba(255,255,255,0.18);
+      --switcher-act-bg:  #00cccc;
+      --switcher-act-txt: #0f1117;
+      --status-ok-bg:    #052e16;
+      --status-ok-text:  #86efac;
+      --status-ok-bdr:   #166534;
+      --status-warn-bg:  #2e2205;
+      --status-warn-text:#f3d999;
+      --status-warn-bdr: #6b4f0d;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: var(--bg);
+      color: var(--text-primary);
+      min-height: 100vh;
+      transition: background 0.3s, color 0.3s;
+    }
+
+    header {
+      background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+      color: white;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+
+    header a { color: white; text-decoration: none; display: flex; align-items: center; gap: 10px; }
+    header h1 { font-size: 1.1rem; font-weight: 600; letter-spacing: 0.5px; }
+
+    .header-actions {
+      margin-left: auto;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .switcher {
+      display: flex;
+      border-radius: 999px;
+      overflow: hidden;
+      border: 1px solid var(--switcher-bdr);
+    }
+
+    .switcher-btn {
+      padding: 6px 12px;
+      border: none;
+      background: var(--switcher-bg);
+      color: var(--switcher-text);
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s;
+      line-height: 1;
+    }
+
+    .switcher-btn + .switcher-btn { border-left: 1px solid var(--switcher-bdr); }
+    .switcher-btn.active { background: var(--switcher-act-bg); color: var(--switcher-act-txt); }
+    .switcher-btn:hover:not(.active) { background: var(--switcher-hover); }
+
+    .dark-toggle {
+      width: 32px; height: 30px;
+      border-radius: 999px;
+      border: 1px solid var(--switcher-bdr);
+      background: var(--switcher-bg);
+      color: var(--switcher-text);
+      font-size: 0.9rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s;
+    }
+    .dark-toggle:hover { background: var(--switcher-hover); }
+
+    .container {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 30px 20px 60px;
+    }
+
+    .card {
+      background: var(--surface);
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: 0 2px 12px var(--shadow);
+      margin-bottom: 20px;
+      transition: background 0.3s, box-shadow 0.3s;
+    }
+
+    .card h2 {
+      font-size: 0.95rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--accent);
+      border-bottom: 2px solid var(--accent-light);
+      padding-bottom: 8px;
+      margin-bottom: 16px;
+    }
+
+    .settings-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .settings-row label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    .settings-row input[type="text"] {
+      width: 110px;
+      padding: 7px 10px;
+      border: 2px solid var(--border-input);
+      border-radius: 8px;
+      font-family: 'Courier New', monospace;
+      font-size: 0.85rem;
+      background: var(--surface);
+      color: var(--text-primary);
+      outline: none;
+    }
+
+    .settings-row input[type="text"]:focus { border-color: var(--accent); }
+
+    .hint {
+      font-size: 0.78rem;
+      color: var(--text-faint);
+    }
+
+    /* ── Input ── */
+    textarea#mlfb-input {
+      width: 100%;
+      min-height: 200px;
+      padding: 14px;
+      border: 2px solid var(--border-input);
+      border-radius: 8px;
+      font-family: 'Courier New', monospace;
+      font-size: 0.88rem;
+      line-height: 1.6;
+      resize: vertical;
+      outline: none;
+      background: var(--surface);
+      color: var(--text-primary);
+      transition: border-color 0.2s;
+    }
+
+    textarea#mlfb-input:focus { border-color: var(--accent); }
+
+    .toolbar {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-top: 14px;
+    }
+
+    .btn {
+      padding: 8px 18px;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-primary { background: var(--accent); color: white; }
+    .btn-primary:hover { background: var(--accent-dark); }
+
+    .btn-secondary {
+      background: var(--btn-sec-bg);
+      color: var(--btn-sec-text);
+      border: 1px solid var(--btn-sec-bdr);
+    }
+    .btn-secondary:hover { background: var(--btn-sec-hover); }
+
+    .btn-danger {
+      background: #fde8e8;
+      color: #a93226;
+      border: 1px solid #f5b7b1;
+    }
+    .btn-danger:hover { background: #fbd0ce; }
+
+    /* ── Output ── */
+    .output-area {
+      position: relative;
+    }
+
+    textarea#corrected-output {
+      width: 100%;
+      min-height: 140px;
+      padding: 14px;
+      border: 2px solid var(--border-input);
+      border-radius: 8px;
+      font-family: 'Courier New', monospace;
+      font-size: 0.85rem;
+      line-height: 1.6;
+      resize: vertical;
+      outline: none;
+      background: var(--surface);
+      color: var(--text-primary);
+      transition: border-color 0.2s;
+    }
+
+    textarea#corrected-output:focus { border-color: var(--accent); }
+
+    .copy-btn {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      padding: 5px 12px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      background: var(--copy-bg);
+      border: 1px solid var(--copy-bdr);
+      border-radius: 6px;
+      cursor: pointer;
+      color: var(--copy-text);
+      transition: all 0.15s;
+    }
+
+    .copy-btn:hover { background: var(--btn-sec-bg); color: var(--btn-sec-text); border-color: var(--btn-sec-bdr); }
+    .copy-btn.copied { background: var(--copy-done-bg); color: var(--copy-done-text); border-color: var(--copy-done-bdr); }
+
+    /* ── Report table ── */
+    .table-wrap { overflow-x: auto; }
+
+    table#report-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.82rem;
+    }
+
+    table#report-table th, table#report-table td {
+      padding: 8px 10px;
+      border-bottom: 1px solid var(--border);
+      text-align: left;
+      vertical-align: top;
+      white-space: nowrap;
+    }
+
+    table#report-table td.wrap-cell { white-space: normal; max-width: 260px; }
+
+    table#report-table th {
+      background: var(--surface-alt);
+      color: var(--text-muted);
+      text-transform: uppercase;
+      font-size: 0.7rem;
+      letter-spacing: 0.04em;
+    }
+
+    table#report-table tr:hover td { background: var(--surface-alt); }
+
+    .status-badge {
+      display: inline-block;
+      padding: 3px 9px;
+      border-radius: 999px;
+      font-size: 0.72rem;
+      font-weight: 700;
+    }
+
+    .status-badge.ok {
+      background: var(--status-ok-bg);
+      color: var(--status-ok-text);
+      border: 1px solid var(--status-ok-bdr);
+    }
+
+    .status-badge.warning {
+      background: var(--status-warn-bg);
+      color: var(--status-warn-text);
+      border: 1px solid var(--status-warn-bdr);
+    }
+
+    .empty-note {
+      font-size: 0.85rem;
+      color: var(--text-faint);
+      padding: 6px 0;
+    }
+
+    @media (max-width: 640px) {
+      .container { padding: 20px 12px 40px; }
+      .card { padding: 16px; }
+      textarea#mlfb-input { min-height: 160px; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <a href="index.html">
+    <span style="font-size:1.3rem;">🏷️</span>
+    <h1 id="page-title">MLFB & Option Code Processor</h1>
+  </a>
+  <div class="header-actions">
+    <div class="switcher">
+      <button class="switcher-btn" id="btn-en" onclick="setLang('en')">EN</button>
+      <button class="switcher-btn" id="btn-zh" onclick="setLang('zh')">中文</button>
+    </div>
+    <button class="dark-toggle" id="darkToggle" onclick="toggleDark()" title="Toggle dark mode">🌙</button>
+  </div>
+</header>
+
+<div class="container">
+
+  <!-- Paste Input -->
+  <div class="card">
+    <h2 id="input-heading">Paste MLFB Data</h2>
+
+    <div class="settings-row">
+      <label for="segment-lengths" id="segment-label">MLFB segment lengths (excl. -Z):</label>
+      <input type="text" id="segment-lengths" value="7,5,4" spellcheck="false" />
+      <span class="hint" id="segment-hint">e.g. 7,5,4 → 6SL3700-1AH41-2AA3</span>
+    </div>
+
+    <textarea id="mlfb-input" spellcheck="false"
+      placeholder="Paste tab-separated rows from Excel...&#10;&#10;Column 1: MLFB code&#10;Column 2 (optional): Option codes&#10;&#10;Example:&#10;6SL3700-1AH41-2AA3-Z	A01+B85+J84+P93"></textarea>
+    <div class="toolbar">
+      <button class="btn btn-primary" onclick="convert()" id="btn-convert">🔄 Convert</button>
+      <button class="btn btn-secondary" onclick="loadSample()" id="btn-sample">📋 Sample</button>
+      <button class="btn btn-danger" onclick="clearAll()" id="btn-clear">🗑 Clear</button>
+    </div>
+  </div>
+
+  <!-- Corrected Output -->
+  <div class="card" id="output-card" style="display:none;">
+    <h2 id="output-heading">Corrected Output</h2>
+    <div class="output-area">
+      <textarea id="corrected-output" readonly placeholder="Corrected, normalized rows will appear here..."></textarea>
+      <button class="copy-btn" id="copy-btn" onclick="copyOutput()">📋 Copy</button>
+    </div>
+  </div>
+
+  <!-- Validation Report -->
+  <div class="card" id="report-card" style="display:none;">
+    <h2 id="report-heading">Validation Report</h2>
+    <div class="table-wrap" id="report-container"></div>
+  </div>
+
+</div>
+
+<script>
+  // ══════════════════════════════════════════════════
+  // DARK MODE
+  // ══════════════════════════════════════════════════
+  const DARK_KEY = 'miniToolsDark';
+
+  function getInitialTheme() {
+    const saved = localStorage.getItem(DARK_KEY);
+    if (saved !== null) return saved === 'true';
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  }
+
+  let isDark = getInitialTheme();
+
+  function applyTheme(dark) {
+    document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+    const btn = document.getElementById('darkToggle');
+    if (btn) {
+      btn.textContent = dark ? '☀️' : '🌙';
+      btn.title = dark
+        ? (currentLang === 'zh' ? '切换到浅色模式' : 'Switch to light mode')
+        : (currentLang === 'zh' ? '切换到深色模式' : 'Switch to dark mode');
+    }
+  }
+
+  function toggleDark() {
+    isDark = !isDark;
+    localStorage.setItem(DARK_KEY, isDark);
+    applyTheme(isDark);
+  }
+
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+    if (localStorage.getItem(DARK_KEY) === null) {
+      isDark = e.matches;
+      applyTheme(isDark);
+    }
+  });
+
+  // ══════════════════════════════════════════════════
+  // i18n
+  // ══════════════════════════════════════════════════
+  const TRANSLATIONS = {
+    en: {
+      pageTitle: 'MLFB & Option Code Processor',
+      inputHeading: 'Paste MLFB Data',
+      segmentLabel: 'MLFB segment lengths (excl. -Z):',
+      segmentHint: 'e.g. 7,5,4 → 6SL3700-1AH41-2AA3',
+      inputPlaceholder: 'Paste tab-separated rows from Excel...\n\nColumn 1: MLFB code\nColumn 2 (optional): Option codes\n\nExample:\n6SL3700-1AH41-2AA3-Z\tA01+B85+J84+P93',
+      btnConvert: '🔄 Convert',
+      btnSample: '📋 Sample',
+      btnClear: '🗑 Clear',
+      outputHeading: 'Corrected Output',
+      outputPlaceholder: 'Corrected, normalized rows will appear here...',
+      copyBtn: '📋 Copy',
+      copiedBtn: '✅ Copied',
+      reportHeading: 'Validation Report',
+      colRow: 'Row',
+      colOrigMlfb: 'Original MLFB',
+      colOrigOpt: 'Original Options',
+      colCorrMlfb: 'Corrected MLFB',
+      colCorrOpt: 'Corrected Options',
+      colStatus: 'Status',
+      colMessage: 'Message',
+      statusOk: 'OK',
+      statusWarning: 'Warning',
+      emptyNote: 'No rows processed yet.',
+      warnMlfbLength: 'MLFB core length mismatch: expected {expected} characters after removing separators, got {actual}. Row was not auto-corrected.',
+      warnMlfbChars: 'MLFB contains non-alphanumeric characters after cleanup — please check manually.',
+      warnOptLength: 'Option code length ({len}) is not a multiple of 3 — {leftover} trailing character(s) dropped.',
+      warnOptInvalid: 'One or more option codes contain invalid characters.',
+      warnEmptyMlfb: 'MLFB cell is empty — row skipped.',
+      warnExtraCols: 'Row has more than 2 columns — extra columns were ignored.',
+    },
+    zh: {
+      pageTitle: 'MLFB与选项代码处理工具',
+      inputHeading: '粘贴 MLFB 数据',
+      segmentLabel: 'MLFB 分段长度（不含 -Z）：',
+      segmentHint: '例如 7,5,4 → 6SL3700-1AH41-2AA3',
+      inputPlaceholder: '从 Excel 粘贴以 Tab 分隔的行...\n\n第1列：MLFB 代码\n第2列（可选）：选项代码\n\n示例：\n6SL3700-1AH41-2AA3-Z\tA01+B85+J84+P93',
+      btnConvert: '🔄 转换',
+      btnSample: '📋 示例',
+      btnClear: '🗑 清除',
+      outputHeading: '修正后的输出',
+      outputPlaceholder: '修正并规范化后的行将显示在此处...',
+      copyBtn: '📋 复制',
+      copiedBtn: '✅ 已复制',
+      reportHeading: '验证报告',
+      colRow: '行',
+      colOrigMlfb: '原始 MLFB',
+      colOrigOpt: '原始选项',
+      colCorrMlfb: '修正后 MLFB',
+      colCorrOpt: '修正后选项',
+      colStatus: '状态',
+      colMessage: '消息',
+      statusOk: '正常',
+      statusWarning: '警告',
+      emptyNote: '尚未处理任何行。',
+      warnMlfbLength: 'MLFB 核心长度不匹配：去除分隔符后应为 {expected} 个字符，实际为 {actual} 个。该行未自动修正。',
+      warnMlfbChars: '清理后 MLFB 包含非字母数字字符 — 请手动检查。',
+      warnOptLength: '选项代码长度（{len}）不是 3 的倍数 — 丢弃了 {leftover} 个末尾字符。',
+      warnOptInvalid: '一个或多个选项代码包含无效字符。',
+      warnEmptyMlfb: 'MLFB 单元格为空 — 该行已跳过。',
+      warnExtraCols: '该行超过 2 列 — 多余的列已被忽略。',
+    }
+  };
+
+  let currentLang = (navigator.language || navigator.userLanguage || 'en')
+                      .toLowerCase().startsWith('zh') ? 'zh' : 'en';
+
+  function t(key) {
+    return TRANSLATIONS[currentLang][key] || TRANSLATIONS['en'][key] || key;
+  }
+
+  function applyTranslations() {
+    document.documentElement.lang = currentLang === 'zh' ? 'zh-CN' : 'en';
+    document.title = currentLang === 'zh' ? 'MLFB与选项代码处理工具' : 'MLFB & Option Code Processor';
+
+    const titleEl = document.getElementById('page-title');
+    if (titleEl) titleEl.textContent = t('pageTitle');
+
+    document.getElementById('input-heading').textContent = t('inputHeading');
+    document.getElementById('segment-label').textContent = t('segmentLabel');
+    document.getElementById('segment-hint').textContent = t('segmentHint');
+    document.getElementById('mlfb-input').placeholder = t('inputPlaceholder');
+    document.getElementById('btn-convert').textContent = t('btnConvert');
+    document.getElementById('btn-sample').textContent = t('btnSample');
+    document.getElementById('btn-clear').textContent = t('btnClear');
+    document.getElementById('output-heading').textContent = t('outputHeading');
+    document.getElementById('corrected-output').placeholder = t('outputPlaceholder');
+    document.getElementById('copy-btn').textContent = t('copyBtn');
+    document.getElementById('report-heading').textContent = t('reportHeading');
+
+    document.getElementById('btn-en').classList.toggle('active', currentLang === 'en');
+    document.getElementById('btn-zh').classList.toggle('active', currentLang === 'zh');
+
+    applyTheme(isDark);
+
+    if (lastResults.length) {
+      renderReport(lastResults);
+    }
+  }
+
+  function setLang(lang) {
+    currentLang = lang;
+    applyTranslations();
+  }
+
+  // ══════════════════════════════════════════════════
+  // MLFB / Option Code Processing Logic
+  // ══════════════════════════════════════════════════
+  let lastResults = [];
+
+  function getSegmentLengths() {
+    const raw = document.getElementById('segment-lengths').value;
+    const parts = raw.split(',')
+      .map(s => parseInt(s.trim(), 10))
+      .filter(n => !isNaN(n) && n > 0);
+    return parts.length ? parts : [7, 5, 4];
+  }
+
+  function escapeHtml(s) {
+    return String(s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+  }
+
+  // Compare option codes: alphabetically first, then numerically.
+  function compareCodes(a, b) {
+    const parse = (c) => {
+      const m = c.match(/^([A-Z]+)(\d+)$/i);
+      if (m) return { alpha: m[1].toUpperCase(), num: parseInt(m[2], 10) };
+      return { alpha: c.toUpperCase(), num: null };
+    };
+    const pa = parse(a), pb = parse(b);
+    if (pa.alpha < pb.alpha) return -1;
+    if (pa.alpha > pb.alpha) return 1;
+    if (pa.num !== null && pb.num !== null) return pa.num - pb.num;
+    return a.localeCompare(b);
+  }
+
+  function processMLFB(cell1, segmentLengths, totalLen) {
+    let core = cell1.replace(/-/g, '').trim().toUpperCase();
+    let warning = null;
+
+    // Strip a trailing "Z" suffix marker (with or without preceding dash) if present.
+    if (core.length === totalLen + 1 && core.slice(-1) === 'Z') {
+      core = core.slice(0, -1);
+    }
+
+    if (core.length !== totalLen) {
+      return {
+        base: cell1.trim(),
+        warning: { type: 'mlfbLength', expected: totalLen, actual: core.length }
+      };
+    }
+
+    if (!/^[A-Z0-9]+$/.test(core)) {
+      warning = { type: 'mlfbChars' };
+    }
+
+    const segs = [];
+    let idx = 0;
+    for (const len of segmentLengths) {
+      segs.push(core.substr(idx, len));
+      idx += len;
+    }
+    return { base: segs.join('-'), warning };
+  }
+
+  function processOptions(cell2) {
+    const trimmed = cell2.trim();
+    if (!trimmed) return { codes: [], warning: null };
+
+    const raw = trimmed.replace(/\+/g, '').toUpperCase();
+    let warning = null;
+    const leftover = raw.length % 3;
+    if (leftover !== 0) {
+      warning = { type: 'optLength', len: raw.length, leftover: leftover };
+    }
+
+    const codes = [];
+    for (let i = 0; i + 3 <= raw.length; i += 3) {
+      codes.push(raw.substr(i, 3));
+    }
+
+    let invalidChars = false;
+    codes.forEach(c => { if (!/^[A-Z0-9]{3}$/.test(c)) invalidChars = true; });
+    if (invalidChars && !warning) warning = { type: 'optInvalid' };
+
+    codes.sort(compareCodes);
+    return { codes, warning };
+  }
+
+  function formatWarning(w) {
+    if (!w) return '';
+    const map = {
+      mlfbLength: () => t('warnMlfbLength').replace('{expected}', w.expected).replace('{actual}', w.actual),
+      mlfbChars: () => t('warnMlfbChars'),
+      optLength: () => t('warnOptLength').replace('{len}', w.len).replace('{leftover}', w.leftover),
+      optInvalid: () => t('warnOptInvalid'),
+      emptyMlfb: () => t('warnEmptyMlfb'),
+      extraCols: () => t('warnExtraCols'),
+    };
+    return map[w.type] ? map[w.type]() : '';
+  }
+
+  function convert() {
+    const text = document.getElementById('mlfb-input').value;
+    const lines = text.split('\n');
+    const segmentLengths = getSegmentLengths();
+    const totalLen = segmentLengths.reduce((a, b) => a + b, 0);
+    const results = [];
+    let rowNum = 0;
+
+    lines.forEach((line) => {
+      if (line.trim() === '') return;
+      rowNum++;
+
+      const cells = line.split('\t');
+      const cell1 = (cells[0] || '').trim();
+      const cell2 = (cells[1] || '').trim();
+      const messages = [];
+
+      if (cells.length > 2) {
+        messages.push(formatWarning({ type: 'extraCols' }));
+      }
+
+      if (!cell1) {
+        results.push({
+          row: rowNum, origMlfb: cell1, origOpt: cell2,
+          corrMlfb: '', corrOpt: '', status: 'warning',
+          messages: [formatWarning({ type: 'emptyMlfb' })]
+        });
+        return;
+      }
+
+      const mlfbResult = processMLFB(cell1, segmentLengths, totalLen);
+      const hasOptions = cell2 !== '';
+      const optResult = hasOptions ? processOptions(cell2) : { codes: [], warning: null };
+
+      const finalMlfb = mlfbResult.warning && mlfbResult.warning.type === 'mlfbLength'
+        ? mlfbResult.base
+        : mlfbResult.base + (hasOptions ? '-Z' : '');
+      const finalOpt = optResult.codes.join('+');
+
+      let status = 'ok';
+      if (mlfbResult.warning) { status = 'warning'; messages.push(formatWarning(mlfbResult.warning)); }
+      if (optResult.warning) { status = 'warning'; messages.push(formatWarning(optResult.warning)); }
+
+      results.push({
+        row: rowNum,
+        origMlfb: cell1,
+        origOpt: cell2,
+        corrMlfb: finalMlfb,
+        corrOpt: finalOpt,
+        status,
+        messages
+      });
+    });
+
+    lastResults = results;
+    renderOutput(results);
+    renderReport(results);
+
+    document.getElementById('output-card').style.display = results.length ? 'block' : 'none';
+    document.getElementById('report-card').style.display = 'block';
+  }
+
+  function renderOutput(results) {
+    const output = document.getElementById('corrected-output');
+    output.value = results.map(r => r.corrMlfb + '\t' + r.corrOpt).join('\n');
+  }
+
+  function renderReport(results) {
+    const container = document.getElementById('report-container');
+    if (!results.length) {
+      container.innerHTML = '<p class="empty-note">' + t('emptyNote') + '</p>';
+      return;
+    }
+
+    let html = '<table id="report-table"><thead><tr>' +
+      '<th>' + t('colRow') + '</th>' +
+      '<th>' + t('colOrigMlfb') + '</th>' +
+      '<th>' + t('colOrigOpt') + '</th>' +
+      '<th>' + t('colCorrMlfb') + '</th>' +
+      '<th>' + t('colCorrOpt') + '</th>' +
+      '<th>' + t('colStatus') + '</th>' +
+      '<th>' + t('colMessage') + '</th>' +
+      '</tr></thead><tbody>';
+
+    results.forEach(r => {
+      const badgeClass = r.status === 'ok' ? 'ok' : 'warning';
+      const badgeText = r.status === 'ok' ? t('statusOk') : t('statusWarning');
+      html += '<tr>' +
+        '<td>' + r.row + '</td>' +
+        '<td>' + escapeHtml(r.origMlfb) + '</td>' +
+        '<td>' + escapeHtml(r.origOpt) + '</td>' +
+        '<td>' + escapeHtml(r.corrMlfb) + '</td>' +
+        '<td>' + escapeHtml(r.corrOpt) + '</td>' +
+        '<td><span class="status-badge ' + badgeClass + '">' + badgeText + '</span></td>' +
+        '<td class="wrap-cell">' + r.messages.map(escapeHtml).join('<br>') + '</td>' +
+        '</tr>';
+    });
+
+    html += '</tbody></table>';
+    container.innerHTML = html;
+  }
+
+  // ── Copy ──
+  async function copyOutput() {
+    const output = document.getElementById('corrected-output');
+    if (!output.value.trim()) return;
+
+    try {
+      await navigator.clipboard.writeText(output.value);
+      const btn = document.getElementById('copy-btn');
+      btn.textContent = t('copiedBtn');
+      btn.classList.add('copied');
+      setTimeout(() => {
+        btn.textContent = t('copyBtn');
+        btn.classList.remove('copied');
+      }, 2000);
+    } catch {
+      output.select();
+      document.execCommand('copy');
+    }
+  }
+
+  // ── Sample ──
+  function loadSample() {
+    document.getElementById('mlfb-input').value =
+`6SL3700-1AH41-2AA3-Z\tA01+B85+J84+P93
+6SL37001AH412AA3Z\tA01+B85+J84+P93
+6SL3700-1AH41-2AA3\tA01+B85
+6SL3700-1AH41-2AA3-Z\t
+6SL3700-1AH41-2AA3-Z\tA01B85J84P93
+6SL3700-1AH41-2AA3-Z\tP93+A01+J84+B85
+6SL37001AH412AA3Z\tP93A01J84B85`;
+    convert();
+  }
+
+  // ── Clear ──
+  function clearAll() {
+    document.getElementById('mlfb-input').value = '';
+    document.getElementById('output-card').style.display = 'none';
+    document.getElementById('report-card').style.display = 'none';
+    document.getElementById('corrected-output').value = '';
+    document.getElementById('report-container').innerHTML = '';
+    lastResults = [];
+  }
+
+  // ══════════════════════════════════════════════════
+  // Init
+  // ══════════════════════════════════════════════════
+  document.addEventListener('DOMContentLoaded', () => {
+    applyTheme(isDark);
+    applyTranslations();
+  });
+</script>
+
+</body>
+</html>
