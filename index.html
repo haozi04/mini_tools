@@ -164,6 +164,19 @@
       gap: 20px;
     }
 
+    .tool-group { margin-bottom: 36px; }
+
+    .group-heading {
+      font-size: 0.95rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--accent);
+      margin-bottom: 16px;
+      font-weight: 700;
+      padding-bottom: 6px;
+      border-bottom: 2px solid var(--accent-light);
+    }
+
     .tool-card {
       background: var(--surface);
       border-radius: 12px;
@@ -272,10 +285,14 @@
 <main class="tools-section">
   <h2 id="tools-heading">Available Tools</h2>
 
-  <div class="tool-grid">
+  <div class="tool-group">
+    <h3 class="group-heading" id="group-siemens">Siemens</h3>
+    <div class="tool-grid" id="grid-siemens"></div>
+  </div>
 
-    <!-- Cards are rendered by JS for drag-and-drop support -->
-
+  <div class="tool-group">
+    <h3 class="group-heading" id="group-misc">Misc</h3>
+    <div class="tool-grid" id="grid-misc"></div>
   </div>
 </main>
 
@@ -294,6 +311,8 @@
       pageTitle: '🧰 Mini Tools',
       pageIntro: 'A collection of lightweight, browser-based utility tools. No sign-up, no tracking — just open and use.',
       toolsHeading: 'Available Tools',
+      groupSiemens: 'Siemens',
+      groupMisc: 'Misc',
       markdownTitle: 'Markdown Renderer',
       markdownDesc: 'Write Markdown with live preview. Supports LaTeX math, code blocks, tables, and more. Export to HTML or PDF.',
       warrantyTitle: 'FID Toolkit',
@@ -310,6 +329,8 @@
       pageTitle: '🧰 迷你工具箱',
       pageIntro: '一组轻量级、基于浏览器的实用工具集合。无需注册、无需跟踪 —— 直接打开即可使用。',
       toolsHeading: '可用工具',
+      groupSiemens: '西门子',
+      groupMisc: '其他',
       markdownTitle: 'Markdown 渲染器',
       markdownDesc: '使用实时预览编写 Markdown。支持 LaTeX 数学公式、代码块、表格等内容。可导出为 HTML 或 PDF。',
       warrantyTitle: 'FID 工具包',
@@ -339,6 +360,8 @@
     setText('page-title', 'pageTitle');
     setText('page-intro', 'pageIntro');
     setText('tools-heading', 'toolsHeading');
+    setText('group-siemens', 'groupSiemens');
+    setText('group-misc', 'groupMisc');
     setText('markdown-title', 'markdownTitle');
     setText('markdown-desc', 'markdownDesc');
     setText('warranty-title', 'warrantyTitle');
@@ -357,10 +380,10 @@
   const ORDER_KEY = 'miniToolsOrder';
 
   const TOOL_CARDS = [
-    { href: 'markdown-renderer.html', icon: 'M↓',   id: 'markdown', titleKey: 'markdownTitle', descKey: 'markdownDesc' },
-    { href: 'warranty-tool.html',     icon: '🔧',   id: 'warranty', titleKey: 'warrantyTitle', descKey: 'warrantyDesc' },
-    { href: 'excel-to-markdown.html', icon: '📊',   id: 'excel',    titleKey: 'excelTitle',    descKey: 'excelDesc' },
-    { href: 'mlfb-option-code-processor.html', icon: '⚙️', id: 'mlfb', titleKey: 'mlfbTitle', descKey: 'mlfbDesc' },
+    { href: 'warranty-tool.html',     icon: '🔧',   id: 'warranty', group: 'siemens', titleKey: 'warrantyTitle', descKey: 'warrantyDesc' },
+    { href: 'mlfb-option-code-processor.html', icon: '⚙️', id: 'mlfb', group: 'siemens', titleKey: 'mlfbTitle', descKey: 'mlfbDesc' },
+    { href: 'markdown-renderer.html', icon: 'M↓',   id: 'markdown', group: 'misc', titleKey: 'markdownTitle', descKey: 'markdownDesc' },
+    { href: 'excel-to-markdown.html', icon: '📊',   id: 'excel',    group: 'misc', titleKey: 'excelTitle',    descKey: 'excelDesc' },
   ];
 
   function renderCards() {
@@ -383,11 +406,14 @@
       order = TOOL_CARDS.map(c => c.id);
     }
 
-    const grid = document.querySelector('.tool-grid');
-    grid.innerHTML = '';
-
     const byId = {};
     TOOL_CARDS.forEach(c => { byId[c.id] = c; });
+
+    // Clear both group grids
+    const gridSiemens = document.getElementById('grid-siemens');
+    const gridMisc    = document.getElementById('grid-misc');
+    gridSiemens.innerHTML = '';
+    gridMisc.innerHTML = '';
 
     order.forEach(id => {
       const card = byId[id];
@@ -410,7 +436,8 @@
       a.addEventListener('dragleave', onDragLeave);
       a.addEventListener('drop', onDrop);
 
-      grid.appendChild(a);
+      const targetGrid = card.group === 'siemens' ? gridSiemens : gridMisc;
+      targetGrid.appendChild(a);
     });
 
     // Re-apply translations for the new elements

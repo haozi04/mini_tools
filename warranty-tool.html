@@ -111,6 +111,17 @@
     .tab-panel.active { display: block; }
 
     /* ── Inputs ── */
+    .decoder-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .decoder-row .input-group {
+      flex: 1;
+      min-width: 0;
+    }
+
     .input-group {
       display: flex;
       align-items: center;
@@ -198,12 +209,16 @@
 
     /* ── Validation banner ── */
     .valid-banner {
-      padding: 10px 16px;
+      flex-shrink: 0;
+      width: 180px;
+      padding: 8px 12px;
       border-radius: 8px;
       font-weight: 700;
-      font-size: 0.95rem;
+      font-size: 0.8rem;
       text-align: center;
-      margin-bottom: 14px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .valid-banner.valid   { background: var(--pass-bg); color: var(--pass-text); border: 1px solid var(--pass-text); }
@@ -337,6 +352,8 @@
       .tab-bar { padding: 14px 12px 0; }
       .tab-btn { padding: 8px 14px; font-size: 0.82rem; }
       .fields-grid { grid-template-columns: 1fr; }
+      .decoder-row { flex-direction: column; align-items: stretch; }
+      .decoder-row .valid-banner { width: 100%; }
       .input-group { flex-direction: column; align-items: stretch; gap: 6px; }
       .stats-bar { margin-left: 0; width: 100%; justify-content: space-around; }
       .toolbar { flex-direction: column; align-items: stretch; }
@@ -364,12 +381,14 @@
 
     <div class="card">
       <h2 id="dec-input">Input</h2>
-      <div class="input-group">
-        <label>FID:</label>
-        <input type="text" id="fidInput" placeholder="e.g. ZYN32967500024"
-               maxlength="14" autocomplete="off" spellcheck="false"/>
+      <div class="decoder-row">
+        <div class="input-group">
+          <label>FID:</label>
+          <input type="text" id="fidInput" placeholder="e.g. ZYN32967500024"
+                 maxlength="14" autocomplete="off" spellcheck="false"/>
+        </div>
+        <div class="valid-banner idle" id="validBanner">Enter a FID to validate</div>
       </div>
-      <div class="valid-banner idle" id="validBanner">Enter a FID to validate</div>
       <div class="checklist" id="checklist">
         <div class="check-item idle" id="chk-length">
           <span class="check-icon">○</span>
