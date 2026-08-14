@@ -5,71 +5,57 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Mini Tools</title>
   <meta name="description" content="A collection of lightweight, browser-based utility tools." />
+  <link rel="stylesheet" href="shared/theme.css" />
+  <link rel="stylesheet" href="shared/header.css" />
   <style>
-    /* ══════════════════════════════════════════════
-       CSS CUSTOM PROPERTIES — Light (default)
-       ══════════════════════════════════════════════ */
     :root {
-      --bg:            #f0f2f5;
-      --surface:       #ffffff;
-      --surface-alt:   #f7fafa;
-      --border:        #e0eeee;
-      --text-primary:  #1a1a2e;
-      --text-muted:    #666666;
-      --text-faint:    #aaaaaa;
-      --accent:        #009999;
-      --accent-dark:   #007a7a;
-      --accent-light:  #e0f5f5;
-      --shadow:        rgba(0,0,0,0.08);
       --card-border:   transparent;
       --card-hover:    #009999;
       --footer-bg:     #ffffff;
       --footer-border: #e0e0e0;
-      --switcher-bg:      rgba(255,255,255,0.16);
-      --switcher-text:    #ffffff;
-      --switcher-bdr:     rgba(255,255,255,0.35);
-      --switcher-hover:   rgba(255,255,255,0.24);
-      --switcher-act-bg:  #ffffff;
-      --switcher-act-txt: #009999;
     }
 
-    /* ══════════════════════════════════════════════
-       DARK MODE OVERRIDES
-       ══════════════════════════════════════════════ */
     [data-theme="dark"] {
-      --bg:            #0f1117;
-      --surface:       #1a1d27;
-      --surface-alt:   #1e2130;
-      --border:        #2a2d3e;
-      --text-primary:  #e2e8f0;
-      --text-muted:    #94a3b8;
-      --text-faint:    #4a5568;
-      --accent:        #00cccc;
-      --accent-dark:   #00aaaa;
-      --accent-light:  #0d2e2e;
-      --shadow:        rgba(0,0,0,0.4);
       --card-border:   #2a2d3e;
       --card-hover:    #00cccc;
       --footer-bg:     #1a1d27;
       --footer-border: #2a2d3e;
-      --switcher-bg:      rgba(255,255,255,0.10);
-      --switcher-text:    #e2e8f0;
-      --switcher-bdr:     rgba(255,255,255,0.25);
-      --switcher-hover:   rgba(255,255,255,0.18);
-      --switcher-act-bg:  #00cccc;
-      --switcher-act-txt: #0f1117;
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: var(--bg);
-      color: var(--text-primary);
-      min-height: 100vh;
       display: flex;
       flex-direction: column;
-      transition: background 0.3s, color 0.3s;
+    }
+
+    /* ── Index-specific header (centered, larger) ── */
+    header {
+      padding: 40px 24px 36px;
+      text-align: center;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+    }
+
+    .header-actions {
+      justify-content: center;
+      margin-top: 16px;
+      flex-wrap: wrap;
+    }
+
+    .switcher-btn { padding: 8px 14px; font-size: 0.85rem; }
+    .dark-toggle  { width: 36px; height: 34px; font-size: 1rem; }
+
+    header h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      margin-bottom: 8px;
+    }
+
+    header p {
+      font-size: 1rem;
+      opacity: 0.85;
+      max-width: 500px;
+      margin: 0 auto;
+      line-height: 1.5;
     }
 
     /* ── Header ──────────────────────────────────────────────── */
@@ -297,44 +283,10 @@
   <p><span id="footer-text">Mini Tools &copy; 2026 &mdash; Built for simplicity.</span> <a id="footer-source" href="https://github.com">Source</a></p>
 </footer>
 
+<script src="shared/header.js"></script>
 <script>
   // ══════════════════════════════════════════════════
-  // DARK MODE
-  // ══════════════════════════════════════════════════
-  const DARK_KEY = 'miniToolsDark';
-
-  function getInitialTheme() {
-    const saved = localStorage.getItem(DARK_KEY);
-    if (saved !== null) return saved === 'true';
-    return window.matchMedia('(prefers-color-scheme: dark)').matches;
-  }
-
-  let isDark = getInitialTheme();
-
-  function applyTheme(dark) {
-    document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
-    const btn = document.getElementById('darkToggle');
-    btn.textContent = dark ? '☀️' : '🌙';
-    btn.title = dark
-      ? (currentLang === 'zh' ? '切换到浅色模式' : 'Switch to light mode')
-      : (currentLang === 'zh' ? '切换到深色模式' : 'Switch to dark mode');
-  }
-
-  function toggleDark() {
-    isDark = !isDark;
-    localStorage.setItem(DARK_KEY, isDark);
-    applyTheme(isDark);
-  }
-
-  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
-    if (localStorage.getItem(DARK_KEY) === null) {
-      isDark = e.matches;
-      applyTheme(isDark);
-    }
-  });
-
-  // ══════════════════════════════════════════════════
-  // i18n
+  // i18n (dark mode handled by shared/header.js)
   // ══════════════════════════════════════════════════
   const TRANSLATIONS = {
     en: {
@@ -352,8 +304,6 @@
       mlfbDesc: 'Paste Excel data with MLFB codes and option codes, validate and normalize them for PMD.',
       footerText: 'Mini Tools © 2026 — Built for simplicity.',
       footerSource: 'Source',
-      dark_on: 'Switch to light mode',
-      dark_off: 'Switch to dark mode',
     },
     zh: {
       metaDescription: '一组轻量级、基于浏览器的实用工具集合。',
@@ -370,20 +320,10 @@
       mlfbDesc: '粘贴包含 MLFB 编码和选型代码的 Excel 数据，验证并规范化为 PMD 格式。',
       footerText: 'Mini Tools © 2026 — 以简洁为核心。',
       footerSource: '源码',
-      dark_on: '切换到浅色模式',
-      dark_off: '切换到深色模式',
     }
   };
 
-  let currentLang = (navigator.language || navigator.userLanguage || 'en')
-                      .toLowerCase().startsWith('zh') ? 'zh' : 'en';
-
-  function t(key) {
-    return TRANSLATIONS[currentLang][key] || TRANSLATIONS['en'][key] || key;
-  }
-
-  function applyTranslations() {
-    document.documentElement.lang = currentLang === 'zh' ? 'zh-CN' : 'en';
+  function pageApplyTranslations() {
     document.title = currentLang === 'zh' ? '迷你工具箱' : 'Mini Tools';
 
     const metaDescription = document.querySelector('meta[name="description"]');
@@ -391,28 +331,24 @@
       metaDescription.setAttribute('content', t('metaDescription'));
     }
 
-    document.getElementById('page-title').textContent = t('pageTitle');
-    document.getElementById('page-intro').textContent = t('pageIntro');
-    document.getElementById('tools-heading').textContent = t('toolsHeading');
-    document.getElementById('markdown-title').textContent = t('markdownTitle');
-    document.getElementById('markdown-desc').textContent = t('markdownDesc');
-    document.getElementById('warranty-title').textContent = t('warrantyTitle');
-    document.getElementById('warranty-desc').textContent = t('warrantyDesc');
-    document.getElementById('excel-title').textContent = t('excelTitle');
-    document.getElementById('excel-desc').textContent = t('excelDesc');
-    document.getElementById('mlfb-title').textContent = t('mlfbTitle');
-    document.getElementById('mlfb-desc').textContent = t('mlfbDesc');
-    document.getElementById('footer-text').textContent = t('footerText');
-    document.getElementById('footer-source').textContent = t('footerSource');
+    const setText = (id, key) => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = t(key);
+    };
 
-    document.getElementById('btn-en').classList.toggle('active', currentLang === 'en');
-    document.getElementById('btn-zh').classList.toggle('active', currentLang === 'zh');
-    applyTheme(isDark);
-  }
-
-  function setLang(lang) {
-    currentLang = lang;
-    applyTranslations();
+    setText('page-title', 'pageTitle');
+    setText('page-intro', 'pageIntro');
+    setText('tools-heading', 'toolsHeading');
+    setText('markdown-title', 'markdownTitle');
+    setText('markdown-desc', 'markdownDesc');
+    setText('warranty-title', 'warrantyTitle');
+    setText('warranty-desc', 'warrantyDesc');
+    setText('excel-title', 'excelTitle');
+    setText('excel-desc', 'excelDesc');
+    setText('mlfb-title', 'mlfbTitle');
+    setText('mlfb-desc', 'mlfbDesc');
+    setText('footer-text', 'footerText');
+    setText('footer-source', 'footerSource');
   }
 
   // ══════════════════════════════════════════════════
@@ -535,7 +471,6 @@
   }
 
   document.addEventListener('DOMContentLoaded', () => {
-    applyTheme(isDark);
     renderCards();
   });
 </script>

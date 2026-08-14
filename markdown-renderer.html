@@ -27,20 +27,11 @@
   </script>
   <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
 
+  <link rel="stylesheet" href="shared/theme.css" />
+  <link rel="stylesheet" href="shared/header.css" />
   <style>
-    /* ══════════════════════════════════════════════
-       CSS CUSTOM PROPERTIES — Light (default)
-       ══════════════════════════════════════════════ */
     :root {
-      --bg:            #f0f2f5;
-      --surface:       #ffffff;
-      --text-primary:  #1a1a2e;
       --text-muted:    #444444;
-      --text-faint:    #aaaaaa;
-      --accent:        #009999;
-      --accent-dark:   #007a7a;
-      --accent-light:  #e0f5f5;
-      --shadow:        rgba(0,0,0,0.08);
       --toolbar-bg:    #ffffff;
       --toolbar-bdr:   #dde1e7;
       --pane-header-editor: #2d2d2d;
@@ -78,27 +69,10 @@
       --view-btn-bg:   #e8e8e8;
       --view-btn-text: #555555;
       --view-btn-act:  #009999;
-      --switcher-bg:      rgba(255,255,255,0.16);
-      --switcher-text:    #ffffff;
-      --switcher-bdr:     rgba(255,255,255,0.35);
-      --switcher-hover:   rgba(255,255,255,0.24);
-      --switcher-act-bg:  #ffffff;
-      --switcher-act-txt: #009999;
     }
 
-    /* ══════════════════════════════════════════════
-       DARK MODE OVERRIDES
-       ══════════════════════════════════════════════ */
     [data-theme="dark"] {
-      --bg:            #0f1117;
-      --surface:       #1a1d27;
-      --text-primary:  #e2e8f0;
       --text-muted:    #94a3b8;
-      --text-faint:    #4a5568;
-      --accent:        #00cccc;
-      --accent-dark:   #00aaaa;
-      --accent-light:  #0d2e2e;
-      --shadow:        rgba(0,0,0,0.4);
       --toolbar-bg:    #1a1d27;
       --toolbar-bdr:   #2a2d3e;
       --pane-header-editor: #1a1d27;
@@ -136,93 +110,7 @@
       --view-btn-bg:   #1e2130;
       --view-btn-text: #94a3b8;
       --view-btn-act:  #00cccc;
-      --switcher-bg:      rgba(255,255,255,0.10);
-      --switcher-text:    #e2e8f0;
-      --switcher-bdr:     rgba(255,255,255,0.25);
-      --switcher-hover:   rgba(255,255,255,0.18);
-      --switcher-act-bg:  #00cccc;
-      --switcher-act-txt: #0f1117;
     }
-
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: var(--bg);
-      color: var(--text-primary);
-      min-height: 100vh;
-      transition: background 0.3s, color 0.3s;
-    }
-
-    header {
-      background: linear-gradient(135deg, var(--accent), var(--accent-dark));
-      color: white;
-      padding: 12px 16px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-    }
-
-    header svg { width: 32px; height: 32px; fill: white; flex-shrink: 0; }
-    header h1  { font-size: 1.1rem; font-weight: 600; letter-spacing: 0.5px; }
-    header span { font-size: 0.75rem; opacity: 0.85; margin-left: 4px; }
-
-    .header-actions {
-      margin-left: auto;
-      display: flex;
-      gap: 8px;
-      align-items: center;
-    }
-
-    .switcher {
-      display: flex;
-      border-radius: 999px;
-      overflow: hidden;
-      border: 1px solid var(--switcher-bdr);
-    }
-
-    .switcher-btn {
-      padding: 6px 12px;
-      border: none;
-      background: var(--switcher-bg);
-      color: var(--switcher-text);
-      font-size: 0.78rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background 0.2s, color 0.2s;
-      line-height: 1;
-    }
-
-    .switcher-btn + .switcher-btn {
-      border-left: 1px solid var(--switcher-bdr);
-    }
-
-    .switcher-btn.active {
-      background: var(--switcher-act-bg);
-      color: var(--switcher-act-txt);
-    }
-
-    .switcher-btn:hover:not(.active) {
-      background: var(--switcher-hover);
-    }
-
-    .dark-toggle {
-      width: 32px;
-      height: 30px;
-      border-radius: 999px;
-      border: 1px solid var(--switcher-bdr);
-      background: var(--switcher-bg);
-      color: var(--switcher-text);
-      font-size: 0.9rem;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: background 0.2s;
-    }
-
-    .dark-toggle:hover { background: var(--switcher-hover); }
 
     .toolbar {
       display: flex;
@@ -445,10 +333,6 @@
 
     /* ── Mobile responsive ──────────────────────────────────────── */
     @media (max-width: 768px) {
-      header { padding: 10px 12px; gap: 8px; }
-      header h1 { font-size: 0.95rem; }
-      header span { display: none; }
-
       .toolbar { padding: 8px 12px; gap: 6px; }
       .btn { padding: 6px 10px; font-size: 0.75rem; gap: 4px; }
 
@@ -474,7 +358,6 @@
     }
 
     @media (max-width: 480px) {
-      header h1 { font-size: 0.85rem; }
       .toolbar-label { display: none; }
       .btn { padding: 6px 8px; font-size: 0.72rem; }
       .btn-clear { margin-left: 0; }
@@ -489,22 +372,15 @@
 </head>
 <body>
 
-<header>
-  <a href="index.html" style="color:white;text-decoration:none;display:flex;align-items:center;gap:10px;">
-    <svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg" style="width:32px;height:32px;fill:white;flex-shrink:0;">
-      <rect width="40" height="40" rx="6" fill="rgba(255,255,255,0.15)"/>
-      <text x="5" y="28" font-size="22" font-family="monospace" fill="white" font-weight="bold">M↓</text>
-    </svg>
-    <h1 id="page-title">Markdown Renderer <span id="page-subtitle">— Preview · Print · Export</span></h1>
-  </a>
-  <div class="header-actions">
-    <div class="switcher">
-      <button class="switcher-btn" id="btn-en" onclick="setLang('en')">EN</button>
-      <button class="switcher-btn" id="btn-zh" onclick="setLang('zh')">中文</button>
-    </div>
-    <button class="dark-toggle" id="darkToggle" onclick="toggleDark()" title="Toggle dark mode">🌙</button>
-  </div>
-</header>
+<script src="shared/header.js"></script>
+<script>
+  injectHeader({
+    icon: '<svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg" style="width:32px;height:32px;fill:white;flex-shrink:0;"><rect width="40" height="40" rx="6" fill="rgba(255,255,255,0.15)"/><text x="5" y="28" font-size="22" font-family="monospace" fill="white" font-weight="bold">M↓</text></svg>',
+    title: 'Markdown Renderer',
+    subtitle: true,
+    subtitleText: '— Preview · Print · Export'
+  });
+</script>
 
 <div class="toolbar">
   <span class="toolbar-label">Actions</span>
@@ -915,43 +791,9 @@ graph TD
 </script>
 
 <!-- ══════════════════════════════════════════════
-     UNIFIED DARK MODE + i18n
+     i18n (dark mode handled by shared/header.js)
      ══════════════════════════════════════════════ -->
 <script>
-  const DARK_KEY = 'miniToolsDark';
-
-  function getInitialTheme() {
-    const saved = localStorage.getItem(DARK_KEY);
-    if (saved !== null) return saved === 'true';
-    return window.matchMedia('(prefers-color-scheme: dark)').matches;
-  }
-
-  let isDark = getInitialTheme();
-
-  function applyTheme(dark) {
-    document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
-    const btn = document.getElementById('darkToggle');
-    if (btn) {
-      btn.textContent = dark ? '☀️' : '🌙';
-      btn.title = dark
-        ? (currentLang === 'zh' ? '切换到浅色模式' : 'Switch to light mode')
-        : (currentLang === 'zh' ? '切换到深色模式' : 'Switch to dark mode');
-    }
-  }
-
-  function toggleDark() {
-    isDark = !isDark;
-    localStorage.setItem(DARK_KEY, isDark);
-    applyTheme(isDark);
-  }
-
-  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
-    if (localStorage.getItem(DARK_KEY) === null) {
-      isDark = e.matches;
-      applyTheme(isDark);
-    }
-  });
-
   const TRANSLATIONS = {
     en: {
       pageTitle: 'Markdown Renderer',
@@ -983,37 +825,21 @@ graph TD
     }
   };
 
-  let currentLang = (navigator.language || navigator.userLanguage || 'en')
-                      .toLowerCase().startsWith('zh') ? 'zh' : 'en';
-
-  function t(key) {
-    return TRANSLATIONS[currentLang][key] || TRANSLATIONS['en'][key] || key;
-  }
-
-  function applyTranslations() {
-    document.documentElement.lang = currentLang === 'zh' ? 'zh-CN' : 'en';
+  function pageApplyTranslations() {
     document.title = currentLang === 'zh' ? 'Markdown 渲染器' : 'Markdown to HTML Renderer';
 
-    const titleEl = document.getElementById('page-title');
-    if (titleEl) titleEl.childNodes[0].textContent = t('pageTitle') + ' ';
-    const subtitleEl = document.getElementById('page-subtitle');
-    if (subtitleEl) subtitleEl.textContent = t('pageSubtitle');
-
-    document.getElementById('btn-en').classList.toggle('active', currentLang === 'en');
-    document.getElementById('btn-zh').classList.toggle('active', currentLang === 'zh');
-
-    applyTheme(isDark);
+    const toolbarLabel = document.querySelector('.toolbar-label');
+    if (toolbarLabel) toolbarLabel.textContent = t('toolbarLabel');
+    document.querySelector('.btn-print').textContent = t('btnPrint');
+    document.querySelector('.btn-pdf').textContent = t('btnPdf');
+    document.querySelector('.btn-html').textContent = t('btnHtml');
+    document.querySelector('.btn-clear').textContent = t('btnClear');
+    document.getElementById('btn-edit').textContent = t('btnEdit');
+    document.getElementById('btn-preview').textContent = t('btnPreview');
+    document.querySelector('.editor-pane .pane-header').childNodes[1].textContent = t('paneEditor');
+    document.querySelector('.preview-pane .pane-header').childNodes[1].textContent = t('panePreview');
+    textarea.placeholder = t('inputPlaceholder');
   }
-
-  function setLang(lang) {
-    currentLang = lang;
-    applyTranslations();
-  }
-
-  document.addEventListener('DOMContentLoaded', () => {
-    applyTheme(isDark);
-    applyTranslations();
-  });
 </script>
 
 </body>
