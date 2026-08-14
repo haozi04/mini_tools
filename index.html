@@ -222,27 +222,6 @@
 
     .tool-card.markdown .tool-icon { background: var(--accent-light); color: var(--accent); }
 
-    /* ── Drag & Drop ─────────────────────────────────────────── */
-    .tool-card.dragging {
-      opacity: 0.4;
-      transform: scale(0.96);
-    }
-
-    .tool-card.drag-over {
-      border-color: var(--accent);
-      border-style: dashed;
-      transform: scale(1.02);
-      box-shadow: 0 4px 16px var(--shadow);
-    }
-
-    .tool-card {
-      cursor: grab;
-    }
-
-    .tool-card:active {
-      cursor: grabbing;
-    }
-
     /* ── Footer ──────────────────────────────────────────────── */
     footer {
       text-align: center;
@@ -375,10 +354,8 @@
   }
 
   // ══════════════════════════════════════════════════
-  // DRAG & DROP — Tile Reordering
+  // TOOL CARDS — Rendering
   // ══════════════════════════════════════════════════
-  const ORDER_KEY = 'miniToolsOrder';
-
   const TOOL_CARDS = [
     { href: 'warranty-tool.html',     icon: '🔧',   id: 'warranty', group: 'siemens', titleKey: 'warrantyTitle', descKey: 'warrantyDesc' },
     { href: 'mlfb-option-code-processor.html', icon: '⚙️', id: 'mlfb', group: 'siemens', titleKey: 'mlfbTitle', descKey: 'mlfbDesc' },
@@ -387,54 +364,20 @@
   ];
 
   function renderCards() {
-    const saved = localStorage.getItem(ORDER_KEY);
-    let order;
-    if (saved) {
-      try {
-        order = JSON.parse(saved);
-        // Ensure all known ids are present
-        const allIds = TOOL_CARDS.map(c => c.id);
-        for (const id of allIds) {
-          if (!order.includes(id)) order.push(id);
-        }
-        // Remove any stale ids
-        order = order.filter(id => allIds.includes(id));
-      } catch {
-        order = TOOL_CARDS.map(c => c.id);
-      }
-    } else {
-      order = TOOL_CARDS.map(c => c.id);
-    }
-
-    const byId = {};
-    TOOL_CARDS.forEach(c => { byId[c.id] = c; });
-
-    // Clear both group grids
     const gridSiemens = document.getElementById('grid-siemens');
     const gridMisc    = document.getElementById('grid-misc');
     gridSiemens.innerHTML = '';
     gridMisc.innerHTML = '';
 
-    order.forEach(id => {
-      const card = byId[id];
-      if (!card) return;
+    TOOL_CARDS.forEach(card => {
       const a = document.createElement('a');
       a.href = card.href;
       a.className = 'tool-card markdown';
-      a.draggable = true;
-      a.dataset.cardId = card.id;
       a.innerHTML = `
         <div class="tool-icon">${card.icon}</div>
         <h3 id="${card.id}-title">${t(card.titleKey)}</h3>
         <p id="${card.id}-desc">${t(card.descKey)}</p>
       `;
-
-      a.addEventListener('dragstart', onDragStart);
-      a.addEventListener('dragend', onDragEnd);
-      a.addEventListener('dragover', onDragOver);
-      a.addEventListener('dragenter', onDragEnter);
-      a.addEventListener('dragleave', onDragLeave);
-      a.addEventListener('drop', onDrop);
 
       const targetGrid = card.group === 'siemens' ? gridSiemens : gridMisc;
       targetGrid.appendChild(a);
@@ -442,59 +385,6 @@
 
     // Re-apply translations for the new elements
     applyTranslations();
-  }
-
-  let dragSrcId = null;
-
-  function onDragStart(e) {
-    dragSrcId = this.dataset.cardId;
-    this.classList.add('dragging');
-    e.dataTransfer.effectAllowed = 'move';
-    e.dataTransfer.setData('text/plain', dragSrcId);
-  }
-
-  function onDragEnd(e) {
-    this.classList.remove('dragging');
-    document.querySelectorAll('.tool-card.drag-over').forEach(el => el.classList.remove('drag-over'));
-  }
-
-  function onDragOver(e) {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
-  }
-
-  function onDragEnter(e) {
-    e.preventDefault();
-    if (this.dataset.cardId !== dragSrcId) {
-      this.classList.add('drag-over');
-    }
-  }
-
-  function onDragLeave(e) {
-    this.classList.remove('drag-over');
-  }
-
-  function onDrop(e) {
-    e.preventDefault();
-    this.classList.remove('drag-over');
-
-    const targetId = this.dataset.cardId;
-    if (!dragSrcId || dragSrcId === targetId) return;
-
-    const saved = localStorage.getItem(ORDER_KEY);
-    let order = saved ? JSON.parse(saved) : TOOL_CARDS.map(c => c.id);
-
-    const srcIdx = order.indexOf(dragSrcId);
-    const tgtIdx = order.indexOf(targetId);
-    if (srcIdx === -1 || tgtIdx === -1) return;
-
-    // Remove source and re-insert at target position
-    order.splice(srcIdx, 1);
-    const newTgtIdx = order.indexOf(targetId);
-    order.splice(newTgtIdx, 0, dragSrcId);
-
-    localStorage.setItem(ORDER_KEY, JSON.stringify(order));
-    renderCards();
   }
 
   document.addEventListener('DOMContentLoaded', () => {
