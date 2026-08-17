@@ -265,13 +265,18 @@
   <h2 id="tools-heading">Available Tools</h2>
 
   <div class="tool-group">
+    <h3 class="group-heading" id="group-misc">Misc</h3>
+    <div class="tool-grid" id="grid-misc"></div>
+  </div>
+
+  <div class="tool-group">
     <h3 class="group-heading" id="group-siemens">Siemens</h3>
     <div class="tool-grid" id="grid-siemens"></div>
   </div>
 
   <div class="tool-group">
-    <h3 class="group-heading" id="group-misc">Misc</h3>
-    <div class="tool-grid" id="grid-misc"></div>
+    <h3 class="group-heading" id="group-3d">3D PRINT</h3>
+    <div class="tool-grid" id="grid-3d"></div>
   </div>
 </main>
 
@@ -291,6 +296,7 @@
       pageIntro: 'A collection of lightweight, browser-based utility tools. No sign-up, no tracking — just open and use.',
       toolsHeading: 'Available Tools',
       groupSiemens: 'Siemens',
+      group3d: '3D PRINT',
       groupMisc: 'Misc',
       markdownTitle: 'Markdown Renderer',
       markdownDesc: 'Write Markdown with live preview. Supports LaTeX math, code blocks, tables, and more. Export to HTML or PDF.',
@@ -300,6 +306,8 @@
       excelDesc: 'Paste Excel data and convert to clean Markdown tables. Preview and copy with one click.',
       formatTitle: 'Format Converter',
       formatDesc: 'Convert pasted content among Excel (tab-delimited), CSV, and Markdown table formats.',
+      converter3dTitle: '3MF / STL Converter',
+      converter3dDesc: 'Convert 3D model files between 3MF and STL formats entirely in your browser.',
       mlfbTitle: 'MLFB & Option Code Processor',
       mlfbDesc: 'Paste Excel data with MLFB codes and option codes, validate and normalize them for PMD.',
       footerText: 'Mini Tools © 2026 — Built for simplicity.',
@@ -311,6 +319,7 @@
       pageIntro: '一组轻量级、基于浏览器的实用工具集合。无需注册、无需跟踪 —— 直接打开即可使用。',
       toolsHeading: '可用工具',
       groupSiemens: '西门子',
+      group3d: '3D 打印',
       groupMisc: '其他',
       markdownTitle: 'Markdown 渲染器',
       markdownDesc: '使用实时预览编写 Markdown。支持 LaTeX 数学公式、代码块、表格等内容。可导出为 HTML 或 PDF。',
@@ -320,6 +329,8 @@
       excelDesc: '将 Excel 数据粘贴并转换为干净的 Markdown 表格。预览并一键复制。',
       formatTitle: '格式转换器',
       formatDesc: '在 Excel（制表符分隔）、CSV 和 Markdown 表格格式之间转换粘贴的内容。',
+      converter3dTitle: '3MF / STL 转换器',
+      converter3dDesc: '在浏览器中完全转换 3MF 和 STL 格式的 3D 模型文件。',
       mlfbTitle: 'MLFB 与选型代码处理器',
       mlfbDesc: '粘贴包含 MLFB 编码和选型代码的 Excel 数据，验证并规范化为 PMD 格式。',
       footerText: 'Mini Tools © 2026 — 以简洁为核心。',
@@ -344,6 +355,7 @@
     setText('page-intro', 'pageIntro');
     setText('tools-heading', 'toolsHeading');
     setText('group-siemens', 'groupSiemens');
+    setText('group-3d', 'group3d');
     setText('group-misc', 'groupMisc');
     setText('markdown-title', 'markdownTitle');
     setText('markdown-desc', 'markdownDesc');
@@ -353,6 +365,8 @@
     setText('excel-desc', 'excelDesc');
     setText('format-title', 'formatTitle');
     setText('format-desc', 'formatDesc');
+    setText('converter3d-title', 'converter3dTitle');
+    setText('converter3d-desc', 'converter3dDesc');
     setText('mlfb-title', 'mlfbTitle');
     setText('mlfb-desc', 'mlfbDesc');
     setText('footer-text', 'footerText');
@@ -368,12 +382,15 @@
     { href: 'markdown-renderer.html', icon: 'M↓',   id: 'markdown', group: 'misc', titleKey: 'markdownTitle', descKey: 'markdownDesc' },
     { href: 'excel-to-markdown.html', icon: '📊',   id: 'excel',    group: 'misc', titleKey: 'excelTitle',    descKey: 'excelDesc' },
     { href: 'format-converter.html',  icon: '🔁',   id: 'format',   group: 'misc', titleKey: 'formatTitle',   descKey: 'formatDesc', },
+    { href: '3mf-stl-converter.html', icon: '🧊',   id: 'converter3d', group: '3d', titleKey: 'converter3dTitle', descKey: 'converter3dDesc' },
   ];
 
   function renderCards() {
     const gridSiemens = document.getElementById('grid-siemens');
+    const grid3d      = document.getElementById('grid-3d');
     const gridMisc    = document.getElementById('grid-misc');
     gridSiemens.innerHTML = '';
+    grid3d.innerHTML = '';
     gridMisc.innerHTML = '';
 
     TOOL_CARDS.forEach(card => {
@@ -386,7 +403,9 @@
         <p id="${card.id}-desc">${t(card.descKey)}</p>
       `;
 
-      const targetGrid = card.group === 'siemens' ? gridSiemens : gridMisc;
+      const targetGrid = card.group === 'siemens' ? gridSiemens
+                      : card.group === '3d' ? grid3d
+                      : gridMisc;
       targetGrid.appendChild(a);
     });
 

@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>3MF / STL Converter</title>
+  <meta name="description" content="Convert 3D model files between 3MF and STL formats entirely in your browser." />
+  <link rel="stylesheet" href="shared/theme.css" />
+  <link rel="stylesheet" href="shared/header.css" />
+  <style>
+    :root {
+      --border-input:  #cce8e8;
+      --btn-sec-bg:    #e0f5f5;
+      --btn-sec-text:  #007777;
+      --btn-sec-bdr:   #b2e0e0;
+      --btn-sec-hover: #c5ecec;
+      --drop-bg:       #f0f7f7;
+      --drop-bdr:      #b2d8d8;
+      --drop-hover-bg: #e0f2f2;
+      --drop-hover-bdr:#009999;
+      --info-bg:       #f0f0f0;
+      --info-bdr:      #dddddd;
+      --info-text:     #555555;
+    }
+
+    [data-theme="dark"] {
+      --border-input:  #2e4a4a;
+      --btn-sec-bg:    #0d2e2e;
+      --btn-sec-text:  #00cccc;
+      --btn-sec-bdr:   #1e3a3a;
+      --btn-sec-hover: #1e4a4a;
+      --drop-bg:       #14161f;
+      --drop-bdr:      #2a2d3e;
+      --drop-hover-bg: #1e2130;
+      --drop-hover-bdr:#00cccc;
+      --info-bg:       #1e2130;
+      --info-bdr:      #2a2d3e;
+      --info-text:     #94a3b8;
+    }
+
+    .container {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 30px 20px 60px;
+    }
+
+    .card {
+      background: var(--surface);
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: 0 2px 12px var(--shadow);
+      margin-bottom: 20px;
+      transition: background 0.3s, box-shadow 0.3s;
+    }
+
+    .card h2 {
+      font-size: 0.95rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--accent);
+      border-bottom: 2px solid var(--accent-light);
+      padding-bottom: 8px;
+      margin-bottom: 16px;
+    }
+
+    /* ── Drop zone ── */
+    .drop-zone {
+      border: 2px dashed var(--drop-bdr);
+      border-radius: 12px;
+      background: var(--drop-bg);
+      padding: 40px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      color: var(--text-muted);
+    }
+
+    .drop-zone:hover,
+    .drop-zone.dragover {
+      background: var(--drop-hover-bg);
+      border-color: var(--drop-hover-bdr);
+    }
+
+    .drop-zone .dz-icon { font-size: 2.4rem; margin-bottom: 10px; }
+    .drop-zone .dz-title { font-size: 1.05rem; font-weight: 700; color: var(--text-primary); margin-bottom: 6px; }
+    .drop-zone .dz-sub { font-size: 0.85rem; }
+
+    .file-input { display: none; }
+
+    /* ── File info ── */
+    .file-info {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      padding: 12px 16px;
+      background: var(--drop-bg);
+      border: 1px solid var(--drop-bdr);
+      border-radius: 8px;
+      margin-top: 14px;
+    }
+
+    .file-info .name { font-weight: 700; color: var(--text-primary); word-break: break-all; }
+    .file-info .meta { font-size: 0.8rem; color: var(--text-muted); margin-top: 2px; }
+
+    .btn {
+      padding: 8px 18px;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-primary { background: var(--accent); color: white; }
+    .btn-primary:hover { background: var(--accent-dark); }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .btn-secondary {
+      background: var(--btn-sec-bg);
+      color: var(--btn-sec-text);
+      border: 1px solid var(--btn-sec-bdr);
+    }
+    .btn-secondary:hover { background: var(--btn-sec-hover); }
+
+    .btn-danger {
+      background: #fde8e8;
+      color: #a93226;
+      border: 1px solid #f5b7b1;
+    }
+    .btn-danger:hover { background: #fbd0ce; }
+
+    .toolbar {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-top: 14px;
+    }
+
+    .info-box {
+      background: var(--info-bg);
+      border: 1px solid var(--info-bdr);
+      border-radius: 8px;
+      padding: 12px 16px;
+      font-size: 0.85rem;
+      color: var(--info-text);
+      line-height: 1.6;
+    }
+
+    .info-box code {
+      background: var(--btn-sec-bg);
+      color: var(--btn-sec-text);
+      padding: 1px 6px;
+      border-radius: 4px;
+      font-size: 0.8rem;
+    }
+
+    .status {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-top: 12px;
+      min-height: 1.2em;
+    }
+
+    .status.error { color: #e74c3c; }
+
+    @media (max-width: 640px) {
+      .container { padding: 20px 12px 40px; }
+      .card { padding: 16px; }
+      .drop-zone { padding: 28px 14px; }
+    }
+  </style>
+</head>
+<body>
+
+<script src="shared/header.js"></script>
+<script>
+  injectHeader({ icon: '<span style="font-size:1.3rem;">🧊</span>', title: '3MF / STL Converter' });
+</script>
+
+<div class="container">
+
+  <!-- File input -->
+  <div class="card">
+    <h2 id="input-heading">Select a 3D File</h2>
+    <div class="drop-zone" id="drop-zone">
+      <div class="dz-icon">📁</div>
+      <div class="dz-title" id="dz-title">Drop a .3mf or .stl file here</div>
+      <div class="dz-sub" id="dz-sub">or click to browse</div>
+    </div>
+    <input type="file" id="file-input" class="file-input" accept=".3mf,.stl" />
+
+    <div class="file-info" id="file-info" style="display:none;">
+      <div>
+        <div class="name" id="file-name"></div>
+        <div class="meta" id="file-meta"></div>
+      </div>
+      <button class="btn btn-danger" id="btn-remove" onclick="removeFile()">✕</button>
+    </div>
+
+    <div class="toolbar">
+      <button class="btn btn-primary" id="btn-convert" onclick="convert()" disabled>🔄 Convert</button>
+      <button class="btn btn-secondary" id="btn-sample" onclick="loadSample()">📋 Sample</button>
+    </div>
+
+    <div class="status" id="status"></div>
+  </div>
+
+  <!-- Info -->
+  <div class="card">
+    <h2 id="info-heading">About</h2>
+    <div class="info-box" id="info-box">
+      <p id="info-p1">Converts between <code>3MF</code> and <code>STL</code> 3D model files entirely in your browser — no uploads, no servers.</p>
+      <p id="info-p2">Both formats store triangle meshes. This tool reads the mesh from the source file and writes it to the target format, preserving geometry.</p>
+      <p id="info-p3"><b>3MF</b> is a ZIP-based XML format; <b>STL</b> is a simple triangle list (binary or ASCII).</p>
+    </div>
+  </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+<script>
+  // ══════════════════════════════════════════════════
+  // i18n (dark mode handled by shared/header.js)
+  // ══════════════════════════════════════════════════
+  const TRANSLATIONS = {
+    en: {
+      pageTitle: '3MF / STL Converter',
+      inputHeading: 'Select a 3D File',
+      dzTitle: 'Drop a .3mf or .stl file here',
+      dzSub: 'or click to browse',
+      btnConvert: '🔄 Convert',
+      btnSample: '📋 Sample',
+      btnRemove: '✕',
+      statusReady: 'Ready. Choose a file to begin.',
+      statusConverting: 'Converting…',
+      statusDone: '✅ Done — download started.',
+      statusError: '❌ Could not convert the file. Make sure it is a valid 3MF or STL.',
+      infoHeading: 'About',
+      infoP1: 'Converts between <code>3MF</code> and <code>STL</code> 3D model files entirely in your browser — no uploads, no servers.',
+      infoP2: 'Both formats store triangle meshes. This tool reads the mesh from the source file and writes it to the target format, preserving geometry.',
+      infoP3: '<b>3MF</b> is a ZIP-based XML format; <b>STL</b> is a simple triangle list (binary or ASCII).',
+      fileMetaTriangles: 'triangles',
+      fileMetaUnknown: 'unknown',
+    },
+    zh: {
+      pageTitle: '3MF / STL 转换器',
+      inputHeading: '选择 3D 文件',
+      dzTitle: '将 .3mf 或 .stl 文件拖放到此处',
+      dzSub: '或点击浏览',
+      btnConvert: '🔄 转换',
+      btnSample: '📋 示例',
+      btnRemove: '✕',
+      statusReady: '就绪。选择文件开始。',
+      statusConverting: '转换中…',
+      statusDone: '✅ 完成 —— 已开始下载。',
+      statusError: '❌ 无法转换文件。请确保它是有效的 3MF 或 STL。',
+      infoHeading: '关于',
+      infoP1: '在浏览器中完全转换 <code>3MF</code> 和 <code>STL</code> 3D 模型文件 —— 无需上传，无需服务器。',
+      infoP2: '两种格式都存储三角形网格。此工具从源文件读取网格并写入目标格式，保留几何形状。',
+      infoP3: '<b>3MF</b> 是基于 ZIP 的 XML 格式；<b>STL</b> 是简单的三角形列表（二进制或 ASCII）。',
+      fileMetaTriangles: '三角形',
+      fileMetaUnknown: '未知',
+    }
+  };
+
+  function pageApplyTranslations() {
+    document.title = currentLang === 'zh' ? '3MF / STL 转换器' : '3MF / STL Converter';
+
+    document.getElementById('input-heading').textContent = t('inputHeading');
+    document.getElementById('dz-title').textContent = t('dzTitle');
+    document.getElementById('dz-sub').textContent = t('dzSub');
+    document.getElementById('btn-convert').textContent = t('btnConvert');
+    document.getElementById('btn-sample').textContent = t('btnSample');
+    document.getElementById('info-heading').textContent = t('infoHeading');
+    document.getElementById('info-p1').innerHTML = t('infoP1');
+    document.getElementById('info-p2').innerHTML = t('infoP2');
+    document.getElementById('info-p3').innerHTML = t('infoP3');
+    if (currentFile) updateFileInfo();
+  }
+
+  // ══════════════════════════════════════════════════
+  // State
+  // ══════════════════════════════════════════════════
+  let currentFile = null;   // { name, data: ArrayBuffer, type: '3mf'|'stl', triangles }
+  let mesh = null;         // { vertices: [[x,y,z],...], triangles: [[a,b,c],...] }
+
+  // ══════════════════════════════════════════════════
+  // File handling
+  // ══════════════════════════════════════════════════
+  const dropZone = document.getElementById('drop-zone');
+  const fileInput = document.getElementById('file-input');
+
+  dropZone.addEventListener('click', () => fileInput.click());
+  fileInput.addEventListener('change', e => {
+    if (e.target.files.length) handleFile(e.target.files[0]);
+  });
+
+  ['dragover', 'dragenter'].forEach(evt =>
+    dropZone.addEventListener(evt, e => { e.preventDefault(); dropZone.classList.add('dragover'); })
+  );
+  ['dragleave', 'drop'].forEach(evt =>
+    dropZone.addEventListener(evt, e => { e.preventDefault(); dropZone.classList.remove('dragover'); })
+  );
+  dropZone.addEventListener('drop', e => {
+    if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+  });
+
+  async function handleFile(file) {
+    const ext = (file.name.split('.').pop() || '').toLowerCase();
+    if (ext !== '3mf' && ext !== 'stl') {
+      setStatus(t('statusError'), true);
+      return;
+    }
+    const data = await file.arrayBuffer();
+    currentFile = { name: file.name, data, type: ext === '3mf' ? '3mf' : 'stl' };
+    updateFileInfo();
+    setStatus(t('statusReady'));
+    document.getElementById('btn-convert').disabled = false;
+  }
+
+  function updateFileInfo() {
+    if (!currentFile) return;
+    document.getElementById('file-name').textContent = currentFile.name;
+    const tri = currentFile.triangles;
+    document.getElementById('file-meta').textContent =
+      (tri != null ? tri + ' ' + t('fileMetaTriangles') : t('fileMetaUnknown')) +
+      ' · ' + currentFile.type.toUpperCase();
+    document.getElementById('file-info').style.display = 'flex';
+  }
+
+  function removeFile() {
+    currentFile = null;
+    mesh = null;
+    document.getElementById('file-info').style.display = 'none';
+    document.getElementById('btn-convert').disabled = true;
+    setStatus(t('statusReady'));
+  }
+
+  function setStatus(text, isError) {
+    const el = document.getElementById('status');
+    el.textContent = text;
+    el.classList.toggle('error', !!isError);
+  }
+
+  // ══════════════════════════════════════════════════
+  // Conversion
+  // ══════════════════════════════════════════════════
+  async function convert() {
+    if (!currentFile) return;
+    setStatus(t('statusConverting'));
+    try {
+      mesh = currentFile.type === '3mf' ? await parse3mf(currentFile.data) : parseStl(currentFile.data);
+      const outName = currentFile.type === '3mf'
+        ? currentFile.name.replace(/\.3mf$/i, '.stl')
+        : currentFile.name.replace(/\.stl$/i, '.3mf');
+
+      if (currentFile.type === '3mf') {
+        const stl = buildStl(mesh);
+        download(new Blob([stl], { type: 'model/stl' }), outName);
+      } else {
+        const zip = await build3mf(mesh);
+        download(zip, outName);
+      }
+      setStatus(t('statusDone'));
+    } catch (err) {
+      console.error(err);
+      setStatus(t('statusError'), true);
+    }
+  }
+
+  function download(blob, name) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
+  // ══════════════════════════════════════════════════
+  // STL parsing / writing
+  // ══════════════════════════════════════════════════
+  function parseStl(data) {
+    const bytes = new Uint8Array(data);
+    const text = new TextDecoder('utf-8').decode(bytes.subarray(0, 6));
+    if (text === 'solid ') return parseAsciiStl(bytes);
+    return parseBinaryStl(bytes);
+  }
+
+  function parseBinaryStl(bytes) {
+    if (bytes.length < 84) throw new Error('STL too short');
+    const dv = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+    const count = dv.getUint32(80, true);
+    const vertices = [];
+    const triangles = [];
+    let offset = 84;
+    for (let i = 0; i < count; i++) {
+      if (offset + 50 > bytes.length) break;
+      const base = offset + 12; // skip normal (3 floats)
+      const v = [
+        [dv.getFloat32(base, true), dv.getFloat32(base + 4, true), dv.getFloat32(base + 8, true)],
+        [dv.getFloat32(base + 12, true), dv.getFloat32(base + 16, true), dv.getFloat32(base + 20, true)],
+        [dv.getFloat32(base + 24, true), dv.getFloat32(base + 28, true), dv.getFloat32(base + 32, true)],
+      ];
+      const idx = vertices.length;
+      vertices.push(v[0], v[1], v[2]);
+      triangles.push([idx, idx + 1, idx + 2]);
+      offset += 50;
+    }
+    return { vertices, triangles };
+  }
+
+  function parseAsciiStl(bytes) {
+    const text = new TextDecoder('utf-8').decode(bytes);
+    const vertices = [];
+    const triangles = [];
+    const vertexRe = /vertex\s+([-\d.eE+]+)\s+([-\d.eE+]+)\s+([-\d.eE+]+)/g;
+    let m;
+    while ((m = vertexRe.exec(text)) !== null) {
+      vertices.push([parseFloat(m[1]), parseFloat(m[2]), parseFloat(m[3])]);
+    }
+    for (let i = 0; i + 2 < vertices.length; i += 3) {
+      triangles.push([i, i + 1, i + 2]);
+    }
+    return { vertices, triangles };
+  }
+
+  function buildStl(mesh) {
+    const count = mesh.triangles.length;
+    const buffer = new ArrayBuffer(84 + count * 50);
+    const dv = new DataView(buffer);
+    // header
+    const header = new TextEncoder().encode('binary STL generated by Mini Tools');
+    for (let i = 0; i < 80; i++) dv.setUint8(i, header[i] || 0);
+    dv.setUint32(80, count, true);
+
+    let offset = 84;
+    for (const tri of mesh.triangles) {
+      const [a, b, c] = [mesh.vertices[tri[0]], mesh.vertices[tri[1]], mesh.vertices[tri[2]]];
+      const normal = computeNormal(a, b, c);
+      dv.setFloat32(offset, normal[0], true);
+      dv.setFloat32(offset + 4, normal[1], true);
+      dv.setFloat32(offset + 8, normal[2], true);
+      offset += 12;
+      for (const v of [a, b, c]) {
+        dv.setFloat32(offset, v[0], true);
+        dv.setFloat32(offset + 4, v[1], true);
+        dv.setFloat32(offset + 8, v[2], true);
+        offset += 12;
+      }
+      dv.setUint16(offset, 0, true); // attribute byte count
+      offset += 2;
+    }
+    return buffer;
+  }
+
+  function computeNormal(a, b, c) {
+    const u = [b[0] - a[0], b[1] - a[1], b[2] - a[2]];
+    const v = [c[0] - a[0], c[1] - a[1], c[2] - a[2]];
+    let nx = u[1] * v[2] - u[2] * v[1];
+    let ny = u[2] * v[0] - u[0] * v[2];
+    let nz = u[0] * v[1] - u[1] * v[0];
+    const len = Math.sqrt(nx * nx + ny * ny + nz * nz) || 1;
+    return [nx / len, ny / len, nz / len];
+  }
+
+  // ══════════════════════════════════════════════════
+  // 3MF parsing / writing
+  // ══════════════════════════════════════════════════
+  async function parse3mf(data) {
+    const zip = await JSZip.loadAsync(data);
+    const modelFile = Object.keys(zip.files).find(f => /3d\/3dmodel\.model$/i.test(f));
+    if (!modelFile) throw new Error('No 3D model found in 3MF');
+    const xml = await zip.files[modelFile].async('string');
+    const doc = new DOMParser().parseFromString(xml, 'application/xml');
+
+    const vertices = [];
+    const vNodes = doc.getElementsByTagName('vertex');
+    for (const v of vNodes) {
+      vertices.push([parseFloat(v.getAttribute('x')), parseFloat(v.getAttribute('y')), parseFloat(v.getAttribute('z'))]);
+    }
+
+    const triangles = [];
+    const tNodes = doc.getElementsByTagName('triangle');
+    for (const t of tNodes) {
+      triangles.push([parseInt(t.getAttribute('v1'), 10), parseInt(t.getAttribute('v2'), 10), parseInt(t.getAttribute('v3'), 10)]);
+    }
+
+    return { vertices, triangles };
+  }
+
+  async function build3mf(mesh) {
+    const zip = new JSZip();
+
+    // [Content_Types].xml
+    zip.file('[Content_Types].xml', `<?xml version="1.0" encoding="UTF-8"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+  <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+  <Default Extension="model" ContentType="application/vnd.ms-package.3dmanufacturing-3dmodel+xml"/>
+  <Override PartName="/3D/3dmodel.model" ContentType="application/vnd.ms-package.3dmanufacturing-3dmodel+xml"/>
+</Types>`);
+
+    // _rels/.rels
+    zip.file('_rels/.rels', `<?xml version="1.0" encoding="UTF-8"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Target="/3D/3dmodel.model" Id="rel0" Type="http://schemas.microsoft.com/3dmanufacturing/2013/01/3dmodel"/>
+</Relationships>`);
+
+    // 3D/3dmodel.model
+    const verts = mesh.vertices.map(v => `      <vertex x="${v[0]}" y="${v[1]}" z="${v[2]}"/>`).join('\n');
+    const tris = mesh.triangles.map(t => `      <triangle v1="${t[0]}" v2="${t[1]}" v3="${t[2]}"/>`).join('\n');
+    const model = `<?xml version="1.0" encoding="UTF-8"?>
+<model unit="millimeter" xml:lang="en-US" xmlns="http://schemas.microsoft.com/3dmanufacturing/core/2015/02">
+  <resources>
+    <object id="1" type="model">
+      <mesh>
+        <vertices>
+${verts}
+        </vertices>
+        <triangles>
+${tris}
+        </triangles>
+      </mesh>
+    </object>
+  </resources>
+  <build>
+    <item objectid="1"/>
+  </build>
+</model>`;
+    zip.file('3D/3dmodel.model', model);
+
+    return await zip.generateAsync({ type: 'blob', mimeType: 'application/vnd.ms-package.3dmanufacturing-3dmodel' });
+  }
+
+  // ══════════════════════════════════════════════════
+  // Sample
+  // ══════════════════════════════════════════════════
+  async function loadSample() {
+    // Build a small sample 3MF in memory (a tetrahedron) and load it
+    const zip = new JSZip();
+    zip.file('[Content_Types].xml', `<?xml version="1.0" encoding="UTF-8"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+  <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+  <Default Extension="model" ContentType="application/vnd.ms-package.3dmanufacturing-3dmodel+xml"/>
+  <Override PartName="/3D/3dmodel.model" ContentType="application/vnd.ms-package.3dmanufacturing-3dmodel+xml"/>
+</Types>`);
+    zip.file('_rels/.rels', `<?xml version="1.0" encoding="UTF-8"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Target="/3D/3dmodel.model" Id="rel0" Type="http://schemas.microsoft.com/3dmanufacturing/2013/01/3dmodel"/>
+</Relationships>`);
+    zip.file('3D/3dmodel.model', `<?xml version="1.0" encoding="UTF-8"?>
+<model unit="millimeter" xml:lang="en-US" xmlns="http://schemas.microsoft.com/3dmanufacturing/core/2015/02">
+  <resources>
+    <object id="1" type="model">
+      <mesh>
+        <vertices>
+          <vertex x="0" y="0" z="0"/>
+          <vertex x="10" y="0" z="0"/>
+          <vertex x="0" y="10" z="0"/>
+          <vertex x="0" y="0" z="10"/>
+        </vertices>
+        <triangles>
+          <triangle v1="0" v2="2" v3="1"/>
+          <triangle v1="0" v2="1" v3="3"/>
+          <triangle v1="1" v2="2" v3="3"/>
+          <triangle v1="0" v2="3" v3="2"/>
+        </triangles>
+      </mesh>
+    </object>
+  </resources>
+  <build>
+    <item objectid="1"/>
+  </build>
+</model>`);
+    const blob = await zip.generateAsync({ type: 'blob' });
+    const data = await blob.arrayBuffer();
+    currentFile = { name: 'sample.3mf', data, type: '3mf' };
+    updateFileInfo();
+    setStatus(t('statusReady'));
+    document.getElementById('btn-convert').disabled = false;
+  }
+
+  // ══════════════════════════════════════════════════
+  // Init
+  // ══════════════════════════════════════════════════
+  document.addEventListener('DOMContentLoaded', () => {
+    setStatus(t('statusReady'));
+  });
+</script>
+
+</body>
+</html>
