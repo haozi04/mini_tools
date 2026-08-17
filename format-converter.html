@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Format Converter</title>
+  <meta name="description" content="Convert pasted content among Excel (tab-delimited), CSV, and Markdown table formats." />
+  <link rel="stylesheet" href="shared/theme.css" />
+  <link rel="stylesheet" href="shared/header.css" />
+  <style>
+    :root {
+      --border-input:  #cce8e8;
+      --btn-sec-bg:    #e0f5f5;
+      --btn-sec-text:  #007777;
+      --btn-sec-bdr:   #b2e0e0;
+      --btn-sec-hover: #c5ecec;
+      --copy-bg:       #f0f0f0;
+      --copy-bdr:      #dddddd;
+      --copy-text:     #555555;
+      --copy-done-bg:  #d4f8e8;
+      --copy-done-text:#1a7a4a;
+      --copy-done-bdr: #a8e6c8;
+      --seg-bg:        #eef6f6;
+      --seg-bdr:       #cce0e0;
+      --seg-active-bg: #ffffff;
+      --seg-active-bdr:#009999;
+      --seg-active-txt:#007777;
+    }
+
+    [data-theme="dark"] {
+      --border-input:  #2e4a4a;
+      --btn-sec-bg:    #0d2e2e;
+      --btn-sec-text:  #00cccc;
+      --btn-sec-bdr:   #1e3a3a;
+      --btn-sec-hover: #1e4a4a;
+      --copy-bg:       #1e2130;
+      --copy-bdr:      #2a2d3e;
+      --copy-text:     #94a3b8;
+      --copy-done-bg:  #052e16;
+      --copy-done-text:#86efac;
+      --copy-done-bdr: #166534;
+      --seg-bg:        #14161f;
+      --seg-bdr:       #2a2d3e;
+      --seg-active-bg: #1e2130;
+      --seg-active-bdr:#00cccc;
+      --seg-active-txt:#00cccc;
+    }
+
+    .container {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 30px 20px 60px;
+    }
+
+    .card {
+      background: var(--surface);
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: 0 2px 12px var(--shadow);
+      margin-bottom: 20px;
+      transition: background 0.3s, box-shadow 0.3s;
+    }
+
+    .card h2 {
+      font-size: 0.95rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--accent);
+      border-bottom: 2px solid var(--accent-light);
+      padding-bottom: 8px;
+      margin-bottom: 16px;
+    }
+
+    /* ── Input ── */
+    textarea#input-area {
+      width: 100%;
+      min-height: 220px;
+      padding: 14px;
+      border: 2px solid var(--border-input);
+      border-radius: 8px;
+      font-family: 'Courier New', monospace;
+      font-size: 0.88rem;
+      line-height: 1.6;
+      resize: vertical;
+      outline: none;
+      background: var(--surface);
+      color: var(--text-primary);
+      transition: border-color 0.2s;
+      box-sizing: border-box;
+    }
+
+    textarea#input-area:focus { border-color: var(--accent); }
+
+    .toolbar {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-top: 14px;
+    }
+
+    .btn {
+      padding: 8px 18px;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-primary { background: var(--accent); color: white; }
+    .btn-primary:hover { background: var(--accent-dark); }
+
+    .btn-secondary {
+      background: var(--btn-sec-bg);
+      color: var(--btn-sec-text);
+      border: 1px solid var(--btn-sec-bdr);
+    }
+    .btn-secondary:hover { background: var(--btn-sec-hover); }
+
+    .btn-danger {
+      background: #fde8e8;
+      color: #a93226;
+      border: 1px solid #f5b7b1;
+    }
+    .btn-danger:hover { background: #fbd0ce; }
+
+    /* ── Format selector ── */
+    .format-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+    }
+
+    .format-label {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--text-muted);
+    }
+
+    .segmented {
+      display: inline-flex;
+      border: 1px solid var(--seg-bdr);
+      border-radius: 8px;
+      overflow: hidden;
+      background: var(--seg-bg);
+    }
+
+    .segmented button {
+      border: none;
+      background: transparent;
+      padding: 8px 16px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      color: var(--text-muted);
+      transition: background 0.15s, color 0.15s;
+      line-height: 1;
+      outline: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .segmented button + button { border-left: 1px solid var(--seg-bdr); }
+
+    .segmented button.active {
+      background: var(--seg-active-bg);
+      color: var(--seg-active-txt);
+      box-shadow: inset 0 0 0 1px var(--seg-active-bdr);
+    }
+
+    /* ── Output ── */
+    .output-area { position: relative; }
+
+    textarea#output-area {
+      width: 100%;
+      min-height: 200px;
+      padding: 14px;
+      border: 2px solid var(--border-input);
+      border-radius: 8px;
+      font-family: 'Courier New', monospace;
+      font-size: 0.85rem;
+      line-height: 1.6;
+      resize: vertical;
+      outline: none;
+      background: var(--surface);
+      color: var(--text-primary);
+      transition: border-color 0.2s;
+      box-sizing: border-box;
+    }
+
+    textarea#output-area:focus { border-color: var(--accent); }
+
+    .copy-btn {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      padding: 5px 12px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      background: var(--copy-bg);
+      border: 1px solid var(--copy-bdr);
+      border-radius: 6px;
+      cursor: pointer;
+      color: var(--copy-text);
+      transition: all 0.15s;
+    }
+
+    .copy-btn:hover { background: var(--btn-sec-bg); color: var(--btn-sec-text); border-color: var(--btn-sec-bdr); }
+    .copy-btn.copied { background: var(--copy-done-bg); color: var(--copy-done-text); border-color: var(--copy-done-bdr); }
+
+    .detected {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-top: 8px;
+    }
+
+    @media (max-width: 640px) {
+      .container { padding: 20px 12px 40px; }
+      .card { padding: 16px; }
+      textarea#input-area { min-height: 160px; }
+    }
+  </style>
+</head>
+<body>
+
+<script src="shared/header.js"></script>
+<script>
+  injectHeader({ icon: '<span style="font-size:1.3rem;">🔁</span>', title: 'Format Converter' });
+</script>
+
+<div class="container">
+
+  <!-- Paste Input -->
+  <div class="card">
+    <h2 id="input-heading">Paste Content</h2>
+    <textarea id="input-area" spellcheck="false"
+      placeholder="Paste Excel (tab-delimited), CSV, or Markdown table content here...&#10;&#10;The tool auto-detects the format and lets you convert to any of the three."></textarea>
+    <div class="format-row">
+      <span class="format-label" id="output-label">Output format:</span>
+      <div class="segmented" id="format-seg">
+        <button type="button" data-format="excel" id="fmt-excel">Excel (tab)</button>
+        <button type="button" data-format="csv" id="fmt-csv">CSV</button>
+        <button type="button" data-format="markdown" id="fmt-markdown">Markdown</button>
+      </div>
+    </div>
+    <div class="toolbar">
+      <button class="btn btn-secondary" onclick="loadSample()" id="btn-sample">📋 Sample</button>
+      <button class="btn btn-danger" onclick="clearAll()" id="btn-clear">🗑 Clear</button>
+    </div>
+    <div class="detected" id="detected" style="display:none;"></div>
+  </div>
+
+  <!-- Output -->
+  <div class="card" id="output-card" style="display:none;">
+    <h2 id="output-heading">Output</h2>
+    <div class="output-area">
+      <textarea id="output-area" readonly placeholder="Converted content will appear here..."></textarea>
+      <button class="copy-btn" id="copy-btn" onclick="copyOutput()">📋 Copy</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // ══════════════════════════════════════════════════
+  // i18n (dark mode handled by shared/header.js)
+  // ══════════════════════════════════════════════════
+  const TRANSLATIONS = {
+    en: {
+      pageTitle: 'Format Converter',
+      inputHeading: 'Paste Content',
+      inputPlaceholder: 'Paste Excel (tab-delimited), CSV, or Markdown table content here...\n\nThe tool auto-detects the format and lets you convert to any of the three.',
+      outputLabel: 'Output format:',
+      fmtExcel: 'Excel (tab)',
+      fmtCsv: 'CSV',
+      fmtMarkdown: 'Markdown',
+      btnSample: '📋 Sample',
+      btnClear: '🗑 Clear',
+      outputHeading: 'Output',
+      outputPlaceholder: 'Converted content will appear here...',
+      copyBtn: '📋 Copy',
+      copiedBtn: '✅ Copied',
+      detectedExcel: 'Detected: Excel (tab-delimited)',
+      detectedCsv: 'Detected: CSV',
+      detectedMarkdown: 'Detected: Markdown table',
+      detectedUnknown: 'Could not reliably detect format — using Excel (tab) as default.',
+    },
+    zh: {
+      pageTitle: '格式转换器',
+      inputHeading: '粘贴内容',
+      inputPlaceholder: '在此粘贴 Excel（制表符分隔）、CSV 或 Markdown 表格内容...\n\n工具会自动检测格式，并可转换为三种格式中的任意一种。',
+      outputLabel: '输出格式：',
+      fmtExcel: 'Excel（制表符）',
+      fmtCsv: 'CSV',
+      fmtMarkdown: 'Markdown',
+      btnSample: '📋 示例',
+      btnClear: '🗑 清除',
+      outputHeading: '输出',
+      outputPlaceholder: '转换后的内容将显示在此处...',
+      copyBtn: '📋 复制',
+      copiedBtn: '✅ 已复制',
+      detectedExcel: '检测到：Excel（制表符分隔）',
+      detectedCsv: '检测到：CSV',
+      detectedMarkdown: '检测到：Markdown 表格',
+      detectedUnknown: '无法可靠检测格式 —— 默认使用 Excel（制表符）。',
+    }
+  };
+
+  function pageApplyTranslations() {
+    document.title = currentLang === 'zh' ? '格式转换器' : 'Format Converter';
+
+    document.getElementById('input-heading').textContent = t('inputHeading');
+    document.getElementById('input-area').placeholder = t('inputPlaceholder');
+    document.getElementById('output-label').textContent = t('outputLabel');
+    document.getElementById('fmt-excel').textContent = t('fmtExcel');
+    document.getElementById('fmt-csv').textContent = t('fmtCsv');
+    document.getElementById('fmt-markdown').textContent = t('fmtMarkdown');
+    document.getElementById('btn-sample').textContent = t('btnSample');
+    document.getElementById('btn-clear').textContent = t('btnClear');
+    document.getElementById('output-heading').textContent = t('outputHeading');
+    document.getElementById('output-area').placeholder = t('outputPlaceholder');
+    document.getElementById('copy-btn').textContent = t('copyBtn');
+    updateDetectedLabel();
+  }
+
+  // ══════════════════════════════════════════════════
+  // Conversion Logic
+  // ══════════════════════════════════════════════════
+  let currentData = [];
+  let currentFormat = 'excel';
+
+  // ── Format detection ──
+  function detectFormat(text) {
+    const lines = text.split('\n').filter(l => l.trim() !== '');
+    if (lines.length === 0) return 'excel';
+
+    // Markdown table: most lines contain a pipe AND the second line is a separator
+    const pipeLines = lines.filter(l => l.includes('|'));
+    if (pipeLines.length >= 2 && lines.length >= 2 && /^\s*\|?[\s:-]+\|/.test(lines[1] || '')) {
+      return 'markdown';
+    }
+
+    // Count tabs vs commas across all lines
+    let tabs = 0, commas = 0;
+    for (const line of lines) {
+      tabs += (line.match(/\t/g) || []).length;
+      commas += (line.match(/,/g) || []).length;
+    }
+
+    if (tabs > 0 && tabs >= commas) return 'excel';
+    if (commas > 0) return 'csv';
+    return 'excel';
+  }
+
+  // ── Parsing into a 2D array ──
+  function parseText(text, format) {
+    const lines = text.split('\n').filter(l => l.trim() !== '');
+    if (lines.length === 0) return [];
+
+    if (format === 'markdown') {
+      // Skip the separator row (second line)
+      const dataLines = lines.filter((l, i) => !(i === 1 && /^\s*\|?[\s:-]+\|/.test(l)));
+      return dataLines.map(line =>
+        line.split('|').map(cell => cell.trim()).filter(c => c !== '')
+      );
+    }
+
+    if (format === 'excel') {
+      return lines.map(line => line.split('\t').map(cell => cell.trim()));
+    }
+
+    // CSV — handle quoted fields
+    return lines.map(line => parseCsvLine(line));
+  }
+
+  function parseCsvLine(line) {
+    const cells = [];
+    let current = '';
+    let inQuotes = false;
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i];
+      if (inQuotes) {
+        if (ch === '"') {
+          if (line[i + 1] === '"') { current += '"'; i++; }
+          else inQuotes = false;
+        } else {
+          current += ch;
+        }
+      } else {
+        if (ch === '"') inQuotes = true;
+        else if (ch === ',') { cells.push(current.trim()); current = ''; }
+        else current += ch;
+      }
+    }
+    cells.push(current.trim());
+    return cells;
+  }
+
+  // ── Rendering to target format ──
+  function renderExcel(data) {
+    return data.map(row => row.join('\t')).join('\n');
+  }
+
+  function renderCsv(data) {
+    return data.map(row =>
+      row.map(cell => {
+        if (/[",\n]/.test(cell)) return '"' + cell.replace(/"/g, '""') + '"';
+        return cell;
+      }).join(',')
+    ).join('\n');
+  }
+
+  function renderMarkdown(data) {
+    if (data.length < 1) return '';
+    const maxCols = Math.max(...data.map(row => row.length));
+    let md = '';
+
+    // Header
+    md += '| ' + Array.from({ length: maxCols }, (_, i) => escapeMdCell(data[0][i] || '')).join(' | ') + ' |\n';
+    // Separator
+    md += '| ' + Array.from({ length: maxCols }, () => '---').join(' | ') + ' |\n';
+    // Data rows
+    for (let i = 1; i < data.length; i++) {
+      md += '| ' + Array.from({ length: maxCols }, (_, j) => escapeMdCell(data[i][j] || '')).join(' | ') + ' |\n';
+    }
+    return md.trimEnd();
+  }
+
+  function escapeMdCell(text) {
+    return text.replace(/\|/g, '\\|').replace(/\n/g, '<br>');
+  }
+
+  // ── UI ──
+  function setOutputFormat(format) {
+    currentFormat = format;
+    document.querySelectorAll('#format-seg button').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.format === format);
+    });
+    if (currentData.length > 0) renderOutput();
+  }
+
+  function updateDetectedLabel() {
+    const el = document.getElementById('detected');
+    if (!currentData.length) { el.style.display = 'none'; return; }
+    const key = currentFormat === 'markdown' ? 'detectedMarkdown'
+              : currentFormat === 'csv' ? 'detectedCsv'
+              : 'detectedExcel';
+    el.textContent = t(key);
+    el.style.display = 'block';
+  }
+
+  function autoConvert() {
+    const input = document.getElementById('input-area');
+    const text = input.value.trim();
+    if (!text) {
+      document.getElementById('output-card').style.display = 'none';
+      document.getElementById('detected').style.display = 'none';
+      currentData = [];
+      return;
+    }
+
+    const detected = detectFormat(text);
+    currentData = parseText(text, detected);
+    currentFormat = detected;
+
+    if (currentData.length === 0) {
+      document.getElementById('output-card').style.display = 'none';
+      return;
+    }
+
+    // Sync the segmented control to the detected format
+    document.querySelectorAll('#format-seg button').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.format === currentFormat);
+    });
+
+    renderOutput();
+    document.getElementById('output-card').style.display = 'block';
+    updateDetectedLabel();
+  }
+
+  function renderOutput() {
+    const output = document.getElementById('output-area');
+    if (currentFormat === 'markdown') output.value = renderMarkdown(currentData);
+    else if (currentFormat === 'csv') output.value = renderCsv(currentData);
+    else output.value = renderExcel(currentData);
+  }
+
+  // ── Copy ──
+  async function copyOutput() {
+    const output = document.getElementById('output-area');
+    if (!output.value.trim()) return;
+
+    try {
+      await navigator.clipboard.writeText(output.value);
+      const btn = document.getElementById('copy-btn');
+      btn.textContent = t('copiedBtn');
+      btn.classList.add('copied');
+      setTimeout(() => {
+        btn.textContent = t('copyBtn');
+        btn.classList.remove('copied');
+      }, 2000);
+    } catch {
+      output.select();
+      document.execCommand('copy');
+    }
+  }
+
+  // ── Sample ──
+  function loadSample() {
+    document.getElementById('input-area').value =
+`Product\tCategory\tPrice\tStock
+Widget A\tElectronics\t$19.99\t120
+Widget B\tElectronics\t$29.99\t85
+Gadget X\tHome\t$49.99\t200`;
+    autoConvert();
+  }
+
+  // ── Clear ──
+  function clearAll() {
+    document.getElementById('input-area').value = '';
+    document.getElementById('output-card').style.display = 'none';
+    document.getElementById('detected').style.display = 'none';
+    currentData = [];
+  }
+
+  // ══════════════════════════════════════════════════
+  // Init
+  // ══════════════════════════════════════════════════
+  document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('#format-seg button').forEach(btn => {
+      btn.addEventListener('click', () => setOutputFormat(btn.dataset.format));
+    });
+    document.getElementById('input-area').addEventListener('input', autoConvert);
+  });
+</script>
+
+</body>
+</html>
