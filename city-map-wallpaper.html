@@ -105,19 +105,20 @@
     .tab-pane { display:none; }
     .tab-pane.active { display:block; }
 
-    /* ── Device grid ── */
-    .device-grid { display:grid; grid-template-columns:1fr 1fr; gap:.35rem; }
-    .device-btn {
-      background:var(--surface2); border:1px solid var(--border);
-      border-radius:7px; padding:.45rem .3rem;
-      cursor:pointer; text-align:center;
-      transition:border-color .15s,background .15s; color:var(--text);
+    /* ── Device selects ── */
+    .device-selects { display:flex; flex-direction:column; gap:.4rem; }
+    .device-selects select {
+      width:100%; background:var(--surface2); border:1px solid var(--border);
+      border-radius:7px; padding:.45rem .5rem; color:var(--text);
+      font-size:.8rem; outline:none; cursor:pointer;
+      transition:border-color .15s;
     }
-    .device-btn:hover { border-color:var(--accent); }
-    .device-btn.active { border-color:var(--accent); background:rgba(108,99,255,.15); }
-    .device-btn .d-icon { font-size:1.2rem; display:block; margin-bottom:1px; }
-    .device-btn .d-name { font-size:.63rem; font-weight:600; display:block; }
-    .device-btn .d-res  { font-size:.57rem; color:var(--muted); display:block; }
+    .device-selects select:focus { border-color:var(--accent); }
+    .device-selects select option { background:var(--surface); color:var(--text); }
+    .device-selects .sel-label {
+      font-size:.62rem; font-weight:700; text-transform:uppercase;
+      letter-spacing:.08em; color:var(--muted); margin-bottom:.15rem;
+    }
 
     /* ── Print / Photo grid ── */
     .print-grid { display:grid; grid-template-columns:1fr 1fr; gap:.35rem; }
@@ -355,7 +356,16 @@
 
     <!-- Device -->
     <div class="tab-pane active" id="tab-device">
-      <div class="device-grid" id="deviceGrid"></div>
+      <div class="device-selects">
+        <div>
+          <div class="sel-label" id="sel-family-label">Family</div>
+          <select id="deviceFamily" onchange="onFamilyChange()"></select>
+        </div>
+        <div>
+          <div class="sel-label" id="sel-model-label">Model</div>
+          <select id="deviceModel" onchange="onModelChange()"></select>
+        </div>
+      </div>
     </div>
 
     <!-- Print / Photo -->
@@ -546,6 +556,8 @@ const TRANSLATIONS = {
     tabDevice: 'Device',
     tabPrint: 'Print / Photo',
     tabCustom: 'Custom',
+    selFamily: 'Family',
+    selModel: 'Model',
     subPaper: 'Paper',
     subPhoto: 'Photo',
     dpi: 'DPI',
@@ -602,6 +614,8 @@ const TRANSLATIONS = {
     tabDevice: '设备',
     tabPrint: '打印 / 照片',
     tabCustom: '自定义',
+    selFamily: '系列',
+    selModel: '型号',
     subPaper: '纸张',
     subPhoto: '照片',
     dpi: 'DPI',
@@ -670,6 +684,8 @@ function pageApplyTranslations() {
   setText('tab-device-btn', 'tabDevice');
   setText('tab-print-btn', 'tabPrint');
   setText('tab-custom-btn', 'tabCustom');
+  setText('sel-family-label', 'selFamily');
+  setText('sel-model-label', 'selModel');
   setText('sub-paper-btn', 'subPaper');
   setText('sub-photo-btn', 'subPhoto');
   setText('dpiLabel', 'dpi');
@@ -712,21 +728,126 @@ function pageApplyTranslations() {
 }
 
 /* ═══════════════════════════════════════════════════════
-   DEVICES
+   DEVICES  (grouped by family → models)
+   Each model: { id, name, w, h, notch, notchW, notchH, radius }
+   notch: "none" | "notch" | "island"
 ═══════════════════════════════════════════════════════ */
-const DEVICES = [
-  { id:"iphone15", icon:"📱", name:"iPhone 15",     w:1179, h:2556, notch:"island", notchW:120,notchH:34, radius:50 },
-  { id:"iphone13", icon:"📱", name:"iPhone 13",     w:1170, h:2532, notch:"notch",  notchW:150,notchH:30, radius:47 },
-  { id:"ipadpro",  icon:"⬜", name:"iPad Pro 12.9", w:2048, h:2732, notch:"none",   notchW:0,  notchH:0,  radius:18 },
-  { id:"ipadair",  icon:"⬜", name:"iPad Air",      w:1640, h:2360, notch:"none",   notchW:0,  notchH:0,  radius:18 },
-  { id:"macbookp", icon:"💻", name:"MacBook Pro",   w:3456, h:2234, notch:"none",   notchW:0,  notchH:0,  radius:10 },
-  { id:"macbooka", icon:"💻", name:"MacBook Air",   w:2560, h:1664, notch:"none",   notchW:0,  notchH:0,  radius:10 },
-  { id:"win4k",    icon:"🖥️", name:"4K Monitor",   w:3840, h:2160, notch:"none",   notchW:0,  notchH:0,  radius:4  },
-  { id:"win1440",  icon:"🖥️", name:"1440p",        w:2560, h:1440, notch:"none",   notchW:0,  notchH:0,  radius:4  },
-  { id:"win1080",  icon:"🖥️", name:"1080p",        w:1920, h:1080, notch:"none",   notchW:0,  notchH:0,  radius:4  },
-  { id:"pixel8",   icon:"📱", name:"Pixel 8",       w:1080, h:2400, notch:"island", notchW:100,notchH:28, radius:42 },
-  { id:"s24",      icon:"📱", name:"Galaxy S24",    w:1080, h:2340, notch:"island", notchW:90, notchH:26, radius:42 },
+const DEVICE_FAMILIES = [
+  {
+    id:"iphone", icon:"📱", name:"iPhone",
+    models:[
+      { id:"iphone17promax", name:"iPhone 17 Pro Max", w:1320, h:2868, notch:"island", notchW:120,notchH:34, radius:55 },
+      { id:"iphone17pro", name:"iPhone 17 Pro",     w:1206, h:2622, notch:"island", notchW:120,notchH:34, radius:55 },
+      { id:"iphone17",    name:"iPhone 17",         w:1206, h:2622, notch:"island", notchW:120,notchH:34, radius:55 },
+      { id:"iphone16promax", name:"iPhone 16 Pro Max", w:1320, h:2868, notch:"island", notchW:120,notchH:34, radius:55 },
+      { id:"iphone16pro", name:"iPhone 16 Pro",     w:1206, h:2622, notch:"island", notchW:120,notchH:34, radius:55 },
+      { id:"iphone16plus", name:"iPhone 16 Plus",   w:1290, h:2796, notch:"island", notchW:120,notchH:34, radius:55 },
+      { id:"iphone16",    name:"iPhone 16",         w:1179, h:2556, notch:"island", notchW:120,notchH:34, radius:50 },
+      { id:"iphone16e",   name:"iPhone 16e",        w:1170, h:2532, notch:"notch",  notchW:150,notchH:30, radius:47 },
+      { id:"iphone15promax", name:"iPhone 15 Pro Max", w:1290, h:2796, notch:"island", notchW:120,notchH:34, radius:55 },
+      { id:"iphone15pro", name:"iPhone 15 Pro",     w:1179, h:2556, notch:"island", notchW:120,notchH:34, radius:50 },
+      { id:"iphone15plus", name:"iPhone 15 Plus",   w:1290, h:2796, notch:"island", notchW:120,notchH:34, radius:55 },
+      { id:"iphone15",    name:"iPhone 15",         w:1179, h:2556, notch:"island", notchW:120,notchH:34, radius:50 },
+      { id:"iphone14promax", name:"iPhone 14 Pro Max", w:1290, h:2796, notch:"island", notchW:120,notchH:34, radius:55 },
+      { id:"iphone14pro", name:"iPhone 14 Pro",     w:1179, h:2556, notch:"island", notchW:120,notchH:34, radius:50 },
+      { id:"iphone14plus", name:"iPhone 14 Plus",   w:1284, h:2778, notch:"notch",  notchW:150,notchH:30, radius:55 },
+      { id:"iphone14",    name:"iPhone 14",         w:1170, h:2532, notch:"notch",  notchW:150,notchH:30, radius:47 },
+      { id:"iphone13promax", name:"iPhone 13 Pro Max", w:1284, h:2778, notch:"notch",  notchW:150,notchH:30, radius:55 },
+      { id:"iphone13pro", name:"iPhone 13 Pro",     w:1170, h:2532, notch:"notch",  notchW:150,notchH:30, radius:47 },
+      { id:"iphone13mini", name:"iPhone 13 mini",   w:1080, h:2340, notch:"notch",  notchW:150,notchH:30, radius:42 },
+      { id:"iphone13",    name:"iPhone 13",         w:1170, h:2532, notch:"notch",  notchW:150,notchH:30, radius:47 },
+      { id:"iphone12promax", name:"iPhone 12 Pro Max", w:1284, h:2778, notch:"notch",  notchW:150,notchH:30, radius:55 },
+      { id:"iphone12pro", name:"iPhone 12 Pro",     w:1170, h:2532, notch:"notch",  notchW:150,notchH:30, radius:47 },
+      { id:"iphone12mini", name:"iPhone 12 mini",   w:1080, h:2340, notch:"notch",  notchW:150,notchH:30, radius:42 },
+      { id:"iphone12",    name:"iPhone 12",         w:1170, h:2532, notch:"notch",  notchW:150,notchH:30, radius:47 },
+      { id:"iphone11promax", name:"iPhone 11 Pro Max", w:1242, h:2688, notch:"notch",  notchW:150,notchH:30, radius:50 },
+      { id:"iphone11pro", name:"iPhone 11 Pro",     w:1125, h:2436, notch:"notch",  notchW:150,notchH:30, radius:45 },
+      { id:"iphone11",    name:"iPhone 11",         w:828,  h:1792, notch:"notch",  notchW:150,notchH:30, radius:40 },
+      { id:"iphonexr",    name:"iPhone XR",         w:828,  h:1792, notch:"notch",  notchW:150,notchH:30, radius:40 },
+      { id:"iphonexsmax", name:"iPhone XS Max",     w:1242, h:2688, notch:"notch",  notchW:150,notchH:30, radius:50 },
+      { id:"iphonexs",    name:"iPhone XS",         w:1125, h:2436, notch:"notch",  notchW:150,notchH:30, radius:45 },
+      { id:"iphonex",     name:"iPhone X",          w:1125, h:2436, notch:"notch",  notchW:150,notchH:30, radius:45 },
+      { id:"iphone8plus", name:"iPhone 8 Plus",    w:1080, h:1920, notch:"none",   notchW:0,  notchH:0,  radius:30 },
+      { id:"iphone8",     name:"iPhone 8",          w:750,  h:1334, notch:"none",   notchW:0,  notchH:0,  radius:30 },
+      { id:"iphone7plus", name:"iPhone 7 Plus",    w:1080, h:1920, notch:"none",   notchW:0,  notchH:0,  radius:30 },
+      { id:"iphone7",     name:"iPhone 7",          w:750,  h:1334, notch:"none",   notchW:0,  notchH:0,  radius:30 },
+      { id:"iphone6splus",name:"iPhone 6s Plus",   w:1080, h:1920, notch:"none",   notchW:0,  notchH:0,  radius:30 },
+      { id:"iphone6s",    name:"iPhone 6s",         w:750,  h:1334, notch:"none",   notchW:0,  notchH:0,  radius:30 },
+      { id:"iphone6plus", name:"iPhone 6 Plus",     w:1080, h:1920, notch:"none",   notchW:0,  notchH:0,  radius:30 },
+      { id:"iphone6",     name:"iPhone 6",          w:750,  h:1334, notch:"none",   notchW:0,  notchH:0,  radius:30 },
+      { id:"iphonese3",  name:"iPhone SE (3rd gen)", w:750, h:1334, notch:"none",   notchW:0,  notchH:0,  radius:30 },
+      { id:"iphonese2",  name:"iPhone SE (2nd gen)", w:750, h:1334, notch:"none",   notchW:0,  notchH:0,  radius:30 },
+      { id:"iphonese",    name:"iPhone SE (1st gen)", w:640, h:1136, notch:"none",   notchW:0,  notchH:0,  radius:28 },
+    ]
+  },
+  {
+    id:"ipad", icon:"⬜", name:"iPad",
+    models:[
+      { id:"ipadpro13m4", name:"iPad Pro 13″ (M4)", w:2752, h:2064, notch:"none", notchW:0, notchH:0, radius:18 },
+      { id:"ipadpro11m4", name:"iPad Pro 11″ (M4)", w:2420, h:1668, notch:"none", notchW:0, notchH:0, radius:18 },
+      { id:"ipadair13m3", name:"iPad Air 13″ (M3)", w:2732, h:2048, notch:"none", notchW:0, notchH:0, radius:18 },
+      { id:"ipadair11m3", name:"iPad Air 11″ (M3)", w:2360, h:1640, notch:"none", notchW:0, notchH:0, radius:18 },
+      { id:"ipad11",      name:"iPad 11th gen (A16)", w:2360, h:1640, notch:"none", notchW:0, notchH:0, radius:18 },
+      { id:"ipadmini7",   name:"iPad mini 7 (A17 Pro)", w:2266, h:1488, notch:"none", notchW:0, notchH:0, radius:16 },
+      { id:"ipadair13m2", name:"iPad Air 13″ (M2)", w:2732, h:2048, notch:"none", notchW:0, notchH:0, radius:18 },
+      { id:"ipadair11m2", name:"iPad Air 11″ (M2)", w:2360, h:1640, notch:"none", notchW:0, notchH:0, radius:18 },
+      { id:"ipad10",      name:"iPad 10th gen",        w:2360, h:1640, notch:"none", notchW:0, notchH:0, radius:18 },
+      { id:"ipadpro12m2", name:"iPad Pro 12.9″ (M2)", w:2732, h:2048, notch:"none", notchW:0, notchH:0, radius:18 },
+      { id:"ipadpro11m2", name:"iPad Pro 11″ (M2)",   w:2388, h:1668, notch:"none", notchW:0, notchH:0, radius:18 },
+      { id:"ipadair5",    name:"iPad Air 5 (M1)",      w:2360, h:1640, notch:"none", notchW:0, notchH:0, radius:18 },
+      { id:"ipadmini6",   name:"iPad mini 6",           w:2266, h:1488, notch:"none", notchW:0, notchH:0, radius:16 },
+      { id:"ipad9",       name:"iPad 9th gen",           w:2160, h:1620, notch:"none", notchW:0, notchH:0, radius:16 },
+      { id:"ipadpro12m1", name:"iPad Pro 12.9″ (M1)", w:2732, h:2048, notch:"none", notchW:0, notchH:0, radius:18 },
+      { id:"ipadpro11m1", name:"iPad Pro 11″ (M1)",   w:2388, h:1668, notch:"none", notchW:0, notchH:0, radius:18 },
+      { id:"ipadair4",    name:"iPad Air 4",            w:2360, h:1640, notch:"none", notchW:0, notchH:0, radius:18 },
+      { id:"ipad8",       name:"iPad 8th gen",           w:2160, h:1620, notch:"none", notchW:0, notchH:0, radius:16 },
+      { id:"ipadpro12a12z", name:"iPad Pro 12.9″ (A12Z)", w:2732, h:2048, notch:"none", notchW:0, notchH:0, radius:18 },
+      { id:"ipadpro11a12z", name:"iPad Pro 11″ (A12Z)",   w:2388, h:1668, notch:"none", notchW:0, notchH:0, radius:18 },
+      { id:"ipadair3",    name:"iPad Air 3",            w:2224, h:1668, notch:"none", notchW:0, notchH:0, radius:16 },
+      { id:"ipadmini5",   name:"iPad mini 5",           w:2048, h:1536, notch:"none", notchW:0, notchH:0, radius:16 },
+      { id:"ipad7",       name:"iPad 7th gen",           w:2160, h:1620, notch:"none", notchW:0, notchH:0, radius:16 },
+      { id:"ipadpro12a12x", name:"iPad Pro 12.9″ (A12X)", w:2732, h:2048, notch:"none", notchW:0, notchH:0, radius:18 },
+      { id:"ipadpro11a12x", name:"iPad Pro 11″ (A12X)",   w:2388, h:1668, notch:"none", notchW:0, notchH:0, radius:18 },
+      { id:"ipad6",       name:"iPad 6th gen",           w:2048, h:1536, notch:"none", notchW:0, notchH:0, radius:16 },
+      { id:"ipadpro12a10x", name:"iPad Pro 12.9″ (2nd)", w:2732, h:2048, notch:"none", notchW:0, notchH:0, radius:18 },
+      { id:"ipadpro10a10x", name:"iPad Pro 10.5″",    w:2224, h:1668, notch:"none", notchW:0, notchH:0, radius:16 },
+      { id:"ipad5",       name:"iPad 5th gen",           w:2048, h:1536, notch:"none", notchW:0, notchH:0, radius:16 },
+      { id:"ipadpro12a9x", name:"iPad Pro 12.9″ (1st)", w:2732, h:2048, notch:"none", notchW:0, notchH:0, radius:18 },
+      { id:"ipadpro9a9x", name:"iPad Pro 9.7″",      w:2048, h:1536, notch:"none", notchW:0, notchH:0, radius:16 },
+      { id:"ipad4",       name:"iPad 4th gen",           w:2048, h:1536, notch:"none", notchW:0, notchH:0, radius:16 },
+      { id:"ipadmini4",   name:"iPad mini 4",           w:2048, h:1536, notch:"none", notchW:0, notchH:0, radius:16 },
+      { id:"ipadair2",    name:"iPad Air 2",            w:2048, h:1536, notch:"none", notchW:0, notchH:0, radius:16 },
+      { id:"ipad3",       name:"iPad 3rd gen",           w:2048, h:1536, notch:"none", notchW:0, notchH:0, radius:16 },
+      { id:"ipad2",       name:"iPad 2",                 w:1024, h:768,  notch:"none", notchW:0, notchH:0, radius:16 },
+      { id:"ipad1",       name:"iPad 1st gen",           w:1024, h:768,  notch:"none", notchW:0, notchH:0, radius:16 },
+    ]
+  },
+  {
+    id:"mac", icon:"💻", name:"Mac",
+    models:[
+      { id:"macbookp", icon:"💻", name:"MacBook Pro",   w:3456, h:2234, notch:"none",   notchW:0,  notchH:0,  radius:10 },
+      { id:"macbooka", icon:"💻", name:"MacBook Air",   w:2560, h:1664, notch:"none",   notchW:0,  notchH:0,  radius:10 },
+    ]
+  },
+  {
+    id:"monitor", icon:"🖥️", name:"Monitor",
+    models:[
+      { id:"win4k",    icon:"🖥️", name:"4K Monitor",   w:3840, h:2160, notch:"none",   notchW:0,  notchH:0,  radius:4  },
+      { id:"win1440",  icon:"🖥️", name:"1440p",        w:2560, h:1440, notch:"none",   notchW:0,  notchH:0,  radius:4  },
+      { id:"win1080",  icon:"🖥️", name:"1080p",        w:1920, h:1080, notch:"none",   notchW:0,  notchH:0,  radius:4  },
+    ]
+  },
+  {
+    id:"android", icon:"📱", name:"Android",
+    models:[
+      { id:"pixel8",   icon:"📱", name:"Pixel 8",       w:1080, h:2400, notch:"island", notchW:100,notchH:28, radius:42 },
+      { id:"s24",      icon:"📱", name:"Galaxy S24",    w:1080, h:2340, notch:"island", notchW:90, notchH:26, radius:42 },
+    ]
+  },
 ];
+
+/* Flattened list of all models (for backward compat) */
+const DEVICES = DEVICE_FAMILIES.flatMap(f => f.models.map(m => ({ ...m, family: f.id, familyName: f.name })));
 
 /* ═══════════════════════════════════════════════════════
    PAPER SIZES  (mm)
@@ -969,24 +1090,65 @@ function switchPrintSub(sub, btn) {
 }
 
 /* ═══════════════════════════════════════════════════════
-   DEVICE GRID
+   DEVICE SELECTS
 ═══════════════════════════════════════════════════════ */
 function buildDeviceGrid() {
-  const grid = document.getElementById("deviceGrid");
-  DEVICES.forEach(dev => {
-    const btn = document.createElement("div");
-    btn.className = "device-btn" + (dev.id===currentDevice.id?" active":"");
-    btn.innerHTML = `<span class="d-icon">${dev.icon}</span>
-                     <span class="d-name">${dev.name}</span>
-                     <span class="d-res">${dev.w}×${dev.h}</span>`;
-    btn.onclick = () => {
-      currentDevice = dev;
-      grid.querySelectorAll(".device-btn").forEach(b=>b.classList.remove("active"));
-      btn.classList.add("active");
-      applyDeviceTarget(dev);
-    };
-    grid.appendChild(btn);
+  const familySel = document.getElementById("deviceFamily");
+  const modelSel = document.getElementById("deviceModel");
+
+  // Populate family dropdown
+  DEVICE_FAMILIES.forEach(fam => {
+    const opt = document.createElement("option");
+    opt.value = fam.id;
+    opt.textContent = `${fam.icon} ${fam.name}`;
+    familySel.appendChild(opt);
   });
+
+  // Populate model dropdown for the currently selected family
+  function fillModels(familyId, selectedId) {
+    const fam = DEVICE_FAMILIES.find(f => f.id === familyId);
+    modelSel.innerHTML = "";
+    fam.models.forEach(m => {
+      const opt = document.createElement("option");
+      opt.value = m.id;
+      opt.textContent = `${m.name} — ${m.w}×${m.h}`;
+      if (m.id === selectedId) opt.selected = true;
+      modelSel.appendChild(opt);
+    });
+  }
+
+  // Set initial selection (first family, first model)
+  const initialFamily = DEVICE_FAMILIES[0];
+  const initialModel = initialFamily.models[0];
+  familySel.value = initialFamily.id;
+  fillModels(initialFamily.id, initialModel.id);
+  currentDevice = initialModel;
+  applyDeviceTarget(initialModel);
+}
+
+function onFamilyChange() {
+  const familySel = document.getElementById("deviceFamily");
+  const modelSel = document.getElementById("deviceModel");
+  const fam = DEVICE_FAMILIES.find(f => f.id === familySel.value);
+  modelSel.innerHTML = "";
+  fam.models.forEach(m => {
+    const opt = document.createElement("option");
+    opt.value = m.id;
+    opt.textContent = `${m.name} — ${m.w}×${m.h}`;
+    modelSel.appendChild(opt);
+  });
+  // Apply first model of the new family
+  const model = fam.models[0];
+  currentDevice = model;
+  applyDeviceTarget(model);
+}
+
+function onModelChange() {
+  const modelSel = document.getElementById("deviceModel");
+  const model = DEVICES.find(d => d.id === modelSel.value);
+  if (!model) return;
+  currentDevice = model;
+  applyDeviceTarget(model);
 }
 
 function applyDeviceTarget(dev) {
