@@ -1,0 +1,1794 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Map Wallpaper Studio</title>
+  <meta name="description" content="Generate city map wallpapers from OpenStreetMap data. Customize size, colors, and road density, then export as PNG, JPG, SVG, PDF, or EPS." />
+  <link rel="stylesheet" href="shared/theme.css" />
+  <link rel="stylesheet" href="shared/header.css" />
+  <style>
+    :root {
+      /* Aliases mapping the tool's local names to the shared theme */
+      --surface2: var(--surface-alt);
+      --surface3: var(--surface-alt);
+      --accent2:  var(--accent);
+      --text:     var(--text-primary);
+      --muted:    var(--text-muted);
+      --radius:   12px;
+      --panel:    290px;
+      --shadow:   0 8px 32px rgba(0,0,0,.5);
+    }
+
+    body {
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Toolbar (below shared header) ── */
+    .toolbar {
+      display: flex;
+      align-items: center;
+      gap: .6rem;
+      padding: .55rem 1rem;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+      z-index: 10;
+      flex-wrap: wrap;
+    }
+    .toolbar-inputs { display: flex; gap: .4rem; flex: 1; max-width: 420px; min-width: 200px; }
+    .toolbar-inputs input {
+      flex: 1; min-width: 0;
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 7px; padding: .4rem .7rem;
+      color: var(--text); font-size: .85rem; outline: none;
+      transition: border-color .2s;
+    }
+    .toolbar-inputs input:focus { border-color: var(--accent); }
+    .toolbar-inputs input::placeholder { color: var(--muted); }
+
+    .btn {
+      border: none; border-radius: 7px;
+      font-size: .85rem; font-weight: 700;
+      cursor: pointer; transition: opacity .15s, transform .1s;
+      white-space: nowrap; padding: .42rem .9rem;
+    }
+    .btn:active { transform: scale(.97); }
+    .btn-primary { background: linear-gradient(135deg,var(--accent),var(--accent2)); color:#fff; }
+    .btn-primary:disabled { opacity:.4; cursor:not-allowed; }
+    .btn-ghost { background:var(--surface2); color:var(--text); border:1px solid var(--border); }
+
+    #statusPill {
+      font-size:.75rem; padding:.22rem .65rem;
+      border-radius:20px; display:none; white-space:nowrap; margin-left:auto;
+    }
+    #statusPill.info  { background:#1e2a4a; color:#7eb8f7; }
+    #statusPill.error { background:#3a1a1a; color:#f78080; }
+    #statusPill.ok    { background:#1a3a2a; color:#80f7b0; }
+
+    /* ── Workspace ── */
+    .workspace { display:flex; flex:1; overflow:hidden; }
+
+    /* ── Panels ── */
+    .panel, .panel-right {
+      background: var(--surface);
+      overflow-y: auto; overflow-x: hidden; flex-shrink: 0;
+    }
+    .panel::-webkit-scrollbar,
+    .panel-right::-webkit-scrollbar { width:3px; }
+    .panel::-webkit-scrollbar-thumb,
+    .panel-right::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
+
+    .panel { width:var(--panel); border-right:1px solid var(--border); }
+    .panel-right { width:240px; border-left:1px solid var(--border); }
+
+    .ps { border-bottom:1px solid var(--border); padding:.8rem .9rem; }
+    .ps-title {
+      font-size:.65rem; font-weight:700;
+      text-transform:uppercase; letter-spacing:.1em;
+      color:var(--accent2); margin-bottom:.65rem;
+    }
+
+    /* ── Tab strip ── */
+    .tab-strip { display:flex; gap:.3rem; margin-bottom:.7rem; }
+    .tab-btn {
+      flex:1; padding:.3rem .2rem;
+      background:var(--surface2); border:1px solid var(--border);
+      border-radius:6px; font-size:.68rem; font-weight:700;
+      color:var(--muted); cursor:pointer; text-align:center;
+      transition:all .15s;
+    }
+    .tab-btn.active { background:rgba(108,99,255,.18); border-color:var(--accent); color:var(--accent2); }
+    .tab-pane { display:none; }
+    .tab-pane.active { display:block; }
+
+    /* ── Device grid ── */
+    .device-grid { display:grid; grid-template-columns:1fr 1fr; gap:.35rem; }
+    .device-btn {
+      background:var(--surface2); border:1px solid var(--border);
+      border-radius:7px; padding:.45rem .3rem;
+      cursor:pointer; text-align:center;
+      transition:border-color .15s,background .15s; color:var(--text);
+    }
+    .device-btn:hover { border-color:var(--accent); }
+    .device-btn.active { border-color:var(--accent); background:rgba(108,99,255,.15); }
+    .device-btn .d-icon { font-size:1.2rem; display:block; margin-bottom:1px; }
+    .device-btn .d-name { font-size:.63rem; font-weight:600; display:block; }
+    .device-btn .d-res  { font-size:.57rem; color:var(--muted); display:block; }
+
+    /* ── Print / Photo grid ── */
+    .print-grid { display:grid; grid-template-columns:1fr 1fr; gap:.35rem; }
+    .print-btn {
+      background:var(--surface2); border:1px solid var(--border);
+      border-radius:7px; padding:.4rem .3rem;
+      cursor:pointer; text-align:center;
+      transition:border-color .15s,background .15s; color:var(--text);
+    }
+    .print-btn:hover { border-color:var(--accent); }
+    .print-btn.active { border-color:var(--accent); background:rgba(108,99,255,.15); }
+    .print-btn .p-name { font-size:.7rem; font-weight:700; display:block; }
+    .print-btn .p-dim  { font-size:.58rem; color:var(--muted); display:block; margin-top:1px; }
+    .print-btn .p-px   { font-size:.55rem; color:var(--muted); display:block; }
+
+    /* DPI row */
+    .dpi-row { display:flex; align-items:center; gap:.4rem; margin-top:.6rem; }
+    .dpi-label { font-size:.72rem; color:var(--muted); flex:1; }
+    .dpi-btns { display:flex; gap:.25rem; }
+    .dpi-btn {
+      padding:.22rem .45rem; font-size:.68rem; font-weight:700;
+      background:var(--surface2); border:1px solid var(--border);
+      border-radius:5px; cursor:pointer; color:var(--muted); transition:all .15s;
+    }
+    .dpi-btn.active { border-color:var(--accent); color:var(--accent2); background:rgba(108,99,255,.15); }
+
+    /* ── Custom size ── */
+    .custom-size-grid {
+      display:grid; grid-template-columns:1fr 1fr; gap:.4rem; margin-bottom:.5rem;
+    }
+    .custom-size-grid label { font-size:.7rem; color:var(--muted); display:block; margin-bottom:.2rem; }
+    .custom-size-grid input {
+      width:100%; background:var(--bg); border:1px solid var(--border);
+      border-radius:6px; padding:.32rem .45rem; color:var(--text);
+      font-size:.82rem; font-family:"SF Mono","Fira Code",monospace;
+      text-align:center; outline:none; transition:border-color .2s;
+    }
+    .custom-size-grid input:focus { border-color:var(--accent); }
+    .unit-row { display:flex; gap:.3rem; margin-bottom:.5rem; }
+    .unit-btn {
+      flex:1; padding:.28rem; font-size:.68rem; font-weight:700;
+      background:var(--surface2); border:1px solid var(--border);
+      border-radius:5px; cursor:pointer; color:var(--muted);
+      text-align:center; transition:all .15s;
+    }
+    .unit-btn.active { border-color:var(--accent); color:var(--accent2); background:rgba(108,99,255,.15); }
+
+    /* ── Color rows ── */
+    .color-row { display:flex; align-items:center; gap:.55rem; margin-bottom:.45rem; }
+    .color-swatch-wrap {
+      position:relative; width:30px; height:30px;
+      border-radius:6px; overflow:hidden; flex-shrink:0;
+      border:1.5px solid rgba(255,255,255,.12); cursor:pointer;
+    }
+    .color-preview { position:absolute; inset:0; pointer-events:none; }
+    .color-swatch-wrap input[type="color"] {
+      position:absolute; inset:0; width:100%; height:100%;
+      opacity:0; border:none; padding:0; cursor:pointer;
+    }
+    .color-info { flex:1; min-width:0; }
+    .color-label { font-size:.75rem; font-weight:600; color:var(--text); }
+    .color-hex-input {
+      flex-shrink:0; width:70px !important;
+      background:var(--bg); border:1px solid var(--border);
+      border-radius:5px; padding:.22rem .3rem; color:var(--text);
+      font-size:.72rem; font-family:"SF Mono","Fira Code",monospace;
+      text-align:center; outline:none; transition:border-color .2s;
+    }
+    .color-hex-input:focus { border-color:var(--accent); }
+
+    /* ── Palette library ── */
+    .palette-search {
+      width:100%; background:var(--bg); border:1px solid var(--border);
+      border-radius:6px; padding:.35rem .6rem; color:var(--text);
+      font-size:.8rem; outline:none; margin-bottom:.55rem; transition:border-color .2s;
+    }
+    .palette-search:focus { border-color:var(--accent); }
+    .palette-search::placeholder { color:var(--muted); }
+    .palette-tags { display:flex; flex-wrap:wrap; gap:.25rem; margin-bottom:.55rem; }
+    .palette-tag {
+      font-size:.62rem; font-weight:700; padding:.18rem .45rem;
+      border-radius:20px; cursor:pointer;
+      background:var(--surface2); border:1px solid var(--border);
+      color:var(--muted); transition:all .15s;
+    }
+    .palette-tag.active { background:rgba(108,99,255,.2); border-color:var(--accent); color:var(--accent2); }
+    .palette-list { display:flex; flex-direction:column; gap:.35rem; max-height:220px; overflow-y:auto; }
+    .palette-list::-webkit-scrollbar { width:3px; }
+    .palette-list::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
+    .palette-item {
+      display:flex; align-items:center; gap:.5rem; padding:.4rem .5rem;
+      background:var(--surface2); border:1px solid var(--border);
+      border-radius:7px; cursor:pointer; transition:border-color .15s;
+    }
+    .palette-item:hover { border-color:var(--accent); }
+    .palette-item.active { border-color:var(--accent); background:rgba(108,99,255,.12); }
+    .palette-swatches { display:flex; gap:2px; flex-shrink:0; }
+    .palette-swatch { width:18px; height:28px; border-radius:3px; }
+    .palette-meta { flex:1; min-width:0; }
+    .palette-name { font-size:.72rem; font-weight:600; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .palette-mood { font-size:.62rem; color:var(--muted); }
+
+    /* ── Sliders ── */
+    .slider-row { margin-bottom:.6rem; }
+    .slider-header { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:.25rem; }
+    .slider-label { font-size:.75rem; color:var(--text); font-weight:500; }
+    .slider-value { font-size:.7rem; color:var(--accent2); font-family:"SF Mono","Fira Code",monospace; font-weight:700; }
+    input[type="range"] { width:100%; accent-color:var(--accent); cursor:pointer; height:3px; }
+    .slider-ticks { display:flex; justify-content:space-between; margin-top:.18rem; }
+    .slider-ticks span { font-size:.58rem; color:var(--muted); flex:1; text-align:center; }
+    .slider-ticks span:first-child { text-align:left; }
+    .slider-ticks span:last-child  { text-align:right; }
+
+    /* ── Canvas area ── */
+    .canvas-area {
+      flex:1; display:flex; align-items:center; justify-content:center;
+      background:var(--bg); overflow:hidden; position:relative;
+    }
+    .canvas-wrap { position:relative; display:flex; align-items:center; justify-content:center; }
+    .device-frame {
+      position:relative; border-radius:20px; overflow:hidden;
+      box-shadow:0 0 0 1px #333, var(--shadow); background:#000; flex-shrink:0;
+    }
+    .device-frame canvas { display:block; width:100%; height:100%; }
+    .frame-notch {
+      position:absolute; top:0; left:50%; transform:translateX(-50%);
+      background:#000; z-index:5; border-radius:0 0 12px 12px;
+    }
+    .canvas-overlay {
+      position:absolute; inset:0; background:rgba(0,0,0,.65);
+      display:none; flex-direction:column;
+      align-items:center; justify-content:center;
+      gap:.55rem; border-radius:20px; z-index:20;
+    }
+    .spinner {
+      width:28px; height:28px;
+      border:3px solid var(--border); border-top-color:var(--accent);
+      border-radius:50%; animation:spin .7s linear infinite;
+    }
+    @keyframes spin { to { transform:rotate(360deg); } }
+    .overlay-text { font-size:.78rem; color:var(--muted); }
+    .res-badge {
+      position:absolute; bottom:-24px; left:50%; transform:translateX(-50%);
+      font-size:.67rem; color:var(--muted); white-space:nowrap;
+    }
+
+    /* ── Right panel ── */
+    .export-section { padding:.8rem .9rem; border-bottom:1px solid var(--border); }
+    .export-info {
+      background:var(--surface2); border:1px solid var(--border);
+      border-radius:7px; padding:.55rem .7rem; margin-bottom:.65rem;
+    }
+    .export-info-row { display:flex; justify-content:space-between; font-size:.72rem; margin-bottom:.18rem; }
+    .export-info-row:last-child { margin-bottom:0; }
+    .export-info-row .k { color:var(--muted); }
+    .export-info-row .v { color:var(--text); font-weight:600; font-family:"SF Mono","Fira Code",monospace; font-size:.68rem; }
+
+    /* ── Format selector ── */
+    .format-grid { display:grid; grid-template-columns:1fr 1fr; gap:.3rem; margin-bottom:.65rem; }
+    .fmt-btn {
+      background:var(--surface2); border:1px solid var(--border);
+      border-radius:6px; padding:.38rem .3rem;
+      cursor:pointer; text-align:center; transition:all .15s;
+    }
+    .fmt-btn:hover { border-color:var(--accent); }
+    .fmt-btn.active { border-color:var(--accent); background:rgba(108,99,255,.15); }
+    .fmt-btn .f-ext {
+      font-size:.78rem; font-weight:800;
+      font-family:"SF Mono","Fira Code",monospace;
+      display:block; color:var(--text);
+    }
+    .fmt-btn .f-type { font-size:.58rem; color:var(--muted); display:block; margin-top:1px; }
+    .fmt-btn.active .f-ext { color:var(--accent2); }
+
+    /* vector note */
+    .vector-note {
+      font-size:.65rem; color:var(--muted);
+      background:var(--surface2); border:1px solid var(--border);
+      border-radius:6px; padding:.4rem .55rem;
+      margin-bottom:.65rem; line-height:1.4; display:none;
+    }
+    .vector-note.show { display:block; }
+
+    .btn-download { width:100%; padding:.55rem; font-size:.85rem; }
+
+    /* width preview */
+    .width-preview { padding:.8rem .9rem; }
+    .tier-bar-row { display:flex; align-items:center; gap:.4rem; margin-bottom:.4rem; }
+    .tier-bar-label { font-size:.62rem; color:var(--muted); width:54px; flex-shrink:0; text-align:right; }
+    .tier-bar-track { flex:1; height:10px; background:var(--surface2); border-radius:3px; overflow:hidden; }
+    .tier-bar-fill { height:100%; border-radius:3px; background:var(--accent); transition:width .2s; }
+    .tier-bar-px { font-size:.6rem; color:var(--muted); width:26px; text-align:right; flex-shrink:0; font-family:monospace; }
+
+    @media (max-width:960px) { .panel-right { display:none; } }
+    @media (max-width:640px) {
+      :root { --panel:100%; }
+      .panel { position:absolute; bottom:0; left:0; right:0; height:52vh;
+               border-right:none; border-top:1px solid var(--border); z-index:20; }
+      .workspace { flex-direction:column; }
+      .toolbar { padding:.5rem .7rem; }
+    }
+  </style>
+</head>
+<body>
+
+<script src="shared/header.js"></script>
+<script>
+  injectHeader({ icon: '<span style="font-size:1.3rem;">🗺️</span>', title: 'Map Wallpaper Studio' });
+</script>
+
+<!-- ══════════ TOOLBAR ══════════ -->
+<div class="toolbar">
+  <div class="toolbar-inputs">
+    <input type="text" id="city"    placeholder="City"    autocomplete="off" />
+    <input type="text" id="country" placeholder="Country" autocomplete="off" />
+  </div>
+  <button class="btn btn-primary" id="fetchBtn" onclick="fetchMap()">Load Map</button>
+  <span id="statusPill"></span>
+</div>
+
+<!-- ══════════ WORKSPACE ══════════ -->
+<div class="workspace">
+
+<!-- ══ LEFT PANEL ══ -->
+<div class="panel">
+
+  <!-- Canvas size -->
+  <div class="ps">
+    <div class="ps-title" id="ps-canvas">📐 Canvas Size</div>
+    <div class="tab-strip">
+      <div class="tab-btn active" id="tab-device-btn" onclick="switchSizeTab('device',this)">Device</div>
+      <div class="tab-btn"       id="tab-print-btn" onclick="switchSizeTab('print',this)">Print / Photo</div>
+      <div class="tab-btn"       id="tab-custom-btn" onclick="switchSizeTab('custom',this)">Custom</div>
+    </div>
+
+    <!-- Device -->
+    <div class="tab-pane active" id="tab-device">
+      <div class="device-grid" id="deviceGrid"></div>
+    </div>
+
+    <!-- Print / Photo -->
+    <div class="tab-pane" id="tab-print">
+      <!-- sub-tabs: paper vs photo -->
+      <div class="tab-strip" style="margin-bottom:.5rem">
+        <div class="tab-btn active" id="sub-paper-btn" onclick="switchPrintSub('paper',this)">Paper</div>
+        <div class="tab-btn"       id="sub-photo-btn" onclick="switchPrintSub('photo',this)">Photo</div>
+      </div>
+      <div id="printSubPaper">
+        <div class="print-grid" id="paperGrid"></div>
+      </div>
+      <div id="printSubPhoto" style="display:none">
+        <div class="print-grid" id="photoGrid"></div>
+      </div>
+      <div class="dpi-row">
+        <span class="dpi-label" id="dpiLabel">DPI</span>
+        <div class="dpi-btns" id="dpiBtns"></div>
+      </div>
+    </div>
+
+    <!-- Custom -->
+    <div class="tab-pane" id="tab-custom">
+      <div class="unit-row" id="unitRow"></div>
+      <div class="custom-size-grid">
+        <div><label id="lblW">Width (px)</label>
+          <input type="number" id="customW" value="1920" min="1" max="20000" oninput="onCustomSize()" /></div>
+        <div><label id="lblH">Height (px)</label>
+          <input type="number" id="customH" value="1080" min="1" max="20000" oninput="onCustomSize()" /></div>
+      </div>
+      <button class="btn btn-ghost" style="width:100%;font-size:.78rem;padding:.35rem"
+              onclick="applyCustomSize()" id="applyBtn">Apply</button>
+    </div>
+  </div>
+
+  <!-- Colors -->
+  <div class="ps">
+    <div class="ps-title" id="ps-colors">🎨 Colors</div>
+    <div class="tab-strip">
+      <div class="tab-btn active" id="tab-manual-btn" onclick="switchColorTab('manual',this)">Manual</div>
+      <div class="tab-btn"       id="tab-library-btn" onclick="switchColorTab('palette',this)">Library</div>
+    </div>
+    <div class="tab-pane active" id="tab-manual">
+      <div class="color-row">
+        <div class="color-swatch-wrap">
+          <div class="color-preview" id="prev-bg"></div>
+          <input type="color" id="pick-bg" value="#000000" oninput="onColorPick('bg',this.value)" />
+        </div>
+        <div class="color-info"><span class="color-label" id="lbl-bg">Background</span></div>
+        <input type="text" class="color-hex-input" id="hex-bg" value="#000000" maxlength="7"
+               oninput="onHexType('bg',this.value)" onblur="onHexBlur('bg')" />
+      </div>
+      <div class="color-row">
+        <div class="color-swatch-wrap">
+          <div class="color-preview" id="prev-road"></div>
+          <input type="color" id="pick-road" value="#616161" oninput="onColorPick('road',this.value)" />
+        </div>
+        <div class="color-info"><span class="color-label" id="lbl-road">Roads</span></div>
+        <input type="text" class="color-hex-input" id="hex-road" value="#616161" maxlength="7"
+               oninput="onHexType('road',this.value)" onblur="onHexBlur('road')" />
+      </div>
+      <div class="color-row">
+        <div class="color-swatch-wrap">
+          <div class="color-preview" id="prev-water"></div>
+          <input type="color" id="pick-water" value="#424242" oninput="onColorPick('water',this.value)" />
+        </div>
+        <div class="color-info"><span class="color-label" id="lbl-water">Water</span></div>
+        <input type="text" class="color-hex-input" id="hex-water" value="#424242" maxlength="7"
+               oninput="onHexType('water',this.value)" onblur="onHexBlur('water')" />
+      </div>
+    </div>
+    <div class="tab-pane" id="tab-palette">
+      <input type="text" class="palette-search" id="paletteSearch"
+             placeholder="Search palettes…" oninput="filterPalettes()" />
+      <div class="palette-tags" id="paletteTags"></div>
+      <div class="palette-list" id="paletteList"></div>
+    </div>
+  </div>
+
+  <!-- Road density -->
+  <div class="ps">
+    <div class="ps-title" id="ps-density">🛣️ Road Density</div>
+    <div class="slider-row">
+      <div class="slider-header">
+        <span class="slider-label" id="lbl-minTier">Minimum tier</span>
+        <span class="slider-value" id="val-threshold">Secondary+</span>
+      </div>
+      <input type="range" id="sl-threshold" min="0" max="4" step="1" value="2"
+             oninput="onSlider('threshold',this.value)" />
+      <div class="slider-ticks">
+        <span id="tick-all">All</span><span id="tick-tertiary">Tertiary</span><span id="tick-secondary">Secondary</span><span id="tick-primary">Primary</span><span id="tick-mway">Mway</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Road widths -->
+  <div class="ps">
+    <div class="ps-title" id="ps-widths">📏 Road Widths</div>
+    <div class="slider-row">
+      <div class="slider-header"><span class="slider-label" id="lbl-minW">Minor width</span><span class="slider-value" id="val-minW">0.8</span></div>
+      <input type="range" id="sl-minW" min="0.2" max="2.0" step="0.1" value="0.8" oninput="onSlider('minW',this.value)" />
+    </div>
+    <div class="slider-row">
+      <div class="slider-header"><span class="slider-label" id="lbl-maxW">Major width</span><span class="slider-value" id="val-maxW">2.2</span></div>
+      <input type="range" id="sl-maxW" min="0.5" max="5.0" step="0.1" value="2.2" oninput="onSlider('maxW',this.value)" />
+    </div>
+    <div class="slider-row">
+      <div class="slider-header"><span class="slider-label" id="lbl-curve">Width curve</span><span class="slider-value" id="val-curve">Linear</span></div>
+      <input type="range" id="sl-curve" min="0.5" max="3.0" step="0.1" value="1.0" oninput="onSlider('curve',this.value)" />
+      <div class="slider-ticks"><span id="tick-flat">Flat</span><span id="tick-linear">Linear</span><span id="tick-steep">Steep</span></div>
+    </div>
+    <div class="slider-row">
+      <div class="slider-header"><span class="slider-label" id="lbl-scale">Global scale</span><span class="slider-value" id="val-scale">1.4×</span></div>
+      <input type="range" id="sl-scale" min="0.5" max="3.0" step="0.1" value="1.4" oninput="onSlider('scale',this.value)" />
+    </div>
+  </div>
+
+  <!-- Map range -->
+  <div class="ps">
+    <div class="ps-title" id="ps-range">🔍 Map Range</div>
+    <div class="slider-row">
+      <div class="slider-header"><span class="slider-label" id="lbl-padding">Padding</span><span class="slider-value" id="val-padding">5%</span></div>
+      <input type="range" id="sl-padding" min="0" max="30" step="1" value="5" oninput="onSlider('padding',this.value)" />
+      <div class="slider-ticks"><span id="tick-tight">Tight</span><span id="tick-normal">Normal</span><span id="tick-wide">Wide</span></div>
+    </div>
+  </div>
+
+</div><!-- /panel -->
+
+<!-- ══ CANVAS ══ -->
+<div class="canvas-area">
+  <div class="canvas-wrap" id="canvasWrap">
+    <div class="device-frame" id="deviceFrame">
+      <div class="frame-notch" id="frameNotch"></div>
+      <canvas id="previewCanvas"></canvas>
+      <div class="canvas-overlay" id="canvasOverlay">
+        <div class="spinner"></div>
+        <span class="overlay-text" id="overlayText">Loading…</span>
+      </div>
+    </div>
+    <span class="res-badge" id="resBadge"></span>
+  </div>
+</div>
+
+<!-- ══ RIGHT PANEL ══ -->
+<div class="panel-right">
+  <div class="export-section">
+    <div class="ps-title" id="ps-export">💾 Export</div>
+
+    <!-- Canvas info -->
+    <div class="export-info" id="exportInfo"></div>
+
+    <!-- Format grid -->
+    <div class="ps-title" style="margin-bottom:.45rem" id="ps-format">Format</div>
+    <div class="format-grid" id="formatGrid"></div>
+
+    <!-- Vector note -->
+    <div class="vector-note" id="vectorNote">
+      ⚡ Vector formats are generated from the live canvas data and scale to any size without quality loss.
+      <br><br>
+      <strong>SVG</strong> — web-ready, editable in Illustrator / Inkscape.<br>
+      <strong>PDF</strong> — print-ready, embeds vector paths.<br>
+      <strong>EPS</strong> — legacy vector, compatible with most print workflows.
+    </div>
+
+    <button class="btn btn-primary btn-download" id="dlBtn"
+            onclick="downloadWallpaper()" disabled>⬇️ Download</button>
+  </div>
+  <div class="width-preview">
+    <div class="ps-title" id="ps-widthPreview">📊 Width Preview</div>
+    <div id="tierBars"></div>
+  </div>
+</div>
+
+</div><!-- /workspace -->
+
+<script>
+/* ═══════════════════════════════════════════════════════
+   i18n (dark mode handled by shared/header.js)
+═══════════════════════════════════════════════════════ */
+const TRANSLATIONS = {
+  en: {
+    pageTitle: 'Map Wallpaper Studio',
+    cityPlaceholder: 'City',
+    countryPlaceholder: 'Country',
+    loadMap: 'Load Map',
+    canvasSize: '📐 Canvas Size',
+    tabDevice: 'Device',
+    tabPrint: 'Print / Photo',
+    tabCustom: 'Custom',
+    subPaper: 'Paper',
+    subPhoto: 'Photo',
+    dpi: 'DPI',
+    lblW: 'Width (px)',
+    lblH: 'Height (px)',
+    apply: 'Apply',
+    colors: 'Colors',
+    tabManual: 'Manual',
+    tabLibrary: 'Library',
+    colorBg: 'Background',
+    colorRoad: 'Roads',
+    colorWater: 'Water',
+    searchPalettes: 'Search palettes…',
+    roadDensity: '🛣️ Road Density',
+    minTier: 'Minimum tier',
+    tickAll: 'All',
+    tickTertiary: 'Tertiary',
+    tickSecondary: 'Secondary',
+    tickPrimary: 'Primary',
+    tickMway: 'Mway',
+    roadWidths: '📏 Road Widths',
+    minorWidth: 'Minor width',
+    majorWidth: 'Major width',
+    widthCurve: 'Width curve',
+    globalScale: 'Global scale',
+    tickFlat: 'Flat',
+    tickLinear: 'Linear',
+    tickSteep: 'Steep',
+    mapRange: '🔍 Map Range',
+    padding: 'Padding',
+    tickTight: 'Tight',
+    tickNormal: 'Normal',
+    tickWide: 'Wide',
+    export: '💾 Export',
+    format: 'Format',
+    vectorNote: '⚡ Vector formats are generated from the live canvas data and scale to any size without quality loss.',
+    download: '⬇️ Download',
+    widthPreview: '📊 Width Preview',
+    loading: 'Loading…',
+    locating: 'Locating city…',
+    geocoding: '🔍 Geocoding…',
+    downloading: '📦 Downloading OSM…',
+    rendering: '🎨 Rendering…',
+    enterCityCountry: '⚠️ Enter city & country',
+    target: 'Target',
+    size: 'Size',
+  },
+  zh: {
+    pageTitle: '地图壁纸工作室',
+    cityPlaceholder: '城市',
+    countryPlaceholder: '国家',
+    loadMap: '加载地图',
+    canvasSize: '📐 画布尺寸',
+    tabDevice: '设备',
+    tabPrint: '打印 / 照片',
+    tabCustom: '自定义',
+    subPaper: '纸张',
+    subPhoto: '照片',
+    dpi: 'DPI',
+    lblW: '宽度（像素）',
+    lblH: '高度（像素）',
+    apply: '应用',
+    colors: '颜色',
+    tabManual: '手动',
+    tabLibrary: '图库',
+    colorBg: '背景',
+    colorRoad: '道路',
+    colorWater: '水域',
+    searchPalettes: '搜索配色…',
+    roadDensity: '🛣️ 道路密度',
+    minTier: '最低等级',
+    tickAll: '全部',
+    tickTertiary: '三级',
+    tickSecondary: '二级',
+    tickPrimary: '主干',
+    tickMway: '高速',
+    roadWidths: '📏 道路宽度',
+    minorWidth: '次要宽度',
+    majorWidth: '主要宽度',
+    widthCurve: '宽度曲线',
+    globalScale: '全局缩放',
+    tickFlat: '平缓',
+    tickLinear: '线性',
+    tickSteep: '陡峭',
+    mapRange: '🔍 地图范围',
+    padding: '边距',
+    tickTight: '紧凑',
+    tickNormal: '正常',
+    tickWide: '宽泛',
+    export: '💾 导出',
+    format: '格式',
+    vectorNote: '⚡ 矢量格式由实时画布数据生成，可无损缩放到任意尺寸。',
+    download: '⬇️ 下载',
+    widthPreview: '📊 宽度预览',
+    loading: '加载中…',
+    locating: '正在定位城市…',
+    geocoding: '🔍 正在地理编码…',
+    downloading: '📦 正在下载 OSM…',
+    rendering: '🎨 正在渲染…',
+    enterCityCountry: '⚠️ 请输入城市与国家',
+    target: '目标',
+    size: '尺寸',
+  }
+};
+
+function pageApplyTranslations() {
+  document.title = currentLang === 'zh' ? '地图壁纸工作室' : 'Map Wallpaper Studio';
+
+  const setText = (id, key) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = t(key);
+  };
+  const setPlaceholder = (id, key) => {
+    const el = document.getElementById(id);
+    if (el) el.placeholder = t(key);
+  };
+
+  setPlaceholder('city', 'cityPlaceholder');
+  setPlaceholder('country', 'countryPlaceholder');
+  setText('fetchBtn', 'loadMap');
+  setText('ps-canvas', 'canvasSize');
+  setText('tab-device-btn', 'tabDevice');
+  setText('tab-print-btn', 'tabPrint');
+  setText('tab-custom-btn', 'tabCustom');
+  setText('sub-paper-btn', 'subPaper');
+  setText('sub-photo-btn', 'subPhoto');
+  setText('dpiLabel', 'dpi');
+  setText('applyBtn', 'apply');
+  setText('ps-colors', 'colors');
+  setText('tab-manual-btn', 'tabManual');
+  setText('tab-library-btn', 'tabLibrary');
+  setText('lbl-bg', 'colorBg');
+  setText('lbl-road', 'colorRoad');
+  setText('lbl-water', 'colorWater');
+  setText('ps-density', 'roadDensity');
+  setText('lbl-minTier', 'minTier');
+  setText('tick-all', 'tickAll');
+  setText('tick-tertiary', 'tickTertiary');
+  setText('tick-secondary', 'tickSecondary');
+  setText('tick-primary', 'tickPrimary');
+  setText('tick-mway', 'tickMway');
+  setText('ps-widths', 'roadWidths');
+  setText('lbl-minW', 'minorWidth');
+  setText('lbl-maxW', 'majorWidth');
+  setText('lbl-curve', 'widthCurve');
+  setText('lbl-scale', 'globalScale');
+  setText('tick-flat', 'tickFlat');
+  setText('tick-linear', 'tickLinear');
+  setText('tick-steep', 'tickSteep');
+  setText('ps-range', 'mapRange');
+  setText('lbl-padding', 'padding');
+  setText('tick-tight', 'tickTight');
+  setText('tick-normal', 'tickNormal');
+  setText('tick-wide', 'tickWide');
+  setText('ps-export', 'export');
+  setText('ps-format', 'format');
+  setText('ps-widthPreview', 'widthPreview');
+  setText('lblW', 'lblW');
+  setText('lblH', 'lblH');
+  setText('paletteSearch', 'searchPalettes');
+  setText('overlayText', 'loading');
+  setText('dlBtn', 'download');
+  setText('vectorNote', 'vectorNote');
+}
+
+/* ═══════════════════════════════════════════════════════
+   DEVICES
+═══════════════════════════════════════════════════════ */
+const DEVICES = [
+  { id:"iphone15", icon:"📱", name:"iPhone 15",     w:1179, h:2556, notch:"island", notchW:120,notchH:34, radius:50 },
+  { id:"iphone13", icon:"📱", name:"iPhone 13",     w:1170, h:2532, notch:"notch",  notchW:150,notchH:30, radius:47 },
+  { id:"ipadpro",  icon:"⬜", name:"iPad Pro 12.9", w:2048, h:2732, notch:"none",   notchW:0,  notchH:0,  radius:18 },
+  { id:"ipadair",  icon:"⬜", name:"iPad Air",      w:1640, h:2360, notch:"none",   notchW:0,  notchH:0,  radius:18 },
+  { id:"macbookp", icon:"💻", name:"MacBook Pro",   w:3456, h:2234, notch:"none",   notchW:0,  notchH:0,  radius:10 },
+  { id:"macbooka", icon:"💻", name:"MacBook Air",   w:2560, h:1664, notch:"none",   notchW:0,  notchH:0,  radius:10 },
+  { id:"win4k",    icon:"🖥️", name:"4K Monitor",   w:3840, h:2160, notch:"none",   notchW:0,  notchH:0,  radius:4  },
+  { id:"win1440",  icon:"🖥️", name:"1440p",        w:2560, h:1440, notch:"none",   notchW:0,  notchH:0,  radius:4  },
+  { id:"win1080",  icon:"🖥️", name:"1080p",        w:1920, h:1080, notch:"none",   notchW:0,  notchH:0,  radius:4  },
+  { id:"pixel8",   icon:"📱", name:"Pixel 8",       w:1080, h:2400, notch:"island", notchW:100,notchH:28, radius:42 },
+  { id:"s24",      icon:"📱", name:"Galaxy S24",    w:1080, h:2340, notch:"island", notchW:90, notchH:26, radius:42 },
+];
+
+/* ═══════════════════════════════════════════════════════
+   PAPER SIZES  (mm)
+═══════════════════════════════════════════════════════ */
+const PAPER_SIZES = [
+  { id:"a4p",  name:"A4",      mmW:210,  mmH:297  },
+  { id:"a4l",  name:"A4 ⟷",   mmW:297,  mmH:210  },
+  { id:"a3p",  name:"A3",      mmW:297,  mmH:420  },
+  { id:"a3l",  name:"A3 ⟷",   mmW:420,  mmH:297  },
+  { id:"a2",   name:"A2",      mmW:420,  mmH:594  },
+  { id:"a1",   name:"A1",      mmW:594,  mmH:841  },
+  { id:"ltr",  name:"Letter",  mmW:216,  mmH:279  },
+  { id:"lgl",  name:"Legal",   mmW:216,  mmH:356  },
+];
+
+/* ═══════════════════════════════════════════════════════
+   PHOTO SIZES  (mm — standard photo print sizes)
+   All listed as portrait; landscape variant auto-generated.
+═══════════════════════════════════════════════════════ */
+const PHOTO_SIZES = [
+  { id:"p4x6",   name:'4×6"',    mmW:102,  mmH:152,  note:"Standard"   },
+  { id:"p5x7",   name:'5×7"',    mmW:127,  mmH:178,  note:"Medium"     },
+  { id:"p4x4",   name:'4×4"',    mmW:102,  mmH:102,  note:"Square"     },
+  { id:"p6x6",   name:'6×6"',    mmW:152,  mmH:152,  note:"Sq. Large"  },
+  { id:"p8x10",  name:'8×10"',   mmW:203,  mmH:254,  note:"Classic"    },
+  { id:"p8x12",  name:'8×12"',   mmW:203,  mmH:305,  note:"Full frame" },
+  { id:"p10x13", name:'10×13"',  mmW:254,  mmH:330,  note:"Portrait"   },
+  { id:"p11x14", name:'11×14"',  mmW:279,  mmH:356,  note:"Gallery"    },
+  { id:"p12x18", name:'12×18"',  mmW:305,  mmH:457,  note:"Large"      },
+  { id:"p16x20", name:'16×20"',  mmW:406,  mmH:508,  note:"Poster"     },
+  { id:"p20x30", name:'20×30"',  mmW:508,  mmH:762,  note:"XL Poster"  },
+  { id:"p24x36", name:'24×36"',  mmW:610,  mmH:914,  note:"Banner"     },
+];
+
+/* ═══════════════════════════════════════════════════════
+   EXPORT FORMATS
+═══════════════════════════════════════════════════════ */
+const FORMATS = [
+  { id:"png",  ext:"PNG",  type:"Raster",  vector:false },
+  { id:"jpg",  ext:"JPG",  type:"Raster",  vector:false },
+  { id:"webp", ext:"WebP", type:"Raster",  vector:false },
+  { id:"svg",  ext:"SVG",  type:"Vector",  vector:true  },
+  { id:"pdf",  ext:"PDF",  type:"Vector",  vector:true  },
+  { id:"eps",  ext:"EPS",  type:"Vector",  vector:true  },
+];
+let currentFormat = FORMATS[0];
+
+/* ═══════════════════════════════════════════════════════
+   STATE
+═══════════════════════════════════════════════════════ */
+const DPIS = [72, 150, 300];
+let currentDpi       = 300;
+let currentDevice    = DEVICES[0];
+let currentPrintSize = PAPER_SIZES[0];
+let printSubMode     = "paper";   // "paper" | "photo"
+let sizeMode         = "device";
+let customUnit       = "px";
+const UNIT_DPI       = 96;
+
+let canvasTarget = {
+  w:DEVICES[0].w, h:DEVICES[0].h, name:DEVICES[0].name,
+  notch:DEVICES[0].notch, notchW:DEVICES[0].notchW,
+  notchH:DEVICES[0].notchH, radius:DEVICES[0].radius,
+};
+
+const colors = { bg:"#000000", road:"#616161", water:"#424242" };
+const params = { threshold:2, minW:0.8, maxW:2.2, curve:1.0, scale:1.4, padding:5 };
+
+let osmElements = null, lastBbox = null, lastCanvas = null;
+let renderTimer = null, isFetching = false;
+let activePaletteTag = "all", activePaletteIdx = -1;
+
+/* ═══════════════════════════════════════════════════════
+   ROAD TIERS
+═══════════════════════════════════════════════════════ */
+const ROAD_TIERS = [
+  { tier:0, label:"Path",        types:["track","path","footway","cycleway","steps","bridleway"] },
+  { tier:1, label:"Service",     types:["living_street","pedestrian","service"] },
+  { tier:2, label:"Residential", types:["residential","unclassified","tertiary","tertiary_link"] },
+  { tier:3, label:"Secondary",   types:["secondary","secondary_link"] },
+  { tier:4, label:"Primary",     types:["primary","primary_link"] },
+  { tier:5, label:"Trunk",       types:["trunk","trunk_link"] },
+  { tier:6, label:"Motorway",    types:["motorway","motorway_link"] },
+];
+const THRESHOLD_LABELS   = ["All roads","Tertiary+","Secondary+","Primary+","Motorway only"];
+const THRESHOLD_MIN_TIER = [0, 2, 3, 4, 6];
+
+/* ═══════════════════════════════════════════════════════
+   PALETTE LIBRARY
+═══════════════════════════════════════════════════════ */
+const PALETTES = [
+  // --- Dark ---
+  { name:"Obsidian",      mood:"dark minimal",        tags:["dark","minimal"],              bg:"#0d0d0d", road:"#3a3a3a", water:"#1a2a3a" },
+  { name:"Charcoal",      mood:"dark warm",            tags:["dark","warm"],                 bg:"#1a1410", road:"#5a4a3a", water:"#2a3040" },
+  { name:"Midnight",      mood:"dark cool blue",       tags:["dark","cool","blue"],          bg:"#060d1f", road:"#c0d8ff", water:"#0a1e3a" },
+  { name:"Slate",         mood:"dark neutral",         tags:["dark","neutral"],              bg:"#111318", road:"#4a5060", water:"#1e2840" },
+  { name:"Noir",          mood:"high contrast",        tags:["dark","contrast"],             bg:"#000000", road:"#ffffff", water:"#222222" },
+  { name:"Deep Sea",      mood:"dark ocean",           tags:["dark","blue","ocean"],         bg:"#020e1c", road:"#1a4a6a", water:"#0a2a4a" },
+  { name:"Deep Purple",   mood:"royal dark",           tags:["dark","purple","rich"],        bg:"#0a0510", road:"#603090", water:"#1a0a2a" },
+  { name:"Dracula",       mood:"vampire dark",         tags:["dark","purple","pink"],        bg:"#282a36", road:"#ff79c6", water:"#6272a4" },
+  // --- Light ---
+  { name:"Parchment",     mood:"light warm",           tags:["light","warm","paper"],        bg:"#f5f0e8", road:"#8a7a6a", water:"#a0b8c8" },
+  { name:"Blueprint",     mood:"light technical",      tags:["light","blue"],                bg:"#e8f0f8", road:"#3060a0", water:"#6090c0" },
+  { name:"Ghost",         mood:"light minimal",        tags:["light","minimal"],             bg:"#f8f8f8", road:"#cccccc", water:"#b0c8d8" },
+  { name:"Cream",         mood:"light neutral",        tags:["light","warm","neutral"],      bg:"#faf6f0", road:"#c0a880", water:"#90b0c0" },
+  { name:"Nordic",        mood:"cold minimal",         tags:["light","cool","grey"],         bg:"#eceff4", road:"#4c566a", water:"#81a1c1" },
+  { name:"Moonlight",     mood:"pale silver",          tags:["light","cool","night"],        bg:"#e0e0f0", road:"#707090", water:"#a0b0d0" },
+  { name:"Champagne",     mood:"elegant light",        tags:["light","warm","luxury"],       bg:"#f7f3e9", road:"#d4c4a8", water:"#b8ccd0" },
+  { name:"Arctic",        mood:"cold ice light",       tags:["cool","blue","minimal"],       bg:"#e8f4ff", road:"#6090b0", water:"#a0c8e0" },
+  // --- Neon ---
+  { name:"Neon City",     mood:"neon vibrant",         tags:["neon","vibrant","dark"],       bg:"#0a0010", road:"#ff00ff", water:"#00ffff" },
+  { name:"Cyberpunk",     mood:"neon yellow",          tags:["neon","yellow","dark"],        bg:"#0d0d00", road:"#ffff00", water:"#00ccff" },
+  { name:"Synthwave",     mood:"retro neon pink",      tags:["neon","pink","retro"],         bg:"#0d0020", road:"#ff2080", water:"#8000ff" },
+  { name:"Electric",      mood:"neon blue",            tags:["neon","blue","vibrant"],       bg:"#000510", road:"#00aaff", water:"#0044aa" },
+  { name:"Acid",          mood:"neon green",           tags:["neon","green","dark"],         bg:"#000a00", road:"#00ff44", water:"#004422" },
+  { name:"Toxic",         mood:"high vis neon",        tags:["neon","yellow","green"],       bg:"#050a00", road:"#ccff00", water:"#224400" },
+  { name:"Mirage",        mood:"bleached sandy neon",  tags:["neon","sandy","warm"],         bg:"#0e0c04", road:"#ffe080", water:"#204050" },
+  { name:"Neon Sign",     mood:"neon on black contrast",tags:["neon","contrast","vibrant"],  bg:"#000000", road:"#ff6600", water:"#001a33" },
+  // --- Earth ---
+  { name:"Terrain",       mood:"earthy natural",       tags:["earth","natural","warm"],      bg:"#2a2010", road:"#a08040", water:"#406080" },
+  { name:"Forest",        mood:"green natural",        tags:["earth","green"],               bg:"#0a1a0a", road:"#4a7a3a", water:"#2a5a4a" },
+  { name:"Desert",        mood:"warm sandy",           tags:["earth","warm","sandy"],        bg:"#2a1a08", road:"#c8a060", water:"#608090" },
+  { name:"Autumn",        mood:"warm seasonal",        tags:["earth","warm"],                bg:"#1a0c00", road:"#c06020", water:"#204060" },
+  { name:"Savanna",       mood:"warm ochre",           tags:["earth","warm","ochre"],        bg:"#1e1608", road:"#b08040", water:"#406070" },
+  { name:"Mars",          mood:"dusty red",            tags:["earth","red","warm"],          bg:"#1a0a05", road:"#b04020", water:"#402010" },
+  { name:"Sahel",         mood:"dusty ochre",          tags:["earth","warm","ochre","sandy"],bg:"#1e1a08", road:"#b89040", water:"#3a5870" },
+  { name:"Turmeric",      mood:"vivid ochre spice",    tags:["earth","warm","ochre","vibrant"],bg:"#180e00",road:"#e8a020", water:"#1a3a50" },
+  { name:"Dune Light",    mood:"pale ochre minimal",   tags:["light","warm","ochre","sandy"],bg:"#f5edd8", road:"#c8a050", water:"#90aab8" },
+  { name:"Amber Noir",    mood:"dark ochre contrast",  tags:["dark","warm","ochre"],         bg:"#0a0800", road:"#cc8800", water:"#1a2a38" },
+  { name:"Emerald",       mood:"vibrant green",        tags:["vibrant","green"],             bg:"#001a0a", road:"#50c878", water:"#004433" },
+  // --- Mono ---
+  { name:"Silver",        mood:"mono cool",            tags:["mono","cool","grey"],          bg:"#1a1a1e", road:"#8888aa", water:"#3a3a5a" },
+  { name:"Sepia",         mood:"mono warm vintage",    tags:["mono","warm"],                 bg:"#1a1208", road:"#8a7050", water:"#3a5060" },
+  { name:"Titanium",      mood:"industrial",           tags:["mono","metal","neutral"],      bg:"#1a1a1a", road:"#a5a5a5", water:"#30353b" },
+  { name:"Old Brass",     mood:"tarnished ochre",      tags:["mono","warm","ochre"],         bg:"#141008", road:"#9a7a30", water:"#2a3a48" },
+  // --- Pastel ---
+  { name:"Rose",          mood:"pastel pink",          tags:["pastel","pink","soft"],        bg:"#fff0f4", road:"#e090a0", water:"#90b8d0" },
+  { name:"Lavender",      mood:"pastel purple",        tags:["pastel","purple","soft"],      bg:"#f4f0ff", road:"#a080c0", water:"#80a8c8" },
+  { name:"Mint",          mood:"pastel green",         tags:["pastel","green","soft"],       bg:"#f0fff8", road:"#70b890", water:"#70a8c0" },
+  { name:"Sakura",        mood:"soft floral",          tags:["pastel","pink","warm"],        bg:"#fff5f7", road:"#ffb7c5", water:"#a0d8ef" },
+  // --- Special ---
+  { name:"Infrared",      mood:"thermal red",          tags:["special","red","dark"],        bg:"#0a0000", road:"#ff4400", water:"#440000" },
+  { name:"Matrix",        mood:"green terminal",       tags:["special","green","dark"],      bg:"#000800", road:"#00cc00", water:"#003300" },
+  { name:"Gold Rush",     mood:"luxury metallic",      tags:["special","gold","warm"],       bg:"#0d0b00", road:"#d4af37", water:"#2a2510" },
+  { name:"Solarized",     mood:"technical warm",       tags:["special","warm","tech"],       bg:"#002b36", road:"#b58900", water:"#268bd2" },
+  { name:"Volcano",       mood:"magma dark",           tags:["special","red","orange"],      bg:"#0a0000", road:"#ff2200", water:"#330000" },
+  // --- Rich ---
+  { name:"Malachite",     mood:"rich deep green",      tags:["dark","green","rich"],         bg:"#001008", road:"#208050", water:"#003020" },
+  { name:"Sapphire",      mood:"rich royal blue",      tags:["dark","blue","rich"],          bg:"#000818", road:"#1040c0", water:"#0a1a40" },
+  { name:"Imperial",      mood:"rich gold purple",     tags:["dark","purple","rich","gold"], bg:"#080008", road:"#c0a000", water:"#200840" },
+  // --- Contrast ---
+  { name:"Chalkboard",    mood:"dark contrast warm",   tags:["dark","contrast","warm"],      bg:"#0a0a08", road:"#f0e8c0", water:"#1a2830" },
+  { name:"Carbon",        mood:"dark paper contrast",  tags:["dark","paper","contrast"],     bg:"#0e0e0e", road:"#e8e0d0", water:"#1e2830" },
+  // --- Paper ---
+  { name:"Newsprint",     mood:"grey paper vintage",   tags:["light","neutral","paper"],     bg:"#f0ede6", road:"#888070", water:"#8898a8" },
+  { name:"Manuscript",    mood:"aged paper warm",      tags:["light","warm","paper","mono"], bg:"#f2ead8", road:"#907850", water:"#7090a0" },
+  // --- Vibrant ---
+  { name:"Sunset",        mood:"vibrant warm",         tags:["vibrant","orange","red"],      bg:"#140a10", road:"#ff5e62", water:"#ff9966" },
+];
+
+const PALETTE_TAGS = [
+  "all",
+  // Brightness
+  "dark", "light",
+  // Style families
+  "neon", "pastel", "mono", "earth",
+  // Temperature
+  "warm", "cool",
+  // Aesthetic
+  "minimal", "vibrant", "retro", "special",
+  // Curated families
+  "contrast", "rich", "paper", "sandy", "ochre",
+  // Colors
+  "blue", "green", "red", "pink", "purple",
+  "yellow", "orange", "gold", "grey",
+  // Descriptors
+  "neutral", "natural", "soft", "ocean",
+  "metal", "luxury", "tech", "night",
+];
+
+/* ═══════════════════════════════════════════════════════
+   FORMAT GRID
+═══════════════════════════════════════════════════════ */
+function buildFormatGrid() {
+  const grid = document.getElementById("formatGrid");
+  FORMATS.forEach(fmt => {
+    const btn = document.createElement("div");
+    btn.className = "fmt-btn" + (fmt.id === currentFormat.id ? " active" : "");
+    btn.innerHTML = `<span class="f-ext">${fmt.ext}</span><span class="f-type">${fmt.type}</span>`;
+    btn.onclick = () => {
+      currentFormat = fmt;
+      grid.querySelectorAll(".fmt-btn").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      document.getElementById("vectorNote").classList.toggle("show", fmt.vector);
+      updateDlButton();
+    };
+    grid.appendChild(btn);
+  });
+}
+
+function updateDlButton() {
+  const btn = document.getElementById("dlBtn");
+  if (!osmElements) { btn.disabled = true; return; }
+  btn.disabled = false;
+  btn.textContent = `${t('download')} ${currentFormat.ext}`;
+}
+
+/* ═══════════════════════════════════════════════════════
+   TAB SWITCHING
+═══════════════════════════════════════════════════════ */
+function switchSizeTab(name, btn) {
+  ["device","print","custom"].forEach(t =>
+    document.getElementById("tab-"+t).classList.toggle("active", t===name));
+  btn.closest(".tab-strip").querySelectorAll(".tab-btn")
+     .forEach(b => b.classList.toggle("active", b===btn));
+  sizeMode = name;
+  if (name==="device") applyDeviceTarget(currentDevice);
+  if (name==="print")  applyCurrentPrintTarget();
+  if (name==="custom") applyCustomSize();
+}
+
+function switchColorTab(name, btn) {
+  ["manual","palette"].forEach(t =>
+    document.getElementById("tab-"+t).classList.toggle("active", t===name));
+  btn.closest(".tab-strip").querySelectorAll(".tab-btn")
+     .forEach(b => b.classList.toggle("active", b===btn));
+}
+
+function switchPrintSub(sub, btn) {
+  printSubMode = sub;
+  document.getElementById("printSubPaper").style.display = sub==="paper" ? "" : "none";
+  document.getElementById("printSubPhoto").style.display = sub==="photo" ? "" : "none";
+  btn.closest(".tab-strip").querySelectorAll(".tab-btn")
+     .forEach(b => b.classList.toggle("active", b===btn));
+  /* reset selection to first of new sub */
+  if (sub==="paper") currentPrintSize = PAPER_SIZES[0];
+  else               currentPrintSize = PHOTO_SIZES[0];
+  highlightPrintBtn();
+  applyCurrentPrintTarget();
+}
+
+/* ═══════════════════════════════════════════════════════
+   DEVICE GRID
+═══════════════════════════════════════════════════════ */
+function buildDeviceGrid() {
+  const grid = document.getElementById("deviceGrid");
+  DEVICES.forEach(dev => {
+    const btn = document.createElement("div");
+    btn.className = "device-btn" + (dev.id===currentDevice.id?" active":"");
+    btn.innerHTML = `<span class="d-icon">${dev.icon}</span>
+                     <span class="d-name">${dev.name}</span>
+                     <span class="d-res">${dev.w}×${dev.h}</span>`;
+    btn.onclick = () => {
+      currentDevice = dev;
+      grid.querySelectorAll(".device-btn").forEach(b=>b.classList.remove("active"));
+      btn.classList.add("active");
+      applyDeviceTarget(dev);
+    };
+    grid.appendChild(btn);
+  });
+}
+
+function applyDeviceTarget(dev) {
+  canvasTarget = { w:dev.w, h:dev.h, name:dev.name,
+    notch:dev.notch, notchW:dev.notchW, notchH:dev.notchH, radius:dev.radius };
+  applyFrame(); scheduleRender();
+}
+
+/* ═══════════════════════════════════════════════════════
+   PAPER GRID
+═══════════════════════════════════════════════════════ */
+function buildPaperGrid() {
+  const grid = document.getElementById("paperGrid");
+  PAPER_SIZES.forEach(ps => {
+    const btn = document.createElement("div");
+    btn.className = "print-btn" + (ps.id===currentPrintSize.id?" active":"");
+    btn.dataset.printId = ps.id;
+    refreshPaperBtnHTML(btn, ps);
+    btn.onclick = () => {
+      currentPrintSize = ps;
+      highlightPrintBtn();
+      applyCurrentPrintTarget();
+    };
+    grid.appendChild(btn);
+  });
+}
+
+function refreshPaperBtnHTML(btn, ps) {
+  const pw = mmToPx(ps.mmW, currentDpi), ph = mmToPx(ps.mmH, currentDpi);
+  btn.innerHTML = `<span class="p-name">${ps.name}</span>
+                   <span class="p-dim">${ps.mmW}×${ps.mmH}mm</span>
+                   <span class="p-px">${pw}×${ph}px</span>`;
+}
+
+/* ═══════════════════════════════════════════════════════
+   PHOTO GRID
+═══════════════════════════════════════════════════════ */
+function buildPhotoGrid() {
+  const grid = document.getElementById("photoGrid");
+  PHOTO_SIZES.forEach(ps => {
+    const btn = document.createElement("div");
+    btn.className = "print-btn";
+    btn.dataset.printId = ps.id;
+    refreshPhotoBtnHTML(btn, ps);
+    btn.onclick = () => {
+      currentPrintSize = ps;
+      highlightPrintBtn();
+      applyCurrentPrintTarget();
+    };
+    grid.appendChild(btn);
+  });
+}
+
+function refreshPhotoBtnHTML(btn, ps) {
+  const pw = mmToPx(ps.mmW, currentDpi), ph = mmToPx(ps.mmH, currentDpi);
+  btn.innerHTML = `<span class="p-name">${ps.name}</span>
+                   <span class="p-dim">${ps.note}</span>
+                   <span class="p-px">${pw}×${ph}px</span>`;
+}
+
+function highlightPrintBtn() {
+  document.querySelectorAll("#paperGrid .print-btn, #photoGrid .print-btn")
+    .forEach(b => b.classList.toggle("active", b.dataset.printId===currentPrintSize.id));
+}
+
+function mmToPx(mm, dpi) { return Math.round(mm * dpi / 25.4); }
+
+function applyCurrentPrintTarget() {
+  const ps = currentPrintSize;
+  const pw = mmToPx(ps.mmW, currentDpi), ph = mmToPx(ps.mmH, currentDpi);
+  canvasTarget = { w:pw, h:ph, name:ps.name+" @"+currentDpi+"dpi",
+                   notch:"none", notchW:0, notchH:0, radius:6 };
+  applyFrame(); scheduleRender();
+}
+
+function refreshAllPrintLabels() {
+  document.querySelectorAll("#paperGrid .print-btn").forEach((btn, i) => {
+    refreshPaperBtnHTML(btn, PAPER_SIZES[i]);
+  });
+  document.querySelectorAll("#photoGrid .print-btn").forEach((btn, i) => {
+    refreshPhotoBtnHTML(btn, PHOTO_SIZES[i]);
+  });
+  if (sizeMode==="print") applyCurrentPrintTarget();
+}
+
+/* ═══════════════════════════════════════════════════════
+   DPI BUTTONS
+═══════════════════════════════════════════════════════ */
+function buildDpiButtons() {
+  const wrap = document.getElementById("dpiBtns");
+  DPIS.forEach(d => {
+    const btn = document.createElement("div");
+    btn.className = "dpi-btn" + (d===currentDpi?" active":"");
+    btn.textContent = d+"dpi";
+    btn.onclick = () => {
+      currentDpi = d;
+      wrap.querySelectorAll(".dpi-btn").forEach(b=>b.classList.remove("active"));
+      btn.classList.add("active");
+      refreshAllPrintLabels();
+    };
+    wrap.appendChild(btn);
+  });
+}
+
+/* ═══════════════════════════════════════════════════════
+   CUSTOM SIZE
+═══════════════════════════════════════════════════════ */
+function buildUnitRow() {
+  const row = document.getElementById("unitRow");
+  ["px","cm","in"].forEach(u => {
+    const btn = document.createElement("div");
+    btn.className = "unit-btn" + (u===customUnit?" active":"");
+    btn.textContent = u;
+    btn.onclick = () => {
+      customUnit = u;
+      row.querySelectorAll(".unit-btn").forEach(b=>b.classList.remove("active"));
+      btn.classList.add("active");
+      document.getElementById("lblW").textContent = "Width ("+u+")";
+      document.getElementById("lblH").textContent = "Height ("+u+")";
+    };
+    row.appendChild(btn);
+  });
+}
+
+function onCustomSize() { /* live label only */ }
+
+function applyCustomSize() {
+  let w = parseFloat(document.getElementById("customW").value)||1920;
+  let h = parseFloat(document.getElementById("customH").value)||1080;
+  if (customUnit==="cm") { w=Math.round(w*UNIT_DPI/2.54); h=Math.round(h*UNIT_DPI/2.54); }
+  if (customUnit==="in") { w=Math.round(w*UNIT_DPI);      h=Math.round(h*UNIT_DPI); }
+  w=Math.max(1,Math.min(20000,w)); h=Math.max(1,Math.min(20000,h));
+  canvasTarget={ w, h, name:`Custom ${w}×${h}`, notch:"none", notchW:0, notchH:0, radius:4 };
+  applyFrame(); scheduleRender();
+}
+
+/* ═══════════════════════════════════════════════════════
+   FRAME SIZING
+═══════════════════════════════════════════════════════ */
+function applyFrame() {
+  const frame  = document.getElementById("deviceFrame");
+  const notch  = document.getElementById("frameNotch");
+  const badge  = document.getElementById("resBadge");
+  const canvas = document.getElementById("previewCanvas");
+  const ct     = canvasTarget;
+
+  const maxH = window.innerHeight - 56 - 80;
+  const maxW = document.querySelector(".canvas-area").clientWidth - 60;
+  const s    = Math.min(maxH/ct.h, maxW/ct.w);
+
+  frame.style.width        = Math.round(ct.w*s)+"px";
+  frame.style.height       = Math.round(ct.h*s)+"px";
+  frame.style.borderRadius = (ct.radius||6)+"px";
+  canvas.width  = ct.w;
+  canvas.height = ct.h;
+
+  if (ct.notch==="notch") {
+    notch.style.display="block";
+    notch.style.width=(ct.notchW*s)+"px"; notch.style.height=(ct.notchH*s)+"px";
+    notch.style.borderRadius="0 0 "+(10*s)+"px "+(10*s)+"px";
+  } else if (ct.notch==="island") {
+    notch.style.display="block";
+    notch.style.width=(ct.notchW*s)+"px"; notch.style.height=(ct.notchH*s)+"px";
+    notch.style.borderRadius=(ct.notchH*s/2)+"px";
+  } else {
+    notch.style.display="none";
+  }
+
+  badge.textContent=`${ct.w} × ${ct.h} px`;
+  updateExportInfo();
+}
+
+function updateExportInfo() {
+  const ct=canvasTarget;
+  document.getElementById("exportInfo").innerHTML=`
+    <div class="export-info-row"><span class="k">${t('target')}</span><span class="v">${ct.name}</span></div>
+    <div class="export-info-row"><span class="k">${t('size')}</span><span class="v">${ct.w}×${ct.h}px</span></div>
+    <div class="export-info-row"><span class="k">${t('format')}</span><span class="v">${currentFormat.ext} (${currentFormat.type})</span></div>
+  `;
+}
+
+/* ═══════════════════════════════════════════════════════
+   PALETTE LIBRARY
+═══════════════════════════════════════════════════════ */
+function buildPaletteTags() {
+  const wrap = document.getElementById("paletteTags");
+  PALETTE_TAGS.forEach(tag => {
+    const el = document.createElement("div");
+    el.className = "palette-tag"+(tag===activePaletteTag?" active":"");
+    el.textContent = tag;
+    el.onclick = () => {
+      activePaletteTag=tag;
+      wrap.querySelectorAll(".palette-tag").forEach(t=>t.classList.remove("active"));
+      el.classList.add("active"); filterPalettes();
+    };
+    wrap.appendChild(el);
+  });
+}
+
+function filterPalettes() {
+  const q=document.getElementById("paletteSearch").value.toLowerCase();
+  const list=document.getElementById("paletteList");
+  list.innerHTML="";
+  PALETTES.forEach((p,i)=>{
+    const matchTag  = activePaletteTag==="all"||p.tags.includes(activePaletteTag);
+    const matchText = !q||p.name.toLowerCase().includes(q)||p.mood.toLowerCase().includes(q);
+    if(!matchTag||!matchText) return;
+    const item=document.createElement("div");
+    item.className="palette-item"+(i===activePaletteIdx?" active":"");
+    item.innerHTML=`
+      <div class="palette-swatches">
+        <div class="palette-swatch" style="background:${p.bg}"></div>
+        <div class="palette-swatch" style="background:${p.road}"></div>
+        <div class="palette-swatch" style="background:${p.water}"></div>
+      </div>
+      <div class="palette-meta">
+        <div class="palette-name">${p.name}</div>
+        <div class="palette-mood">${p.mood}</div>
+      </div>`;
+    item.onclick=()=>{
+      activePaletteIdx=i; applyPalette(p);
+      list.querySelectorAll(".palette-item").forEach(el=>el.classList.remove("active"));
+      item.classList.add("active");
+    };
+    list.appendChild(item);
+  });
+}
+
+function applyPalette(p) {
+  syncColor("bg",p.bg); syncColor("road",p.road); syncColor("water",p.water);
+  scheduleRender();
+}
+
+/* ═══════════════════════════════════════════════════════
+   COLOR HELPERS
+═══════════════════════════════════════════════════════ */
+function isValidHex(h){ return /^#[0-9a-fA-F]{6}$/.test(h); }
+function syncColor(key,hex){
+  if(!isValidHex(hex)) return;
+  colors[key]=hex;
+  document.getElementById(`pick-${key}`).value=hex;
+  document.getElementById(`prev-${key}`).style.background=hex;
+  document.getElementById(`hex-${key}`).value=hex;
+}
+function onColorPick(key,hex){ syncColor(key,hex); scheduleRender(); }
+function onHexType(key,raw){
+  const v=raw.startsWith("#")?raw:"#"+raw;
+  if(isValidHex(v)){ colors[key]=v; document.getElementById(`pick-${key}`).value=v;
+    document.getElementById(`prev-${key}`).style.background=v; scheduleRender(); }
+}
+function onHexBlur(key){
+  let v=document.getElementById(`hex-${key}`).value.trim();
+  if(!v.startsWith("#")) v="#"+v;
+  if(isValidHex(v)) syncColor(key,v);
+  else document.getElementById(`hex-${key}`).value=colors[key];
+}
+["bg","road","water"].forEach(k=>syncColor(k,colors[k]));
+
+/* ═══════════════════════════════════════════════════════
+   SLIDER HELPERS
+═══════════════════════════════════════════════════════ */
+const SLIDER_FMT={
+  threshold:v=>THRESHOLD_LABELS[v],
+  minW:v=>parseFloat(v).toFixed(1),
+  maxW:v=>parseFloat(v).toFixed(1),
+  curve:v=>{const n=parseFloat(v);return n<0.8?"Flat":n<1.2?"Linear":n<2?"Curved":"Steep";},
+  scale:v=>parseFloat(v).toFixed(1)+"×",
+  padding:v=>v+"%",
+};
+function onSlider(key,val){
+  params[key]=parseFloat(val);
+  document.getElementById(`val-${key}`).textContent=SLIDER_FMT[key](val);
+  updateTierBars(); scheduleRender();
+}
+
+/* ═══════════════════════════════════════════════════════
+   WIDTH CALC
+═══════════════════════════════════════════════════════ */
+function computeRoadWidth(tier){
+  const t=tier/6, curved=Math.pow(t,1/params.curve);
+  return params.minW+(params.maxW-params.minW)*curved;
+}
+function roadWidthForType(hw){
+  for(const t of ROAD_TIERS) if(t.types.includes(hw)) return computeRoadWidth(t.tier);
+  return params.minW;
+}
+
+/* ═══════════════════════════════════════════════════════
+   TIER BARS
+═══════════════════════════════════════════════════════ */
+function updateTierBars(){
+  const c=document.getElementById("tierBars"); c.innerHTML="";
+  const minTier=THRESHOLD_MIN_TIER[params.threshold];
+  const active=ROAD_TIERS.filter(t=>t.tier>=minTier);
+  if(!active.length) return;
+  const maxPx=computeRoadWidth(6)*(canvasTarget.w/1170)*params.scale;
+  active.forEach(t=>{
+    const px=computeRoadWidth(t.tier)*(canvasTarget.w/1170)*params.scale;
+    const pct=Math.min(100,(px/maxPx)*100);
+    const row=document.createElement("div");
+    row.className="tier-bar-row";
+    row.innerHTML=`<span class="tier-bar-label">${t.label}</span>
+      <div class="tier-bar-track"><div class="tier-bar-fill" style="width:${pct.toFixed(1)}%"></div></div>
+      <span class="tier-bar-px">${px.toFixed(1)}px</span>`;
+    c.appendChild(row);
+  });
+}
+
+/* ═══════════════════════════════════════════════════════
+   STATUS / OVERLAY
+═══════════════════════════════════════════════════════ */
+function setStatus(msg,type="info"){
+  const el=document.getElementById("statusPill");
+  el.textContent=msg; el.className=type; el.style.display="block";
+}
+function clearStatus(){ document.getElementById("statusPill").style.display="none"; }
+function showOverlay(msg){
+  document.getElementById("overlayText").textContent=msg;
+  document.getElementById("canvasOverlay").style.display="flex";
+}
+function hideOverlay(){ document.getElementById("canvasOverlay").style.display="none"; }
+
+/* ═══════════════════════════════════════════════════════
+   PROJECTION
+═══════════════════════════════════════════════════════ */
+function lon2x(lon,west,east,W){ return ((lon-west)/(east-west))*W; }
+function lat2y(lat,south,north,H){
+  const R=Math.PI/180, merc=v=>Math.log(Math.tan(Math.PI/4+v*R/2));
+  return H-((merc(lat)-merc(south))/(merc(north)-merc(south)))*H;
+}
+
+/* ═══════════════════════════════════════════════════════
+   GEOCODE
+═══════════════════════════════════════════════════════ */
+async function geocodeCity(city,country){
+  const url="https://nominatim.openstreetmap.org/search?"+new URLSearchParams({
+    city,country,format:"json",limit:1,addressdetails:1,"accept-language":"en"
+  });
+  const res=await fetch(url,{headers:{"Accept-Language":"en"}});
+  if(!res.ok) throw new Error("Nominatim request failed");
+  const data=await res.json();
+  if(!data.length) throw new Error(`"${city}, ${country}" not found`);
+  return data[0];
+}
+
+/* ═══════════════════════════════════════════════════════
+   BBOX
+═══════════════════════════════════════════════════════ */
+function computeBbox(place){
+  let [south,north,west,east]=place.boundingbox.map(Number);
+  const pad=params.padding/100;
+  const dLat=(north-south)*pad, dLon=(east-west)*pad;
+  south-=dLat; north+=dLat; west-=dLon; east+=dLon;
+  const ct=canvasTarget, targetRatio=ct.h/ct.w;
+  const midLat=(north+south)/2, lonPerLat=Math.cos(midLat*Math.PI/180);
+  const latSpan=north-south, lonSpan=east-west;
+  const curRatio=(latSpan/lonSpan)/lonPerLat;
+  if(curRatio<targetRatio){
+    const extra=((lonSpan*lonPerLat*targetRatio)-latSpan)/2;
+    south-=extra; north+=extra;
+  } else {
+    const extra=((latSpan/lonPerLat/targetRatio)-lonSpan)/2;
+    west-=extra; east+=extra;
+  }
+  return [south,west,north,east];
+}
+
+/* ═══════════════════════════════════════════════════════
+   OVERPASS
+═══════════════════════════════════════════════════════ */
+function allowedRoadTypes(){
+  const minTier=THRESHOLD_MIN_TIER[params.threshold];
+  return ROAD_TIERS.filter(t=>t.tier>=minTier).flatMap(t=>t.types);
+}
+async function fetchOSM(bbox){
+  const [south,west,north,east]=bbox;
+  const b=`${south},${west},${north},${east}`;
+  const allTypes=ROAD_TIERS.flatMap(t=>t.types);
+  const roadUnion=allTypes.map(r=>`  way["highway"="${r}"](${b});`).join("\n");
+  const query=`[out:json][timeout:90];\n(\n${roadUnion}\n  way["waterway"](${b});\n  way["natural"="water"](${b});\n  way["landuse"="reservoir"](${b});\n  way["landuse"="basin"](${b});\n);\nout body;\n>;\nout skel qt;`;
+  const res=await fetch("https://overpass-api.de/api/interpreter",{
+    method:"POST", body:"data="+encodeURIComponent(query),
+    headers:{"Content-Type":"application/x-www-form-urlencoded"},
+  });
+  if(!res.ok) throw new Error("Overpass API request failed");
+  return res.json();
+}
+
+/* ═══════════════════════════════════════════════════════
+   RENDER (canvas)
+═══════════════════════════════════════════════════════ */
+function renderMap(){
+  if(!osmElements||!lastBbox) return;
+  const canvas=document.getElementById("previewCanvas");
+  const ct=canvasTarget;
+  canvas.width=ct.w; canvas.height=ct.h;
+  const [south,west,north,east]=lastBbox;
+  const W=ct.w, H=ct.h;
+  const ctx=canvas.getContext("2d");
+  ctx.fillStyle=colors.bg; ctx.fillRect(0,0,W,H);
+
+  const nodes={};
+  for(const el of osmElements) if(el.type==="node") nodes[el.id]=el;
+
+  const allowed=new Set(allowedRoadTypes());
+  const roads=[],waterLines=[],waterPolys=[];
+  for(const el of osmElements){
+    if(el.type!=="way"||!el.nodes?.length) continue;
+    const tags=el.tags||{};
+    if(tags.highway&&allowed.has(tags.highway)){ roads.push(el); }
+    else if(tags.waterway||tags.natural==="water"||tags.landuse==="reservoir"||tags.landuse==="basin"){
+      const closed=el.nodes[0]===el.nodes[el.nodes.length-1];
+      if(closed&&(tags.natural==="water"||tags.landuse==="reservoir"||tags.landuse==="basin"))
+        waterPolys.push(el); else waterLines.push(el);
+    }
+  }
+  const pxScale=W/1170;
+  function buildPath(nodeIds){
+    ctx.beginPath(); let first=true;
+    for(const nid of nodeIds){
+      const n=nodes[nid]; if(!n) continue;
+      const x=lon2x(n.lon,west,east,W), y=lat2y(n.lat,south,north,H);
+      first?(ctx.moveTo(x,y),first=false):ctx.lineTo(x,y);
+    }
+  }
+  ctx.fillStyle=colors.water;
+  for(const way of waterPolys){ buildPath(way.nodes); ctx.closePath(); ctx.fill(); }
+  const wLineW={river:1.8,canal:1.5,stream:1.0,drain:0.7,ditch:0.5};
+  ctx.strokeStyle=colors.water; ctx.lineCap="round"; ctx.lineJoin="round";
+  for(const way of waterLines){
+    const wt=(way.tags||{}).waterway||"stream";
+    ctx.lineWidth=(wLineW[wt]||0.7)*pxScale*params.scale;
+    buildPath(way.nodes); ctx.stroke();
+  }
+  const drawOrder=ROAD_TIERS.flatMap(t=>t.types).filter(r=>allowed.has(r));
+  const roadGroups={};
+  for(const way of roads){ const hw=(way.tags||{}).highway; if(!roadGroups[hw]) roadGroups[hw]=[]; roadGroups[hw].push(way); }
+  ctx.strokeStyle=colors.road; ctx.lineCap="round"; ctx.lineJoin="round";
+  for(const hw of drawOrder){
+    if(!roadGroups[hw]) continue;
+    ctx.lineWidth=roadWidthForType(hw)*pxScale*params.scale;
+    for(const way of roadGroups[hw]){ buildPath(way.nodes); ctx.stroke(); }
+  }
+  lastCanvas=canvas;
+  updateDlButton(); updateTierBars();
+}
+
+function scheduleRender(){
+  clearTimeout(renderTimer);
+  renderTimer=setTimeout(()=>{ if(osmElements) renderMap(); },60);
+}
+
+/* ═══════════════════════════════════════════════════════
+   FETCH MAP
+═══════════════════════════════════════════════════════ */
+async function fetchMap(){
+  if(isFetching) return;
+  const city=document.getElementById("city").value.trim();
+  const country=document.getElementById("country").value.trim();
+  if(!city||!country){ setStatus(t('enterCityCountry'),"error"); return; }
+  isFetching=true; osmElements=null; lastCanvas=null;
+  updateDlButton();
+  document.getElementById("fetchBtn").disabled=true;
+  showOverlay(t('locating')); setStatus(t('geocoding'),"info");
+  try{
+    const place=await geocodeCity(city,country);
+    lastBbox=computeBbox(place);
+    showOverlay(t('downloading')); setStatus(t('downloading'),"info");
+    const data=await fetchOSM(lastBbox);
+    osmElements=data.elements;
+    showOverlay(t('rendering')); setStatus(t('rendering'),"info");
+    await new Promise(r=>setTimeout(r,30));
+    renderMap(); hideOverlay(); clearStatus();
+    setStatus(`✅ ${city}, ${country}`,"ok");
+  }catch(err){
+    hideOverlay(); setStatus("❌ "+err.message,"error"); console.error(err);
+  }finally{
+    isFetching=false; document.getElementById("fetchBtn").disabled=false;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════
+   VECTOR EXPORT HELPERS
+═══════════════════════════════════════════════════════ */
+
+/* Build a structured scene description from current OSM + params */
+function buildScene(){
+  if(!osmElements||!lastBbox) return null;
+  const [south,west,north,east]=lastBbox;
+  const W=canvasTarget.w, H=canvasTarget.h;
+  const nodes={};
+  for(const el of osmElements) if(el.type==="node") nodes[el.id]=el;
+
+  const allowed=new Set(allowedRoadTypes());
+  const pxScale=W/1170;
+  const wLineW={river:1.8,canal:1.5,stream:1.0,drain:0.7,ditch:0.5};
+
+  const waterPolyPaths=[], waterLinePaths=[], roadPaths=[];
+  const roadGroups={};
+
+  for(const el of osmElements){
+    if(el.type!=="way"||!el.nodes?.length) continue;
+    const tags=el.tags||{};
+    const pts=el.nodes.map(nid=>{
+      const n=nodes[nid]; if(!n) return null;
+      return [lon2x(n.lon,west,east,W), lat2y(n.lat,south,north,H)];
+    }).filter(Boolean);
+    if(!pts.length) continue;
+
+    if(tags.highway&&allowed.has(tags.highway)){
+      const hw=tags.highway;
+      if(!roadGroups[hw]) roadGroups[hw]=[];
+      roadGroups[hw].push(pts);
+    } else if(tags.waterway||tags.natural==="water"||tags.landuse==="reservoir"||tags.landuse==="basin"){
+      const closed=el.nodes[0]===el.nodes[el.nodes.length-1];
+      if(closed&&(tags.natural==="water"||tags.landuse==="reservoir"||tags.landuse==="basin")){
+        waterPolyPaths.push(pts);
+      } else {
+        const wt=tags.waterway||"stream";
+        waterLinePaths.push({pts, lw:(wLineW[wt]||0.7)*pxScale*params.scale});
+      }
+    }
+  }
+
+  const drawOrder=ROAD_TIERS.flatMap(t=>t.types).filter(r=>allowed.has(r));
+  for(const hw of drawOrder){
+    if(!roadGroups[hw]) continue;
+    const lw=roadWidthForType(hw)*pxScale*params.scale;
+    for(const pts of roadGroups[hw]) roadPaths.push({pts,lw});
+  }
+
+  return { W, H, waterPolyPaths, waterLinePaths, roadPaths };
+}
+
+/* Points array → SVG path d attribute */
+function ptsToSVGPath(pts, close=false){
+  if(!pts.length) return "";
+  let d=`M${pts[0][0].toFixed(2)},${pts[0][1].toFixed(2)}`;
+  for(let i=1;i<pts.length;i++) d+=` L${pts[i][0].toFixed(2)},${pts[i][1].toFixed(2)}`;
+  if(close) d+=" Z";
+  return d;
+}
+
+/* ── SVG ── */
+function generateSVG(){
+  const sc=buildScene(); if(!sc) return null;
+  const {W,H,waterPolyPaths,waterLinePaths,roadPaths}=sc;
+  const lines=[];
+  lines.push(`<?xml version="1.0" encoding="UTF-8"?>`);
+  lines.push(`<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">`);
+  lines.push(`  <rect width="${W}" height="${H}" fill="${colors.bg}"/>`);
+
+  /* water fills */
+  if(waterPolyPaths.length){
+    lines.push(`  <g fill="${colors.water}" stroke="none">`);
+    for(const pts of waterPolyPaths)
+      lines.push(`    <path d="${ptsToSVGPath(pts,true)}"/>`);
+    lines.push(`  </g>`);
+  }
+  /* water lines */
+  if(waterLinePaths.length){
+    lines.push(`  <g fill="none" stroke="${colors.water}" stroke-linecap="round" stroke-linejoin="round">`);
+    for(const {pts,lw} of waterLinePaths)
+      lines.push(`    <path stroke-width="${lw.toFixed(2)}" d="${ptsToSVGPath(pts)}"/>`);
+    lines.push(`  </g>`);
+  }
+  /* roads */
+  if(roadPaths.length){
+    lines.push(`  <g fill="none" stroke="${colors.road}" stroke-linecap="round" stroke-linejoin="round">`);
+    for(const {pts,lw} of roadPaths)
+      lines.push(`    <path stroke-width="${lw.toFixed(2)}" d="${ptsToSVGPath(pts)}"/>`);
+    lines.push(`  </g>`);
+  }
+  lines.push(`</svg>`);
+  return lines.join("\n");
+}
+
+/* ── PDF (hand-crafted minimal PDF with vector paths) ── */
+function generatePDF(){
+  const sc=buildScene(); if(!sc) return null;
+  const {W,H,waterPolyPaths,waterLinePaths,roadPaths}=sc;
+
+  /* PDF uses bottom-left origin — flip Y */
+  const fy=y=>H-y;
+
+  function hexToRGB01(hex){
+    const r=parseInt(hex.slice(1,3),16)/255;
+    const g=parseInt(hex.slice(3,5),16)/255;
+    const b=parseInt(hex.slice(5,7),16)/255;
+    return [r,g,b];
+  }
+
+  const bgRGB  =hexToRGB01(colors.bg);
+  const rdRGB  =hexToRGB01(colors.road);
+  const wtRGB  =hexToRGB01(colors.water);
+
+  const streamLines=[];
+
+  /* helper: path from pts */
+  function pdfPath(pts,close=false){
+    if(!pts.length) return "";
+    let s=`${pts[0][0].toFixed(2)} ${fy(pts[0][1]).toFixed(2)} m`;
+    for(let i=1;i<pts.length;i++) s+=` ${pts[i][0].toFixed(2)} ${fy(pts[i][1]).toFixed(2)} l`;
+    if(close) s+=" h";
+    return s;
+  }
+
+  /* background rect */
+  streamLines.push(`${bgRGB[0].toFixed(4)} ${bgRGB[1].toFixed(4)} ${bgRGB[2].toFixed(4)} rg`);
+  streamLines.push(`0 0 ${W} ${H} re f`);
+
+  /* water polys */
+  if(waterPolyPaths.length){
+    streamLines.push(`${wtRGB[0].toFixed(4)} ${wtRGB[1].toFixed(4)} ${wtRGB[2].toFixed(4)} rg`);
+    for(const pts of waterPolyPaths){
+      streamLines.push(pdfPath(pts,true));
+      streamLines.push("f");
+    }
+  }
+  /* water lines */
+  if(waterLinePaths.length){
+    streamLines.push(`${wtRGB[0].toFixed(4)} ${wtRGB[1].toFixed(4)} ${wtRGB[2].toFixed(4)} RG`);
+    streamLines.push("1 J 1 j"); /* round caps/joins */
+    for(const {pts,lw} of waterLinePaths){
+      streamLines.push(`${lw.toFixed(2)} w`);
+      streamLines.push(pdfPath(pts));
+      streamLines.push("S");
+    }
+  }
+  /* roads */
+  if(roadPaths.length){
+    streamLines.push(`${rdRGB[0].toFixed(4)} ${rdRGB[1].toFixed(4)} ${rdRGB[2].toFixed(4)} RG`);
+    streamLines.push("1 J 1 j");
+    for(const {pts,lw} of roadPaths){
+      streamLines.push(`${lw.toFixed(2)} w`);
+      streamLines.push(pdfPath(pts));
+      streamLines.push("S");
+    }
+  }
+
+  const streamContent=streamLines.join("\n");
+  const streamBytes=new TextEncoder().encode(streamContent);
+  const streamLen=streamBytes.length;
+
+  /* Build PDF objects */
+  const objs=[];
+  const offsets=[];
+
+  function addObj(content){ objs.push(content); }
+
+  /* obj 1 — catalog */
+  addObj(`1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj`);
+  /* obj 2 — pages */
+  addObj(`2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj`);
+  /* obj 3 — page */
+  addObj(`3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${W} ${H}] /Contents 4 0 R /Resources << >> >>\nendobj`);
+  /* obj 4 — content stream */
+  addObj(`4 0 obj\n<< /Length ${streamLen} >>\nstream\n${streamContent}\nendstream\nendobj`);
+
+  let pdfStr="%PDF-1.4\n";
+  objs.forEach((obj,i)=>{
+    offsets.push(pdfStr.length);
+    pdfStr+=obj+"\n";
+  });
+
+  const xrefOffset=pdfStr.length;
+  pdfStr+=`xref\n0 ${objs.length+1}\n0000000000 65535 f \n`;
+  offsets.forEach(o=>{ pdfStr+=String(o).padStart(10,"0")+" 00000 n \n"; });
+  pdfStr+=`trailer\n<< /Size ${objs.length+1} /Root 1 0 R >>\nstartxref\n${xrefOffset}\n%%EOF`;
+
+  return pdfStr;
+}
+
+/* ── EPS ── */
+function generateEPS(){
+  const sc=buildScene(); if(!sc) return null;
+  const {W,H,waterPolyPaths,waterLinePaths,roadPaths}=sc;
+
+  function hexToRGB01(hex){
+    return [parseInt(hex.slice(1,3),16)/255,
+            parseInt(hex.slice(3,5),16)/255,
+            parseInt(hex.slice(5,7),16)/255];
+  }
+  const bgRGB=hexToRGB01(colors.bg);
+  const rdRGB=hexToRGB01(colors.road);
+  const wtRGB=hexToRGB01(colors.water);
+
+  const fy=y=>H-y;
+  const lines=[];
+
+  lines.push("%!PS-Adobe-3.0 EPSF-3.0");
+  lines.push(`%%BoundingBox: 0 0 ${W} ${H}`);
+  lines.push("%%EndComments");
+  lines.push("% Map Wallpaper Studio — EPS Export");
+
+  /* background */
+  lines.push(`${bgRGB[0].toFixed(4)} ${bgRGB[1].toFixed(4)} ${bgRGB[2].toFixed(4)} setrgbcolor`);
+  lines.push(`0 0 ${W} ${H} rectfill`);
+
+  /* water polys */
+  if(waterPolyPaths.length){
+    lines.push(`${wtRGB[0].toFixed(4)} ${wtRGB[1].toFixed(4)} ${wtRGB[2].toFixed(4)} setrgbcolor`);
+    for(const pts of waterPolyPaths){
+      lines.push("newpath");
+      lines.push(`${pts[0][0].toFixed(2)} ${fy(pts[0][1]).toFixed(2)} moveto`);
+      for(let i=1;i<pts.length;i++)
+        lines.push(`${pts[i][0].toFixed(2)} ${fy(pts[i][1]).toFixed(2)} lineto`);
+      lines.push("closepath fill");
+    }
+  }
+  /* water lines */
+  if(waterLinePaths.length){
+    lines.push(`${wtRGB[0].toFixed(4)} ${wtRGB[1].toFixed(4)} ${wtRGB[2].toFixed(4)} setrgbcolor`);
+    lines.push("1 setlinecap 1 setlinejoin");
+    for(const {pts,lw} of waterLinePaths){
+      lines.push(`${lw.toFixed(2)} setlinewidth`);
+      lines.push("newpath");
+      lines.push(`${pts[0][0].toFixed(2)} ${fy(pts[0][1]).toFixed(2)} moveto`);
+      for(let i=1;i<pts.length;i++)
+        lines.push(`${pts[i][0].toFixed(2)} ${fy(pts[i][1]).toFixed(2)} lineto`);
+      lines.push("stroke");
+    }
+  }
+  /* roads */
+  if(roadPaths.length){
+    lines.push(`${rdRGB[0].toFixed(4)} ${rdRGB[1].toFixed(4)} ${rdRGB[2].toFixed(4)} setrgbcolor`);
+    lines.push("1 setlinecap 1 setlinejoin");
+    for(const {pts,lw} of roadPaths){
+      lines.push(`${lw.toFixed(2)} setlinewidth`);
+      lines.push("newpath");
+      lines.push(`${pts[0][0].toFixed(2)} ${fy(pts[0][1]).toFixed(2)} moveto`);
+      for(let i=1;i<pts.length;i++)
+        lines.push(`${pts[i][0].toFixed(2)} ${fy(pts[i][1]).toFixed(2)} lineto`);
+      lines.push("stroke");
+    }
+  }
+
+  lines.push("%%EOF");
+  return lines.join("\n");
+}
+
+/* ═══════════════════════════════════════════════════════
+   DOWNLOAD
+═══════════════════════════════════════════════════════ */
+function downloadWallpaper(){
+  if(!osmElements) return;
+  const city=document.getElementById("city").value.trim().replace(/\s+/g,"_");
+  const country=document.getElementById("country").value.trim().replace(/\s+/g,"_");
+  const base=`map_${canvasTarget.name.replace(/[\s×]/g,"_")}_${city}_${country}`;
+  const fmt=currentFormat;
+
+  if(fmt.vector){
+    let content="", mime="", ext="";
+    if(fmt.id==="svg"){
+      content=generateSVG(); mime="image/svg+xml"; ext="svg";
+    } else if(fmt.id==="pdf"){
+      content=generatePDF(); mime="application/pdf"; ext="pdf";
+    } else if(fmt.id==="eps"){
+      content=generateEPS(); mime="application/postscript"; ext="eps";
+    }
+    if(!content){ alert("Could not generate vector file."); return; }
+    const blob=new Blob([content],{type:mime});
+    const a=document.createElement("a");
+    a.href=URL.createObjectURL(blob); a.download=`${base}.${ext}`; a.click();
+    setTimeout(()=>URL.revokeObjectURL(a.href),5000);
+    return;
+  }
+
+  /* Raster */
+  const canvas=document.getElementById("previewCanvas");
+  let mime="image/png", ext="png";
+  if(fmt.id==="jpg"){ mime="image/jpeg"; ext="jpg"; }
+  if(fmt.id==="webp"){ mime="image/webp"; ext="webp"; }
+  const a=document.createElement("a");
+  a.download=`${base}.${ext}`;
+  a.href=canvas.toDataURL(mime, fmt.id==="jpg"?0.95:undefined);
+  a.click();
+}
+
+/* ═══════════════════════════════════════════════════════
+   INIT
+═══════════════════════════════════════════════════════ */
+buildDeviceGrid();
+buildPaperGrid();
+buildPhotoGrid();
+buildDpiButtons();
+buildUnitRow();
+buildFormatGrid();
+buildPaletteTags();
+filterPalettes();
+applyFrame();
+updateExportInfo();
+updateTierBars();
+
+window.addEventListener("resize",()=>{ applyFrame(); scheduleRender(); });
+["city","country"].forEach(id=>{
+  document.getElementById(id).addEventListener("keydown",e=>{ if(e.key==="Enter") fetchMap(); });
+});
+Object.keys(SLIDER_FMT).forEach(k=>{
+  const sl=document.getElementById(`sl-${k}`);
+  if(sl) document.getElementById(`val-${k}`).textContent=SLIDER_FMT[k](sl.value);
+});
+</script>
+</body>
+</html>
