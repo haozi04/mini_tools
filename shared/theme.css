@@ -13,9 +13,9 @@
   --text-primary:  #1a1a2e;
   --text-muted:    #666666;
   --text-faint:    #aaaaaa;
-  --accent:        #009999;
-  --accent-dark:   #007a7a;
-  --accent-light:  #e0f5f5;
+  --accent:        #2563eb;
+  --accent-dark:   #1d4ed8;
+  --accent-light:  #dbeafe;
   --shadow:        rgba(0,0,0,0.08);
 
   /* lang/dark switcher */
@@ -24,7 +24,7 @@
   --switcher-bdr:     rgba(255,255,255,0.35);
   --switcher-hover:   rgba(255,255,255,0.24);
   --switcher-act-bg:  #ffffff;
-  --switcher-act-txt: #009999;
+  --switcher-act-txt: #2563eb;
 }
 
 /* ── Dark mode overrides ────────────────────────── */
@@ -36,16 +36,16 @@
   --text-primary:  #e2e8f0;
   --text-muted:    #94a3b8;
   --text-faint:    #4a5568;
-  --accent:        #00cccc;
-  --accent-dark:   #00aaaa;
-  --accent-light:  #0d2e2e;
+  --accent:        #3b82f6;
+  --accent-dark:   #2563eb;
+  --accent-light:  #1e3a8a;
   --shadow:        rgba(0,0,0,0.4);
 
   --switcher-bg:      rgba(255,255,255,0.10);
   --switcher-text:    #e2e8f0;
   --switcher-bdr:     rgba(255,255,255,0.25);
   --switcher-hover:   rgba(255,255,255,0.18);
-  --switcher-act-bg:  #00cccc;
+  --switcher-act-bg:  #3b82f6;
   --switcher-act-txt: #0f1117;
 }
 
