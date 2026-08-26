@@ -18,6 +18,11 @@
   --accent-light:  #dbeafe;
   --shadow:        rgba(0,0,0,0.08);
 
+  /* rich gradients */
+  --grad-accent:   linear-gradient(135deg, #3b82f6 0%, #2563eb 45%, #7c3aed 100%);
+  --grad-surface:  linear-gradient(160deg, #ffffff 0%, #eef2ff 100%);
+  --grad-icon:     linear-gradient(135deg, #dbeafe 0%, #ede9fe 100%);
+
   /* lang/dark switcher */
   --switcher-bg:      rgba(255,255,255,0.16);
   --switcher-text:    #ffffff;
@@ -40,6 +45,11 @@
   --accent-dark:   #2563eb;
   --accent-light:  #1e3a8a;
   --shadow:        rgba(0,0,0,0.4);
+
+  /* rich gradients */
+  --grad-accent:   linear-gradient(135deg, #60a5fa 0%, #3b82f6 45%, #8b5cf6 100%);
+  --grad-surface:  linear-gradient(160deg, #1a1d27 0%, #141824 100%);
+  --grad-icon:     linear-gradient(135deg, #1e3a8a 0%, #312e81 100%);
 
   --switcher-bg:      rgba(255,255,255,0.10);
   --switcher-text:    #e2e8f0;

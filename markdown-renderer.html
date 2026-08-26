@@ -150,9 +150,9 @@
     .btn:hover  { transform: translateY(-1px); box-shadow: 0 4px 12px var(--shadow); }
     .btn:active { transform: translateY(0); }
 
-    .btn-print { background: var(--btn-print-bg); color: white; }
-    .btn-pdf   { background: var(--btn-pdf-bg); color: white; }
-    .btn-html  { background: var(--btn-html-bg); color: white; }
+    .btn-print { background: linear-gradient(135deg, #5aa7f0, #3b82f6); color: white; }
+    .btn-pdf   { background: linear-gradient(135deg, #f06a6a, #e05252); color: white; }
+    .btn-html  { background: linear-gradient(135deg, #6fbf8a, #5a9e6f); color: white; }
     .btn-clear { background: var(--btn-clear-bg); color: var(--btn-clear-text); margin-left: auto; }
 
     /* View toggle for mobile */
@@ -168,7 +168,7 @@
       color: var(--view-btn-text);
     }
     .view-toggle .btn.active {
-      background: var(--view-btn-act);
+      background: var(--grad-accent);
       color: white;
     }
 
@@ -286,7 +286,7 @@
     }
 
     #preview-output th {
-      background: var(--preview-th-bg); color: var(--preview-th-text); padding: 8px 10px; text-align: left;
+      background: var(--grad-accent); color: var(--preview-th-text); padding: 8px 10px; text-align: left;
     }
 
     #preview-output td { padding: 7px 10px; border-bottom: 1px solid var(--preview-td-bdr); }
@@ -400,7 +400,7 @@
 
   <div class="pane editor-pane">
     <div class="pane-header">
-      <span class="dot"></span> Markdown Input
+      <span class="dot"></span>
     </div>
     <textarea
       id="markdown-input"
@@ -412,7 +412,7 @@
 
   <div class="pane preview-pane">
     <div class="pane-header">
-      <span class="dot"></span> Live Preview
+      <span class="dot"></span>
       <div class="typeset-spinner" id="typeset-spinner"></div>
     </div>
     <div id="preview-output"></div>
@@ -805,8 +805,6 @@ graph TD
       btnClear: '🗑️ Clear',
       btnEdit: '✏️ Edit',
       btnPreview: '👁️ Preview',
-      paneEditor: 'Markdown Input',
-      panePreview: 'Live Preview',
       inputPlaceholder: 'Start typing your Markdown here...',
     },
     zh: {
@@ -819,8 +817,6 @@ graph TD
       btnClear: '🗑️ 清除',
       btnEdit: '✏️ 编辑',
       btnPreview: '👁️ 预览',
-      paneEditor: 'Markdown 输入',
-      panePreview: '实时预览',
       inputPlaceholder: '在此输入 Markdown 内容...',
     }
   };
@@ -836,8 +832,6 @@ graph TD
     document.querySelector('.btn-clear').textContent = t('btnClear');
     document.getElementById('btn-edit').textContent = t('btnEdit');
     document.getElementById('btn-preview').textContent = t('btnPreview');
-    document.querySelector('.editor-pane .pane-header').childNodes[1].textContent = t('paneEditor');
-    document.querySelector('.preview-pane .pane-header').childNodes[1].textContent = t('panePreview');
     textarea.placeholder = t('inputPlaceholder');
   }
 </script>

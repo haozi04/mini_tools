@@ -44,8 +44,16 @@ window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e =
 });
 
 // ── i18n ──────────────────────────────────────────
-let currentLang = (navigator.language || navigator.userLanguage || 'en')
+const LANG_KEY = 'miniToolsLang';
+
+function getInitialLang() {
+  const saved = localStorage.getItem(LANG_KEY);
+  if (saved === 'en' || saved === 'zh') return saved;
+  return (navigator.language || navigator.userLanguage || 'en')
                     .toLowerCase().startsWith('zh') ? 'zh' : 'en';
+}
+
+let currentLang = getInitialLang();
 
 // TRANSLATIONS is defined by each page (global const).
 // Guard against pages that don't define it.
@@ -56,6 +64,7 @@ function t(key) {
 
 function setLang(lang) {
   currentLang = lang;
+  localStorage.setItem(LANG_KEY, lang);
   applyTranslations();
 }
 

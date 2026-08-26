@@ -76,7 +76,10 @@
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.05em;
-      color: var(--accent);
+      background: var(--grad-accent);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
       border-bottom: 2px solid var(--accent-light);
       padding-bottom: 8px;
       margin-bottom: 16px;
@@ -105,7 +108,7 @@
     }
 
     .tab-btn:hover { color: var(--accent); }
-    .tab-btn.active { background: var(--accent); color: #fff; }
+    .tab-btn.active { background: var(--grad-accent); color: #fff; }
 
     .tab-panel { display: none; }
     .tab-panel.active { display: block; }
@@ -190,8 +193,8 @@
       transition: all 0.2s;
     }
 
-    .btn-primary { background: var(--accent); color: white; }
-    .btn-primary:hover { background: var(--accent-dark); }
+    .btn-primary { background: var(--grad-accent); color: white; }
+    .btn-primary:hover { filter: brightness(1.08); }
 
     .btn-secondary {
       background: var(--btn-sec-bg);

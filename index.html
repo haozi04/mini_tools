@@ -60,7 +60,7 @@
 
     /* ── Header ──────────────────────────────────────────────── */
     header {
-      background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+      background: var(--grad-accent);
       color: white;
       padding: 40px 24px 36px;
       text-align: center;
@@ -178,7 +178,7 @@
     }
 
     .tool-card {
-      background: var(--surface);
+      background: var(--grad-surface);
       border-radius: 12px;
       padding: 28px 24px;
       text-decoration: none;
@@ -206,6 +206,7 @@
       justify-content: center;
       font-size: 1.5rem;
       flex-shrink: 0;
+      background: var(--grad-icon);
     }
 
     .tool-card h3 {
@@ -220,7 +221,7 @@
       line-height: 1.5;
     }
 
-    .tool-card.markdown .tool-icon { background: var(--accent-light); color: var(--accent); }
+    .tool-card.markdown .tool-icon { background: var(--grad-icon); color: var(--accent); }
 
     /* ── Footer ──────────────────────────────────────────────── */
     footer {
@@ -262,7 +263,6 @@
 </header>
 
 <main class="tools-section">
-  <h2 id="tools-heading">Available Tools</h2>
 
   <div class="tool-group">
     <h3 class="group-heading" id="group-misc">Misc</h3>
@@ -294,7 +294,6 @@
       metaDescription: 'A collection of lightweight, browser-based utility tools.',
       pageTitle: '🧰 Mini Tools',
       pageIntro: 'A collection of lightweight, browser-based utility tools. No sign-up, no tracking — just open and use.',
-      toolsHeading: 'Available Tools',
       groupSiemens: 'Siemens',
       group3d: '3D PRINT',
       groupMisc: 'Misc',
@@ -319,7 +318,6 @@
       metaDescription: '一组轻量级、基于浏览器的实用工具集合。',
       pageTitle: '🧰 迷你工具箱',
       pageIntro: '一组轻量级、基于浏览器的实用工具集合。无需注册、无需跟踪 —— 直接打开即可使用。',
-      toolsHeading: '可用工具',
       groupSiemens: '西门子',
       group3d: '3D 打印',
       groupMisc: '其他',
@@ -357,7 +355,6 @@
 
     setText('page-title', 'pageTitle');
     setText('page-intro', 'pageIntro');
-    setText('tools-heading', 'toolsHeading');
     setText('group-siemens', 'groupSiemens');
     setText('group-3d', 'group3d');
     setText('group-misc', 'groupMisc');

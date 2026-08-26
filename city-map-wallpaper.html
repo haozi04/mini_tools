@@ -57,7 +57,7 @@
       white-space: nowrap; padding: .42rem .9rem;
     }
     .btn:active { transform: scale(.97); }
-    .btn-primary { background: linear-gradient(135deg,var(--accent),var(--accent2)); color:#fff; }
+    .btn-primary { background: var(--grad-accent); color:#fff; }
     .btn-primary:disabled { opacity:.4; cursor:not-allowed; }
     .btn-ghost { background:var(--surface2); color:var(--text); border:1px solid var(--border); }
 
@@ -89,7 +89,10 @@
     .ps-title {
       font-size:.65rem; font-weight:700;
       text-transform:uppercase; letter-spacing:.1em;
-      color:var(--accent2); margin-bottom:.65rem;
+      background:var(--grad-accent);
+      -webkit-background-clip:text; background-clip:text;
+      -webkit-text-fill-color:transparent;
+      margin-bottom:.65rem;
     }
 
     /* ── Tab strip ── */
@@ -1482,16 +1485,27 @@ function lat2y(lat,south,north,H){
 
 /* ═══════════════════════════════════════════════════════
    GEOCODE
+   Uses Photon (komoot) — Nominatim is often blocked /
+   rate-limited and times out. Photon works from both
+   file:// and http(s) origins as long as the query has
+   no comma (Photon's CORS breaks on "%2C").
+   Returns a normalized object with a `boundingbox`
+   ([south,north,west,east]) so computeBbox() is unchanged.
 ═══════════════════════════════════════════════════════ */
 async function geocodeCity(city,country){
-  const url="https://nominatim.openstreetmap.org/search?"+new URLSearchParams({
-    city,country,format:"json",limit:1,addressdetails:1,"accept-language":"en"
+  const url="https://photon.komoot.io/api/?"+new URLSearchParams({
+    q:city,limit:1,lang:"en"
   });
   const res=await fetch(url,{headers:{"Accept-Language":"en"}});
-  if(!res.ok) throw new Error("Nominatim request failed");
+  if(!res.ok) throw new Error("Geocoding request failed");
   const data=await res.json();
-  if(!data.length) throw new Error(`"${city}, ${country}" not found`);
-  return data[0];
+  const f=data.features&&data.features[0];
+  if(!f) throw new Error(`"${city}, ${country}" not found`);
+  const p=f.properties||{}, ext=p.extent;
+  if(!ext||ext.length<4) throw new Error(`"${city}, ${country}" not found`);
+  // Photon extent = [west, north, east, south]
+  const [west,north,east,south]=ext.map(Number);
+  return { boundingbox:[south,north,west,east] };
 }
 
 /* ═══════════════════════════════════════════════════════
@@ -1529,12 +1543,24 @@ async function fetchOSM(bbox){
   const allTypes=ROAD_TIERS.flatMap(t=>t.types);
   const roadUnion=allTypes.map(r=>`  way["highway"="${r}"](${b});`).join("\n");
   const query=`[out:json][timeout:90];\n(\n${roadUnion}\n  way["waterway"](${b});\n  way["natural"="water"](${b});\n  way["landuse"="reservoir"](${b});\n  way["landuse"="basin"](${b});\n);\nout body;\n>;\nout skel qt;`;
-  const res=await fetch("https://overpass-api.de/api/interpreter",{
-    method:"POST", body:"data="+encodeURIComponent(query),
-    headers:{"Content-Type":"application/x-www-form-urlencoded"},
-  });
-  if(!res.ok) throw new Error("Overpass API request failed");
-  return res.json();
+  // Try several Overpass mirrors in order; the first that returns
+  // valid JSON wins. (Overpass rejects file:// origins with 406,
+  // so a mirror fallback helps when one endpoint is down/blocked.)
+  const mirrors=[
+    "https://overpass-api.de/api/interpreter",
+    "https://lz4.overpass-api.de/api/interpreter",
+    "https://z.overpass-api.de/api/interpreter",
+    "https://overpass.kumi.systems/api/interpreter",
+  ];
+  let lastErr=null;
+  for(const base of mirrors){
+    try{
+      const res=await fetch(base+"?data="+encodeURIComponent(query));
+      if(!res.ok) throw new Error("Overpass API request failed ("+res.status+")");
+      return await res.json();
+    }catch(e){ lastErr=e; }
+  }
+  throw lastErr||new Error("Overpass API request failed");
 }
 
 /* ═══════════════════════════════════════════════════════
