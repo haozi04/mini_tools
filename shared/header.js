@@ -8,6 +8,14 @@
    Edit here to change header behavior across all tools.
    ══════════════════════════════════════════════════ */
 
+// ── Fonts (bbox·lab design language) ─────────────
+(function loadFonts() {
+  const link = document.createElement('link');
+  link.rel = 'stylesheet';
+  link.href = 'https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap';
+  document.head.appendChild(link);
+})();
+
 // ── Dark mode ─────────────────────────────────────
 const DARK_KEY = 'miniToolsDark';
 

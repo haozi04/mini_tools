@@ -10,16 +10,16 @@
   <style>
     :root {
       --card-border:   transparent;
-      --card-hover:    #2563eb;
-      --footer-bg:     #ffffff;
-      --footer-border: #e0e0e0;
+      --card-hover:   #d98a1f;
+      --footer-bg:    #ffffff;
+      --footer-border: #d5dce8;
     }
 
     [data-theme="dark"] {
-      --card-border:   #2a2d3e;
-      --card-hover:    #3b82f6;
-      --footer-bg:     #1a1d27;
-      --footer-border: #2a2d3e;
+      --card-border:   #263353;
+      --card-hover:   #ffb454;
+      --footer-bg:    #121a2c;
+      --footer-border: #263353;
     }
 
     body {
@@ -31,7 +31,8 @@
     header {
       padding: 40px 24px 36px;
       text-align: center;
-      box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+      box-shadow: none;
+      border-bottom: 1px solid var(--border);
     }
 
     .header-actions {
@@ -46,7 +47,7 @@
     header h1 {
       font-size: 2rem;
       font-weight: 700;
-      letter-spacing: 1px;
+      letter-spacing: 0.02em;
       margin-bottom: 8px;
     }
 
@@ -60,11 +61,11 @@
 
     /* ── Header ──────────────────────────────────────────────── */
     header {
-      background: var(--grad-accent);
-      color: white;
+      background: transparent;
+      color: var(--text-primary);
       padding: 40px 24px 36px;
       text-align: center;
-      box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+      box-shadow: none;
     }
 
     .header-actions {
@@ -78,7 +79,7 @@
 
     .switcher {
       display: flex;
-      border-radius: 999px;
+      border-radius: 5px;
       overflow: hidden;
       border: 1px solid var(--switcher-bdr);
     }
@@ -88,8 +89,11 @@
       border: none;
       background: var(--switcher-bg);
       color: var(--switcher-text);
-      font-size: 0.85rem;
+      font-family: "Chakra Petch", sans-serif;
+      font-size: 11px;
       font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
       cursor: pointer;
       transition: background 0.2s, color 0.2s;
       line-height: 1;
@@ -111,7 +115,7 @@
     .dark-toggle {
       width: 36px;
       height: 34px;
-      border-radius: 999px;
+      border-radius: 5px;
       border: 1px solid var(--switcher-bdr);
       background: var(--switcher-bg);
       color: var(--switcher-text);
@@ -126,13 +130,15 @@
     .dark-toggle:hover { background: var(--switcher-hover); }
 
     header h1 {
+      font-family: "Chakra Petch", sans-serif;
       font-size: 2rem;
       font-weight: 700;
-      letter-spacing: 1px;
+      letter-spacing: 0.02em;
       margin-bottom: 8px;
     }
 
     header p {
+      font-family: "IBM Plex Sans", sans-serif;
       font-size: 1rem;
       opacity: 0.85;
       max-width: 500px;
@@ -142,6 +148,8 @@
 
     /* ── Tool Grid ───────────────────────────────────────────── */
     .tools-section {
+      position: relative;
+      z-index: 1;
       flex: 1;
       max-width: 900px;
       width: 100%;
@@ -150,9 +158,10 @@
     }
 
     .tools-section h2 {
-      font-size: 1.1rem;
+      font-family: "Chakra Petch", sans-serif;
+      font-size: 12px;
       text-transform: uppercase;
-      letter-spacing: 1px;
+      letter-spacing: 0.2em;
       color: var(--text-faint);
       margin-bottom: 24px;
       font-weight: 600;
@@ -167,24 +176,25 @@
     .tool-group { margin-bottom: 36px; }
 
     .group-heading {
-      font-size: 0.95rem;
+      font-family: "Chakra Petch", sans-serif;
+      font-size: 12px;
       text-transform: uppercase;
-      letter-spacing: 1px;
+      letter-spacing: 0.2em;
       color: var(--accent);
       margin-bottom: 16px;
-      font-weight: 700;
+      font-weight: 600;
       padding-bottom: 6px;
-      border-bottom: 2px solid var(--accent-light);
+      border-bottom: 1px solid var(--border);
     }
 
     .tool-card {
-      background: var(--grad-surface);
-      border-radius: 12px;
+      background: var(--surface);
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
       padding: 28px 24px;
       text-decoration: none;
       color: inherit;
-      box-shadow: 0 2px 8px var(--shadow);
-      border: 2px solid var(--card-border);
+      box-shadow: 0 14px 34px var(--shadow);
       transition: all 0.25s ease;
       display: flex;
       flex-direction: column;
@@ -200,16 +210,18 @@
     .tool-icon {
       width: 48px;
       height: 48px;
-      border-radius: 10px;
+      border-radius: 8px;
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: 1.5rem;
       flex-shrink: 0;
-      background: var(--grad-icon);
+      background: var(--surface-alt);
+      border: 1px solid var(--border);
     }
 
     .tool-card h3 {
+      font-family: "Chakra Petch", sans-serif;
       font-size: 1.1rem;
       font-weight: 600;
       color: var(--text-primary);
@@ -221,7 +233,7 @@
       line-height: 1.5;
     }
 
-    .tool-card.markdown .tool-icon { background: var(--grad-icon); color: var(--accent); }
+    .tool-card.markdown .tool-icon { background: var(--surface-alt); color: var(--accent); }
 
     /* ── Footer ──────────────────────────────────────────────── */
     footer {
@@ -309,6 +321,8 @@
       converter3dDesc: 'Convert 3D model files between 3MF and STL formats entirely in your browser.',
       mlfbTitle: 'MLFB & Option Code Processor',
       mlfbDesc: 'Paste Excel data with MLFB codes and option codes, validate and normalize them for PMD.',
+      bboxTitle: 'bbox·lab',
+      bboxDesc: 'Project normalized 0–1000 bounding boxes onto real image pixels as an interactive overlay.',
       footerText: 'Mini Tools © 2026 — Built for simplicity.',
       footerSource: 'Source',
     },
@@ -331,6 +345,8 @@
       converter3dDesc: '在浏览器中完全转换 3MF 和 STL 格式的 3D 模型文件。',
       mlfbTitle: 'MLFB 与选型代码处理器',
       mlfbDesc: '粘贴包含 MLFB 编码和选型代码的 Excel 数据，验证并规范化为 PMD 格式。',
+      bboxTitle: 'bbox·lab',
+      bboxDesc: '将归一化的 0–1000 边界框投影到真实图像像素上，作为交互式叠加层。',
       footerText: 'Mini Tools © 2026 — 以简洁为核心。',
       footerSource: '源码',
     }
@@ -366,6 +382,8 @@
     setText('converter3d-desc', 'converter3dDesc');
     setText('mlfb-title', 'mlfbTitle');
     setText('mlfb-desc', 'mlfbDesc');
+    setText('bbox-title', 'bboxTitle');
+    setText('bbox-desc', 'bboxDesc');
     setText('footer-text', 'footerText');
     setText('footer-source', 'footerSource');
   }
@@ -380,6 +398,7 @@
     { href: 'format-converter.html',  icon: '🔁',   id: 'format',   group: 'misc', titleKey: 'formatTitle',   descKey: 'formatDesc', },
     { href: 'city-map-wallpaper.html', icon: '🗺️',   id: 'map',      group: 'misc', titleKey: 'mapTitle',      descKey: 'mapDesc' },
     { href: '3mf-stl-converter.html', icon: '🧊',   id: 'converter3d', group: '3d', titleKey: 'converter3dTitle', descKey: 'converter3dDesc' },
+    { href: 'bbox-tool.html',         icon: '▭',   id: 'bbox',       group: 'misc', titleKey: 'bboxTitle',      descKey: 'bboxDesc' },
   ];
 
   function renderCards() {

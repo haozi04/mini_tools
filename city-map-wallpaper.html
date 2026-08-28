@@ -15,9 +15,9 @@
       --accent2:  var(--accent);
       --text:     var(--text-primary);
       --muted:    var(--text-muted);
-      --radius:   12px;
+      --radius:   8px;
       --panel:    290px;
-      --shadow:   0 8px 32px rgba(0,0,0,.5);
+      --shadow:   0 14px 34px rgba(2,6,16,.45);
     }
 
     body {
@@ -51,15 +51,18 @@
     .toolbar-inputs input::placeholder { color: var(--muted); }
 
     .btn {
-      border: none; border-radius: 7px;
-      font-size: .85rem; font-weight: 700;
-      cursor: pointer; transition: opacity .15s, transform .1s;
-      white-space: nowrap; padding: .42rem .9rem;
+      border: 1px solid; border-radius: 5px;
+      font-family:"Chakra Petch",sans-serif;
+      font-size:.78rem; font-weight:600; letter-spacing:.1em; text-transform:uppercase;
+      cursor: pointer; transition: transform .15s, box-shadow .2s, background .2s, color .2s, border-color .2s;
+      white-space: nowrap; padding: 10px 16px;
     }
-    .btn:active { transform: scale(.97); }
-    .btn-primary { background: var(--grad-accent); color:#fff; }
-    .btn-primary:disabled { opacity:.4; cursor:not-allowed; }
+    .btn:active { transform: translateY(1px); }
+    .btn-primary { background: var(--accent); border-color: color-mix(in srgb, var(--accent) 70%, #fff); color:#1a1206; }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 20px color-mix(in srgb, var(--accent) 35%, transparent); }
+    .btn-primary:disabled { opacity:.4; cursor:not-allowed; transform:none; box-shadow:none; }
     .btn-ghost { background:var(--surface2); color:var(--text); border:1px solid var(--border); }
+    .btn-ghost:hover { color: var(--text-primary); border-color: #53d8e8; box-shadow: 0 8px 20px rgba(83,216,232,.25); }
 
     #statusPill {
       font-size:.75rem; padding:.22rem .65rem;
@@ -87,11 +90,10 @@
 
     .ps { border-bottom:1px solid var(--border); padding:.8rem .9rem; }
     .ps-title {
-      font-size:.65rem; font-weight:700;
-      text-transform:uppercase; letter-spacing:.1em;
-      background:var(--grad-accent);
-      -webkit-background-clip:text; background-clip:text;
-      -webkit-text-fill-color:transparent;
+      font-family:"Chakra Petch",sans-serif;
+      font-size:.68rem; font-weight:600;
+      text-transform:uppercase; letter-spacing:.16em;
+      color:var(--muted);
       margin-bottom:.65rem;
     }
 
@@ -104,7 +106,7 @@
       color:var(--muted); cursor:pointer; text-align:center;
       transition:all .15s;
     }
-    .tab-btn.active { background:rgba(108,99,255,.18); border-color:var(--accent); color:var(--accent2); }
+    .tab-btn.active { background:rgba(255,180,84,.18); border-color:var(--accent); color:var(--accent2); }
     .tab-pane { display:none; }
     .tab-pane.active { display:block; }
 
@@ -132,7 +134,7 @@
       transition:border-color .15s,background .15s; color:var(--text);
     }
     .print-btn:hover { border-color:var(--accent); }
-    .print-btn.active { border-color:var(--accent); background:rgba(108,99,255,.15); }
+    .print-btn.active { border-color:var(--accent); background:rgba(255,180,84,.15); }
     .print-btn .p-name { font-size:.7rem; font-weight:700; display:block; }
     .print-btn .p-dim  { font-size:.58rem; color:var(--muted); display:block; margin-top:1px; }
     .print-btn .p-px   { font-size:.55rem; color:var(--muted); display:block; }
@@ -146,7 +148,7 @@
       background:var(--surface2); border:1px solid var(--border);
       border-radius:5px; cursor:pointer; color:var(--muted); transition:all .15s;
     }
-    .dpi-btn.active { border-color:var(--accent); color:var(--accent2); background:rgba(108,99,255,.15); }
+    .dpi-btn.active { border-color:var(--accent); color:var(--accent2); background:rgba(255,180,84,.15); }
 
     /* ── Custom size ── */
     .custom-size-grid {
@@ -156,7 +158,7 @@
     .custom-size-grid input {
       width:100%; background:var(--bg); border:1px solid var(--border);
       border-radius:6px; padding:.32rem .45rem; color:var(--text);
-      font-size:.82rem; font-family:"SF Mono","Fira Code",monospace;
+      font-size:.82rem; font-family:"IBM Plex Mono",monospace;
       text-align:center; outline:none; transition:border-color .2s;
     }
     .custom-size-grid input:focus { border-color:var(--accent); }
@@ -167,7 +169,7 @@
       border-radius:5px; cursor:pointer; color:var(--muted);
       text-align:center; transition:all .15s;
     }
-    .unit-btn.active { border-color:var(--accent); color:var(--accent2); background:rgba(108,99,255,.15); }
+    .unit-btn.active { border-color:var(--accent); color:var(--accent2); background:rgba(255,180,84,.15); }
 
     /* ── Color rows ── */
     .color-row { display:flex; align-items:center; gap:.55rem; margin-bottom:.45rem; }
@@ -187,7 +189,7 @@
       flex-shrink:0; width:70px !important;
       background:var(--bg); border:1px solid var(--border);
       border-radius:5px; padding:.22rem .3rem; color:var(--text);
-      font-size:.72rem; font-family:"SF Mono","Fira Code",monospace;
+      font-size:.72rem; font-family:"IBM Plex Mono",monospace;
       text-align:center; outline:none; transition:border-color .2s;
     }
     .color-hex-input:focus { border-color:var(--accent); }
@@ -207,7 +209,7 @@
       background:var(--surface2); border:1px solid var(--border);
       color:var(--muted); transition:all .15s;
     }
-    .palette-tag.active { background:rgba(108,99,255,.2); border-color:var(--accent); color:var(--accent2); }
+    .palette-tag.active { background:rgba(255,180,84,.2); border-color:var(--accent); color:var(--accent2); }
     .palette-list { display:flex; flex-direction:column; gap:.35rem; max-height:220px; overflow-y:auto; }
     .palette-list::-webkit-scrollbar { width:3px; }
     .palette-list::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
@@ -217,7 +219,7 @@
       border-radius:7px; cursor:pointer; transition:border-color .15s;
     }
     .palette-item:hover { border-color:var(--accent); }
-    .palette-item.active { border-color:var(--accent); background:rgba(108,99,255,.12); }
+    .palette-item.active { border-color:var(--accent); background:rgba(255,180,84,.12); }
     .palette-swatches { display:flex; gap:2px; flex-shrink:0; }
     .palette-swatch { width:18px; height:28px; border-radius:3px; }
     .palette-meta { flex:1; min-width:0; }
@@ -228,7 +230,7 @@
     .slider-row { margin-bottom:.6rem; }
     .slider-header { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:.25rem; }
     .slider-label { font-size:.75rem; color:var(--text); font-weight:500; }
-    .slider-value { font-size:.7rem; color:var(--accent2); font-family:"SF Mono","Fira Code",monospace; font-weight:700; }
+    .slider-value { font-size:.7rem; color:var(--accent2); font-family:"IBM Plex Mono",monospace; font-weight:600; }
     input[type="range"] { width:100%; accent-color:var(--accent); cursor:pointer; height:3px; }
     .slider-ticks { display:flex; justify-content:space-between; margin-top:.18rem; }
     .slider-ticks span { font-size:.58rem; color:var(--muted); flex:1; text-align:center; }
@@ -277,7 +279,7 @@
     .export-info-row { display:flex; justify-content:space-between; font-size:.72rem; margin-bottom:.18rem; }
     .export-info-row:last-child { margin-bottom:0; }
     .export-info-row .k { color:var(--muted); }
-    .export-info-row .v { color:var(--text); font-weight:600; font-family:"SF Mono","Fira Code",monospace; font-size:.68rem; }
+    .export-info-row .v { color:var(--text); font-weight:600; font-family:"IBM Plex Mono",monospace; font-size:.68rem; }
 
     /* ── Format selector ── */
     .format-grid { display:grid; grid-template-columns:1fr 1fr; gap:.3rem; margin-bottom:.65rem; }
@@ -287,10 +289,10 @@
       cursor:pointer; text-align:center; transition:all .15s;
     }
     .fmt-btn:hover { border-color:var(--accent); }
-    .fmt-btn.active { border-color:var(--accent); background:rgba(108,99,255,.15); }
+    .fmt-btn.active { border-color:var(--accent); background:rgba(255,180,84,.15); }
     .fmt-btn .f-ext {
-      font-size:.78rem; font-weight:800;
-      font-family:"SF Mono","Fira Code",monospace;
+      font-size:.78rem; font-weight:600;
+      font-family:"IBM Plex Mono",monospace;
       display:block; color:var(--text);
     }
     .fmt-btn .f-type { font-size:.58rem; color:var(--muted); display:block; margin-top:1px; }
@@ -313,7 +315,7 @@
     .tier-bar-label { font-size:.62rem; color:var(--muted); width:54px; flex-shrink:0; text-align:right; }
     .tier-bar-track { flex:1; height:10px; background:var(--surface2); border-radius:3px; overflow:hidden; }
     .tier-bar-fill { height:100%; border-radius:3px; background:var(--accent); transition:width .2s; }
-    .tier-bar-px { font-size:.6rem; color:var(--muted); width:26px; text-align:right; flex-shrink:0; font-family:monospace; }
+    .tier-bar-px { font-size:.6rem; color:var(--muted); width:26px; text-align:right; flex-shrink:0; font-family:"IBM Plex Mono",monospace; }
 
     @media (max-width:960px) { .panel-right { display:none; } }
     @media (max-width:640px) {
@@ -1493,19 +1495,41 @@ function lat2y(lat,south,north,H){
    ([south,north,west,east]) so computeBbox() is unchanged.
 ═══════════════════════════════════════════════════════ */
 async function geocodeCity(city,country){
-  const url="https://photon.komoot.io/api/?"+new URLSearchParams({
-    q:city,limit:1,lang:"en"
-  });
-  const res=await fetch(url,{headers:{"Accept-Language":"en"}});
-  if(!res.ok) throw new Error("Geocoding request failed");
-  const data=await res.json();
-  const f=data.features&&data.features[0];
-  if(!f) throw new Error(`"${city}, ${country}" not found`);
-  const p=f.properties||{}, ext=p.extent;
-  if(!ext||ext.length<4) throw new Error(`"${city}, ${country}" not found`);
-  // Photon extent = [west, north, east, south]
-  const [west,north,east,south]=ext.map(Number);
-  return { boundingbox:[south,north,west,east] };
+  // Try several geocoders in order; the first that returns a usable
+  // result wins. Photon is primary (works from file:// origins);
+  // Nominatim is a fallback but is often blocked/rate-limited.
+  const attempts=[
+    { name:"photon", url:"https://photon.komoot.io/api/?"+new URLSearchParams({q:city,limit:1,lang:"en"}), headers:{"Accept-Language":"en"} },
+    { name:"photon+country", url:"https://photon.komoot.io/api/?"+new URLSearchParams({q:`${city}, ${country}`,limit:1,lang:"en"}), headers:{"Accept-Language":"en"} },
+    { name:"nominatim", url:"https://nominatim.openstreetmap.org/search?"+new URLSearchParams({q:`${city}, ${country}`,format:"jsonv2",limit:1}), headers:{"User-Agent":"mini-tools/1.0","Accept-Language":"en"} },
+  ];
+  let lastErr=null;
+  for(const a of attempts){
+    try{
+      const res=await fetch(a.url,{headers:a.headers});
+      if(!res.ok) throw new Error("Geocoding request failed ("+res.status+")");
+      const data=await res.json();
+      let f=null;
+      if(a.name==="nominatim"){
+        f=Array.isArray(data)&&data[0];
+        if(f){
+          const bb=f.boundingbox.map(Number); // [south,north,west,east]
+          return { boundingbox:bb };
+        }
+      } else {
+        f=data.features&&data.features[0];
+        if(f){
+          const p=f.properties||{}, ext=p.extent;
+          if(ext&&ext.length>=4){
+            const [west,north,east,south]=ext.map(Number);
+            return { boundingbox:[south,north,west,east] };
+          }
+        }
+      }
+      throw new Error(`"${city}, ${country}" not found`);
+    }catch(e){ lastErr=e; }
+  }
+  throw lastErr||new Error(`"${city}, ${country}" not found`);
 }
 
 /* ═══════════════════════════════════════════════════════
@@ -1547,10 +1571,12 @@ async function fetchOSM(bbox){
   // valid JSON wins. (Overpass rejects file:// origins with 406,
   // so a mirror fallback helps when one endpoint is down/blocked.)
   const mirrors=[
+    "https://maps.mail.ru/osm/tools/overpass/api/interpreter",
     "https://overpass-api.de/api/interpreter",
     "https://lz4.overpass-api.de/api/interpreter",
     "https://z.overpass-api.de/api/interpreter",
     "https://overpass.kumi.systems/api/interpreter",
+    "https://overpass.osm.ch/api/interpreter",
   ];
   let lastErr=null;
   for(const base of mirrors){

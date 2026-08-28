@@ -2,26 +2,30 @@
    MiniTools — Shared Theme
    Centralized light/dark CSS custom properties used
    by all tools. Edit here to change the global theme.
+
+   Design language: bbox·lab (dark navy + amber/cyan)
+   Fonts: Chakra Petch (headings), IBM Plex Mono (data),
+          IBM Plex Sans (body) — loaded via header.js.
    ══════════════════════════════════════════════════ */
 
 /* ── Light (default) ─────────────────────────────── */
 :root {
-  --bg:            #f0f2f5;
+  --bg:            #eef1f7;
   --surface:       #ffffff;
-  --surface-alt:   #f7fafa;
-  --border:        #e0eeee;
-  --text-primary:  #1a1a2e;
-  --text-muted:    #666666;
-  --text-faint:    #aaaaaa;
-  --accent:        #2563eb;
-  --accent-dark:   #1d4ed8;
-  --accent-light:  #dbeafe;
-  --shadow:        rgba(0,0,0,0.08);
+  --surface-alt:   #f4f6fb;
+  --border:        #d5dce8;
+  --text-primary:  #1a2233;
+  --text-muted:    #5b6884;
+  --text-faint:    #8b96ad;
+  --accent:        #d98a1f;
+  --accent-dark:   #b06f12;
+  --accent-light:  #fbe9d0;
+  --shadow:        rgba(20,30,60,0.12);
 
   /* rich gradients */
-  --grad-accent:   linear-gradient(135deg, #3b82f6 0%, #2563eb 45%, #7c3aed 100%);
-  --grad-surface:  linear-gradient(160deg, #ffffff 0%, #eef2ff 100%);
-  --grad-icon:     linear-gradient(135deg, #dbeafe 0%, #ede9fe 100%);
+  --grad-accent:   linear-gradient(135deg, #ffb454 0%, #e08a2e 50%, #d98a1f 100%);
+  --grad-surface:  linear-gradient(160deg, #ffffff 0%, #eef1f7 100%);
+  --grad-icon:     linear-gradient(135deg, #fbe9d0 0%, #f6e3c8 100%);
 
   /* lang/dark switcher */
   --switcher-bg:      rgba(255,255,255,0.16);
@@ -29,43 +33,66 @@
   --switcher-bdr:     rgba(255,255,255,0.35);
   --switcher-hover:   rgba(255,255,255,0.24);
   --switcher-act-bg:  #ffffff;
-  --switcher-act-txt: #2563eb;
+  --switcher-act-txt: #d98a1f;
 }
 
-/* ── Dark mode overrides ────────────────────────── */
+/* ── Dark mode overrides (bbox·lab palette) ──────── */
 [data-theme="dark"] {
-  --bg:            #0f1117;
-  --surface:       #1a1d27;
-  --surface-alt:   #1e2130;
-  --border:        #2a2d3e;
-  --text-primary:  #e2e8f0;
-  --text-muted:    #94a3b8;
-  --text-faint:    #4a5568;
-  --accent:        #3b82f6;
-  --accent-dark:   #2563eb;
-  --accent-light:  #1e3a8a;
-  --shadow:        rgba(0,0,0,0.4);
+  --bg:            #0c111d;
+  --surface:       #121a2c;
+  --surface-alt:   #0b101d;
+  --border:        #263353;
+  --text-primary:  #e8ecf6;
+  --text-muted:    #8b96ad;
+  --text-faint:    #5b6884;
+  --accent:        #ffb454;
+  --accent-dark:   #e09a3f;
+  --accent-light:  #263353;
+  --shadow:        rgba(2,6,16,0.45);
 
   /* rich gradients */
-  --grad-accent:   linear-gradient(135deg, #60a5fa 0%, #3b82f6 45%, #8b5cf6 100%);
-  --grad-surface:  linear-gradient(160deg, #1a1d27 0%, #141824 100%);
-  --grad-icon:     linear-gradient(135deg, #1e3a8a 0%, #312e81 100%);
+  --grad-accent:   linear-gradient(135deg, #ffb454 0%, #ff9d3f 50%, #ff7ab8 100%);
+  --grad-surface:  linear-gradient(160deg, #121a2c 0%, #0c111d 100%);
+  --grad-icon:     linear-gradient(135deg, #263353 0%, #1c2740 100%);
 
   --switcher-bg:      rgba(255,255,255,0.10);
-  --switcher-text:    #e2e8f0;
+  --switcher-text:    #e8ecf6;
   --switcher-bdr:     rgba(255,255,255,0.25);
   --switcher-hover:   rgba(255,255,255,0.18);
-  --switcher-act-bg:  #3b82f6;
-  --switcher-act-txt: #0f1117;
+  --switcher-act-bg:  #ffb454;
+  --switcher-act-txt: #0c111d;
 }
 
 /* ── Base ───────────────────────────────────────── */
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: "IBM Plex Sans", system-ui, sans-serif;
+  font-size: 14.5px;
+  line-height: 1.55;
   background: var(--bg);
   color: var(--text-primary);
   min-height: 100vh;
   transition: background 0.3s, color 0.3s;
+}
+
+/* measurement grid + radial glow + slow light sweep */
+body::before {
+  content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  background:
+    linear-gradient(rgba(140,160,210,.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(140,160,210,.05) 1px, transparent 1px);
+  background-size: 34px 34px;
+}
+body::after {
+  content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  background: linear-gradient(105deg, transparent 44%, rgba(130,170,255,.045) 50%, transparent 56%) 0 0/300% 100% no-repeat;
+  animation: drift 16s linear infinite;
+}
+@keyframes drift { from { background-position: 130% 0; } to { background-position: -70% 0; } }
+
+::selection { background: var(--accent); color: #181004; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
 }

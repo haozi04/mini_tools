@@ -2,60 +2,75 @@
    MiniTools — Shared Header
    Unified header + language/dark switcher styles used
    by all tool pages. Edit here to change the header.
+
+   Design language: bbox·lab masthead (dark navy,
+   Chakra Petch, amber accents, ruler underline).
    ══════════════════════════════════════════════════ */
 
 header {
-  background: var(--grad-accent);
-  color: white;
-  padding: 12px 16px;
+  position: relative;
+  z-index: 1;
+  background: transparent;
+  color: var(--text-primary);
+  padding: 18px 24px 15px;
   display: flex;
   align-items: center;
-  gap: 10px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  gap: 16px;
+  max-width: 1440px;
+  margin: 0 auto;
+  width: 100%;
 }
 
 header a {
-  color: white;
+  color: inherit;
   text-decoration: none;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 14px;
 }
 
 header h1 {
-  font-size: 1.1rem;
-  font-weight: 600;
-  letter-spacing: 0.5px;
+  font-family: "Chakra Petch", sans-serif;
+  font-size: 25px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.02em;
   margin: 0;
 }
 
 header h1 span {
-  font-size: 0.75rem;
-  opacity: 0.85;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11.5px;
+  font-weight: 400;
+  color: var(--text-faint);
   margin-left: 4px;
+  letter-spacing: 0;
 }
 
 .header-actions {
   margin-left: auto;
   display: flex;
-  gap: 8px;
+  gap: 9px;
   align-items: center;
 }
 
 .switcher {
   display: flex;
-  border-radius: 999px;
+  border-radius: 5px;
   overflow: hidden;
   border: 1px solid var(--switcher-bdr);
 }
 
 .switcher-btn {
-  padding: 6px 12px;
+  padding: 8px 14px;
   border: none;
   background: var(--switcher-bg);
   color: var(--switcher-text);
-  font-size: 0.78rem;
+  font-family: "Chakra Petch", sans-serif;
+  font-size: 11px;
   font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
   cursor: pointer;
   transition: background 0.2s, color 0.2s;
   line-height: 1;
@@ -66,9 +81,9 @@ header h1 span {
 .switcher-btn:hover:not(.active) { background: var(--switcher-hover); }
 
 .dark-toggle {
-  width: 32px;
-  height: 30px;
-  border-radius: 999px;
+  width: 34px;
+  height: 32px;
+  border-radius: 5px;
   border: 1px solid var(--switcher-bdr);
   background: var(--switcher-bg);
   color: var(--switcher-text);
@@ -84,6 +99,8 @@ header h1 span {
 
 /* ── Responsive ─────────────────────────────────── */
 @media (max-width: 480px) {
-  .switcher-btn { padding: 5px 7px; font-size: 0.7rem; }
-  .dark-toggle  { width: 30px; height: 28px; font-size: 0.85rem; }
+  header { padding: 14px 16px 12px; }
+  header h1 { font-size: 20px; }
+  .switcher-btn { padding: 7px 9px; font-size: 10px; }
+  .dark-toggle  { width: 30px; height: 29px; font-size: 0.85rem; }
 }
