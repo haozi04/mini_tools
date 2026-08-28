@@ -1,0 +1,183 @@
+/* ══════════════════════════════════════════════════
+   MiniTools — Shared Components
+   Centralized common UI styles used by tool pages:
+   container, card, buttons, toolbar, segmented
+   controls, form fields, action bar, summary, status.
+   Edit here to change these across all tools.
+
+   Pages link this AFTER theme.css and header.css.
+   ══════════════════════════════════════════════════ */
+
+/* ── Container ─────────────────────────────── */
+.container {
+  position: relative;
+  z-index: 1;
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 20px 24px 60px;
+}
+
+/* ── Card ──────────────────────────────────── */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 24px;
+  box-shadow: 0 14px 34px var(--shadow);
+  margin-bottom: 20px;
+  transition: background 0.3s, box-shadow 0.3s;
+}
+
+.card h2 {
+  font-family: "Chakra Petch", sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 12px;
+  margin-bottom: 16px;
+}
+
+/* ── Buttons ──────────────────────────────── */
+.btn {
+  font-family: "Chakra Petch", sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 10px 16px;
+  border-radius: 5px;
+  border: 1px solid;
+  cursor: pointer;
+  background: transparent;
+  transition: transform 0.15s, box-shadow 0.2s, background 0.2s, color 0.2s, border-color 0.2s;
+}
+.btn:active { transform: translateY(1px); }
+
+.btn-primary { background: var(--accent); border-color: color-mix(in srgb, var(--accent) 70%, #fff); color: #1a1206; }
+.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 20px color-mix(in srgb, var(--accent) 35%, transparent); }
+.btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+
+.btn-secondary { color: #9fb0d0; border-color: #33415f; }
+.btn-secondary:hover { color: var(--text-primary); border-color: #53d8e8; box-shadow: 0 8px 20px rgba(83,216,232,.25); }
+
+.btn-danger { color: #ff9a9a; border-color: #6b3a4a; }
+.btn-danger:hover { color: #ff6b6b; border-color: #ff6b6b; }
+
+/* ── Toolbar ──────────────────────────────── */
+.toolbar {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-top: 14px;
+}
+
+/* ── Action bar (final actions, separated) ── */
+.action-bar {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+/* ── Segmented control ─────────────────────── */
+.seg-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+.seg-label {
+  font-family: "Chakra Petch", sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.segmented { display: inline-flex; gap: 8px; }
+
+.segmented button {
+  padding: 10px 16px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  background: var(--surface);
+  color: var(--text-muted);
+  font-family: "Chakra Petch", sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  transition: all 0.2s;
+  line-height: 1;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.segmented button:hover { color: var(--accent); border-color: var(--accent); }
+.segmented button.active { background: var(--accent); color: #1a1206; border-color: var(--accent); }
+
+/* ── Form fields ──────────────────────────── */
+.row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  margin-bottom: 14px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.field label {
+  font-family: "Chakra Petch", sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* ── Summary ─────────────────────────────── */
+.summary {
+  margin-top: 14px;
+  padding: 12px 14px;
+  border-radius: 6px;
+  background: var(--accent-light);
+  border: 1px solid var(--border);
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--text-primary);
+  display: none;
+}
+.summary.show { display: block; }
+.summary b { color: var(--accent); font-weight: 600; }
+
+/* ── Status ──────────────────────────────── */
+.status {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11.5px;
+  color: var(--text-muted);
+  margin-top: 10px;
+  min-height: 18px;
+}
+.status.err { color: var(--holiday-text, #ff6b6b); }
+
+/* ── Responsive ──────────────────────────── */
+@media (max-width: 640px) {
+  .container { padding: 16px 12px 40px; }
+  .card { padding: 16px; }
+}

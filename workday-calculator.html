@@ -1,0 +1,966 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Workday Calculator</title>
+  <meta name="description" content="Calculate delivery dates and workdays, excluding weekends and holidays. Forward and backward calculations." />
+  <link rel="stylesheet" href="shared/theme.css" />
+  <link rel="stylesheet" href="shared/header.css" />
+  <link rel="stylesheet" href="shared/components.css" />
+  <style>
+    :root {
+      --border-input:  #d5dce8;
+      --btn-sec-bg:    #f4f6fb;
+      --btn-sec-text:  #5b6884;
+      --btn-sec-bdr:   #c9d2e2;
+      --btn-sec-hover: #e9eef7;
+      --stat-bg:       #f4f6fb;
+      --stat-bdr:      #d5dce8;
+      --stat-text:     #5b6884;
+      --stat-num:      #d98a1f;
+      --holiday-bg:    #fdecec;
+      --holiday-bdr:   #f5c6c6;
+      --holiday-text:   #c0392b;
+      --workday-bg:    #e6f7ec;
+      --workday-bdr:   #b9e6cd;
+      --workday-text:   #1a7a4a;
+      --weekend-bg:    #f4f6fb;
+      --weekend-bdr:   #d5dce8;
+      --weekend-text:   #8b96ad;
+      color-scheme: light;
+    }
+
+    [data-theme="dark"] {
+      --border-input:  #263353;
+      --btn-sec-bg:    #1c2740;
+      --btn-sec-text:  #9fb0d0;
+      --btn-sec-bdr:   #33415f;
+      --btn-sec-hover: #263353;
+      --stat-bg:       #1c2740;
+      --stat-bdr:      #263353;
+      --stat-text:     #9fb0d0;
+      --stat-num:      #ffb454;
+      --holiday-bg:    #2d0a0a;
+      --holiday-bdr:   #6b3a4a;
+      --holiday-text:   #ff9a9a;
+      --workday-bg:    #0f2a1c;
+      --workday-bdr:   #2a4a3a;
+      --workday-text:   #9fe870;
+      --weekend-bg:    #0b101d;
+      --weekend-bdr:   #263353;
+      --weekend-text:   #8b96ad;
+      color-scheme: dark;
+    }
+
+    .row {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: flex-end;
+      margin-bottom: 14px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .field label {
+      font-family: "Chakra Petch", sans-serif;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    input[type="date"], input[type="number"] {
+      padding: 10px 12px;
+      border: 1px solid var(--border-input);
+      border-radius: 6px;
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 13px;
+      background: var(--surface-alt);
+      color: var(--text-primary);
+      outline: none;
+      transition: border-color 0.18s, box-shadow 0.18s;
+      box-sizing: border-box;
+      color-scheme: inherit;
+    }
+
+    input[type="date"]:focus, input[type="number"]:focus { border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 16%, transparent); }
+
+    /* Input + Pick + Today grouped together */
+    .input-group {
+      display: flex;
+      align-items: stretch;
+      gap: 6px;
+      flex-wrap: nowrap;
+    }
+
+    .input-group input[type="date"] {
+      flex: 1 1 auto;
+      min-width: 150px;
+    }
+
+    .icon-btn {
+      padding: 0 12px;
+      border: 1px solid var(--btn-sec-bdr);
+      border-radius: 6px;
+      background: var(--btn-sec-bg);
+      color: var(--btn-sec-text);
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.18s;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .icon-btn:hover {
+      background: var(--btn-sec-hover);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .icon-btn.pick-btn {
+      padding: 0 10px;
+      font-size: 15px;
+    }
+
+    /* Final actions separated from the rest */
+    .action-bar {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-top: 18px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+    }
+
+    /* Summary text */
+    .summary {
+      margin-top: 14px;
+      padding: 12px 14px;
+      border-radius: 6px;
+      background: var(--accent-light);
+      border: 1px solid var(--border);
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 12.5px;
+      line-height: 1.6;
+      color: var(--text-primary);
+      display: none;
+    }
+    .summary.show { display: block; }
+    .summary b { color: var(--accent); font-weight: 600; }
+
+    /* Calendar navigation */
+    .cal-nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .cal-nav-title {
+      font-family: "Chakra Petch", sans-serif;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .cal-nav-btns { display: flex; gap: 6px; }
+
+    .cal-nav-btn {
+      width: 30px;
+      height: 30px;
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      background: var(--surface);
+      color: var(--text-muted);
+      font-size: 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+
+    .cal-nav-btn:hover { color: var(--accent); border-color: var(--accent); }
+
+    /* Range highlight */
+    .cal-day.range { box-shadow: inset 0 0 0 2px var(--accent); }
+    .cal-day.range-start { box-shadow: inset 0 0 0 2px var(--accent); }
+    .cal-day.range-end { box-shadow: inset 0 0 0 2px var(--accent); }
+
+    /* ── Segmented (mode + unit) ── */
+    .seg-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+    }
+
+    .seg-label {
+      font-family: "Chakra Petch", sans-serif;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    .segmented { display: inline-flex; gap: 8px; flex-wrap: wrap; }
+
+    .segmented button {
+      padding: 10px 16px;
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      background: var(--surface);
+      color: var(--text-muted);
+      font-family: "Chakra Petch", sans-serif;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      cursor: pointer;
+      transition: all 0.2s;
+      line-height: 1;
+      outline: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .segmented button:hover { color: var(--accent); border-color: var(--accent); }
+    .segmented button.active { background: var(--accent); color: #1a1206; border-color: var(--accent); }
+
+    /* ── Result ── */
+    .result-card { display: none; }
+    .result-card.show { display: block; }
+
+    .legend {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+    }
+
+    .result-big {
+      font-family: "Chakra Petch", sans-serif;
+      font-size: 26px;
+      font-weight: 700;
+      color: var(--accent);
+      margin-bottom: 4px;
+    }
+
+    .result-sub {
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 16px;
+    }
+
+    .legend span { display: inline-flex; align-items: center; gap: 6px; }
+    .dot { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+
+    .dot.work { background: var(--workday-text); }
+    .dot.hol  { background: var(--holiday-text); }
+    .dot.wknd { background: var(--weekend-text); }
+    .dot.range { background: var(--accent); }
+
+    .cal {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 4px;
+      margin-top: 4px;
+    }
+
+    .cal-head {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 4px;
+      margin-bottom: 4px;
+    }
+
+    .cal-head span {
+      text-align: center;
+      font-family: "Chakra Petch", sans-serif;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-faint);
+    }
+
+    .cal-day {
+      text-align: center;
+      padding: 6px 2px;
+      border-radius: 5px;
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 12px;
+      color: var(--text-muted);
+      border: 1px solid transparent;
+    }
+
+    .cal-day.work { background: var(--workday-bg); color: var(--workday-text); border-color: var(--workday-bdr); }
+    .cal-day.hol  { background: var(--holiday-bg); color: var(--holiday-text); border-color: var(--holiday-bdr); }
+    .cal-day.wknd{ background: var(--weekend-bg); color: var(--weekend-text); border-color: var(--weekend-bdr); }
+    .cal-day.today { outline: 2px solid var(--accent); }
+    .cal-day.target { outline: 2px solid var(--accent); box-shadow: 0 0 0 2px var(--surface); }
+
+    .holiday-note {
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 11.5px;
+      color: var(--text-muted);
+      margin-top: 12px;
+      line-height: 1.6;
+    }
+
+    .holiday-note .src {
+      color: var(--text-faint);
+      font-size: 10.5px;
+    }
+
+    .holiday-list {
+      margin-top: 6px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .holiday-chip {
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 10.5px;
+      padding: 2px 8px;
+      border-radius: 4px;
+      background: var(--holiday-bg);
+      color: var(--holiday-text);
+      border: 1px solid var(--holiday-bdr);
+    }
+
+    .holiday-chip.work { background: var(--workday-bg); color: var(--workday-text); border-color: var(--workday-bdr); }
+  </style>
+</head>
+<body>
+
+<script src="shared/header.js"></script>
+<script>
+  injectHeader({ icon: '<span style="font-size:1.3rem;">🗓️</span>', title: 'Workday Calculator' });
+</script>
+
+<div class="container">
+
+  <!-- Calculator -->
+  <div class="card">
+    <h2 id="calc-heading">Workday Calculator</h2>
+
+    <!-- Mode -->
+    <div class="seg-row">
+      <span class="seg-label" id="mode-label">Mode:</span>
+      <div class="segmented" id="mode-seg">
+        <button type="button" data-mode="forward" id="mode-forward">By duration</button>
+        <button type="button" data-mode="backward" id="mode-backward">By target date</button>
+      </div>
+    </div>
+
+    <!-- Forward: start + N units -->
+    <div class="row" id="row-forward">
+      <div class="field">
+        <label for="start-date" id="start-label">Start date</label>
+        <div class="input-group">
+          <input type="date" id="start-date">
+          <button type="button" class="icon-btn pick-btn" id="start-date-pick" title="Open calendar picker">📅</button>
+          <button type="button" class="icon-btn" id="start-date-today">Today</button>
+        </div>
+      </div>
+      <div class="field">
+        <label for="count" id="count-label">Count</label>
+        <input type="number" id="count" step="1" value="45" title="Positive = forward, negative = backward">
+      </div>
+      <div class="field">
+        <label for="unit" id="unit-label">Unit</label>
+        <div class="segmented" id="unit-seg">
+          <button type="button" data-unit="workday" id="unit-workday">Workdays</button>
+          <button type="button" data-unit="workweek" id="unit-workweek">Work weeks</button>
+          <button type="button" data-unit="calday" id="unit-calday">Calendar days</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Backward: target date -->
+    <div class="row" id="row-backward" style="display:none;">
+      <div class="field">
+        <label for="target-date" id="target-label">Target date</label>
+        <div class="input-group">
+          <input type="date" id="target-date">
+          <button type="button" class="icon-btn pick-btn" id="target-date-pick" title="Open calendar picker">📅</button>
+          <button type="button" class="icon-btn" id="target-date-today">Today</button>
+        </div>
+      </div>
+      <div class="field">
+        <label for="unit2" id="unit2-label">Unit</label>
+        <div class="segmented" id="unit-seg2">
+          <button type="button" data-unit="workday" id="unit2-workday">Workdays</button>
+          <button type="button" data-unit="workweek" id="unit2-workweek">Work weeks</button>
+          <button type="button" data-unit="calday" id="unit2-calday">Calendar days</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Holidays -->
+    <div class="seg-row">
+      <span class="seg-label" id="hol-label">Holidays:</span>
+      <div class="segmented" id="hol-seg">
+        <button type="button" data-hol="cn" id="hol-cn">🇨🇳 China</button>
+        <button type="button" data-hol="de" id="hol-de">🇩🇪 Germany</button>
+        <button type="button" data-hol="none" id="hol-none">None</button>
+      </div>
+    </div>
+
+    <div class="summary" id="summary"></div>
+    <div class="action-bar">
+      <button class="btn btn-primary" id="btn-calc" onclick="calculate()">🧮 Calculate</button>
+      <button class="btn btn-danger" id="btn-clear" onclick="clearAll()">🗑 Clear</button>
+    </div>
+    <div class="status" id="status"></div>
+  </div>
+
+  <!-- Result -->
+  <div class="card result-card" id="result-card">
+    <h2 id="result-heading">Result</h2>
+    <div class="result-big" id="result-big"></div>
+    <div class="result-sub" id="result-sub"></div>
+    <div class="legend">
+      <span><span class="dot work"></span><span id="lg-work">Workday</span></span>
+      <span><span class="dot hol"></span><span id="lg-hol">Holiday</span></span>
+      <span><span class="dot wknd"></span><span id="lg-wknd">Weekend</span></span>
+      <span><span class="dot range"></span><span id="lg-range">Range</span></span>
+    </div>
+    <div class="cal-nav">
+      <div class="cal-nav-btns">
+        <button class="cal-nav-btn" id="cal-prev" title="Previous month">‹</button>
+        <button class="cal-nav-btn" id="cal-next" title="Next month">›</button>
+      </div>
+      <div class="cal-nav-title" id="cal-title"></div>
+      <div class="cal-nav-btns">
+        <button class="cal-nav-btn" id="cal-prev-year" title="Previous year">«</button>
+        <button class="cal-nav-btn" id="cal-next-year" title="Next year">»</button>
+      </div>
+    </div>
+    <div class="cal-head" id="cal-head"></div>
+    <div class="cal" id="cal"></div>
+    <div class="holiday-note" id="holiday-note"></div>
+  </div>
+
+</div>
+
+<script>
+  // ══════════════════════════════════════════════════════
+  // i18n
+  // ══════════════════════════════════════════════════════
+  const TRANSLATIONS = {
+    en: {
+      pageTitle: 'Workday Calculator',
+      calcHeading: 'Workday Calculator',
+      modeLabel: 'Mode:',
+      modeForward: 'By duration',
+      modeBackward: 'By target date',
+      startLabel: 'Start date',
+      countLabel: 'Count',
+      unitLabel: 'Unit',
+      unitWorkday: 'Workdays',
+      unitWorkweek: 'Work weeks',
+      unitCalday: 'Calendar days',
+      targetLabel: 'Target date',
+      holLabel: 'Holidays:',
+      holCn: '🇨🇳 China',
+      holDe: '🇩🇪 Germany',
+      holNone: 'None',
+      btnCalc: '🧮 Calculate',
+      btnToday: '📅 Today',
+      btnClear: '🗑 Clear',
+      resultHeading: 'Result',
+      lgWork: 'Workday',
+      lgHol: 'Holiday',
+      lgWknd: 'Weekend',
+      lgRange: 'Range',
+      summaryForward: 'Calculate <b>{n} {unit}</b> {dir} <b>{date}</b> → result date',
+      summaryBackward: 'Calculate <b>workdays</b> from <b>{date}</b> to <b>{target}</b>',
+      dirAfter: 'after',
+      dirBefore: 'before',
+      resBackwardToday: 'Target is today',
+      resBackwardPast: '{n} workdays ago',
+      unitWorkdayPlural: 'workdays',
+      unitWorkweekPlural: 'work weeks',
+      unitCaldayPlural: 'calendar days',
+      unitWorkdaySingular: 'workday',
+      unitWorkweekSingular: 'work week',
+      unitCaldaySingular: 'calendar day',
+      holSourceAuto: 'Holidays are sourced from the official Chinese public holiday calendar (fetched automatically).',
+      holSourceAutoDE: 'Holidays are sourced from the German public holiday calendar (fetched automatically, via Nager.Date).',
+      holSourceNone: 'Only weekends are excluded — no holidays applied.',
+      holFetchFail: 'Could not fetch China holidays — falling back to weekends only.',
+      holFetchFailDE: 'Could not fetch Germany holidays — falling back to weekends only.',
+      errNoStart: 'Please pick a start date.',
+      errNoTarget: 'Please pick a target date.',
+      errCount: 'Please enter a non-zero count (use a negative number to go backward).',
+      errTargetPast: 'Target date is before start date.',
+      today: 'Today',
+      target: 'Target',
+    },
+    zh: {
+      pageTitle: '工作日 / 交货期计算器',
+      calcHeading: '工作日 / 交货期计算器',
+      modeLabel: '模式：',
+      modeForward: '按时间长度',
+      modeBackward: '按目标日期',
+      startLabel: '开始日期',
+      countLabel: '数量',
+      unitLabel: '单位',
+      unitWorkday: '工作日',
+      unitWorkweek: '工作周',
+      unitCalday: '日历日',
+      targetLabel: '目标日期',
+      holLabel: '节假日：',
+      holCn: '🇨🇳 中国',
+      holDe: '🇩🇪 德国',
+      holNone: '无',
+      btnCalc: '🧮 计算',
+      btnToday: '📅 今天',
+      btnClear: '🗑 清除',
+      resultHeading: '计算结果',
+      lgWork: '工作日',
+      lgHol: '节假日',
+      lgWknd: '周末',
+      lgRange: '范围',
+      summaryForward: '计算从 <b>{date}</b> {dir} <b>{n} 个{unit}</b> → 结果日期',
+      summaryBackward: '计算从 <b>{date}</b> 到 <b>{target}</b> 的<b>工作日</b>',
+      dirAfter: '之后',
+      dirBefore: '之前',
+      resBackwardToday: '目标日期就是今天',
+      resBackwardPast: '{n} 个工作日之前',
+      unitWorkdayPlural: '工作日',
+      unitWorkweekPlural: '个工作周',
+      unitCaldayPlural: '个日历日',
+      unitWorkdaySingular: '工作日',
+      unitWorkweekSingular: '个工作周',
+      unitCaldaySingular: '个日历日',
+      holSourceAuto: '节假日来自中国官方日历（自动获取）。',
+      holSourceAutoDE: '节假日来自德国官方节假日日历（自动获取，数据源：Nager.Date）。',
+      holSourceNone: '仅排除周末 —— 不应用节假日。',
+      holFetchFail: '无法获取中国节假日 —— 改用仅周末排除。',
+      holFetchFailDE: '无法获取德国节假日 —— 改用仅周末排除。',
+      errNoStart: '请选择开始日期。',
+      errNoTarget: '请选择目标日期。',
+      errCount: '请输入一个非零的数量（负数表示往前推算）。',
+      errTargetPast: '目标日期早于开始日期。',
+      today: '今天',
+      target: '目标',
+    }
+  };
+
+  function pageApplyTranslations() {
+    document.title = currentLang === 'zh' ? '工作日 / 交货期计算器' : 'Workday Calculator';
+    const setText = (id, key) => { const el = document.getElementById(id); if (el) el.textContent = t(key); };
+    setText('calc-heading', 'calcHeading');
+    setText('mode-label', 'modeLabel');
+    setText('mode-forward', 'modeForward');
+    setText('mode-backward', 'modeBackward');
+    setText('start-label', 'startLabel');
+    setText('count-label', 'countLabel');
+    setText('unit-label', 'unitLabel');
+    setText('unit-workday', 'unitWorkday');
+    setText('unit-workweek', 'unitWorkweek');
+    setText('unit-calday', 'unitCalday');
+    setText('target-label', 'targetLabel');
+    setText('unit2-label', 'unitLabel');
+    setText('unit2-workday', 'unitWorkday');
+    setText('unit2-workweek', 'unitWorkweek');
+    setText('unit2-calday', 'unitCalday');
+    setText('hol-label', 'holLabel');
+    setText('hol-cn', 'holCn');
+    setText('hol-de', 'holDe');
+    setText('hol-none', 'holNone');
+    setText('btn-calc', 'btnCalc');
+    setText('btn-clear', 'btnClear');
+    setText('start-date-today', 'today');
+    setText('target-date-today', 'today');
+    setText('result-heading', 'resultHeading');
+    setText('lg-work', 'lgWork');
+    setText('lg-hol', 'lgHol');
+    setText('lg-wknd', 'lgWknd');
+    setText('lg-range', 'lgRange');
+  }
+
+  // ══════════════════════════════════════════════════════
+  // State
+  // ══════════════════════════════════════════════════════
+  let mode = 'forward';
+  let unit = 'workday';
+  let holMode = 'cn';
+  let chinaHolidays = null;      // { holidays: {date: name}, workdays: [date] }
+  let germanyHolidays = null;    // { holidays: {date: name}, workdays: [] }
+  let lastResult = null;
+  let calView = null;            // {y, m} currently displayed in calendar
+
+  const DAY = 86400000;
+  const fmt = d => {
+    const y = d.getFullYear(), m = String(d.getMonth() + 1).padStart(2, '0'), dd = String(d.getDate()).padStart(2, '0');
+    return y + '-' + m + '-' + dd;
+  };
+  const parse = s => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); };
+  const addDays = (d, n) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + n);
+  const isWeekend = d => { const w = d.getDay(); return w === 0 || w === 6; };
+
+  function isHoliday(d) {
+    const s = fmt(d);
+    if (holMode === 'none') return false;
+    if (holMode === 'cn' && chinaHolidays && chinaHolidays.holidays && chinaHolidays.holidays[s]) return true;
+    if (holMode === 'de' && germanyHolidays && germanyHolidays.holidays && germanyHolidays.holidays[s]) return true;
+    return false;
+  }
+
+  function isWorkday(d) {
+    const s = fmt(d);
+    if (holMode === 'cn' && chinaHolidays && chinaHolidays.workdays && chinaHolidays.workdays.includes(s)) return true;
+    if (isHoliday(d)) return false;
+    return !isWeekend(d);
+  }
+
+  // ── China holidays fetch (current year ± 1, so year-boundary calcs stay correct) ──
+  async function fetchChinaHolidays() {
+    const now = new Date().getFullYear();
+    const years = [now - 1, now, now + 1];
+    const settled = await Promise.allSettled(years.map(y =>
+      fetch('https://timor.tech/api/holiday/year/' + y).then(r => { if (!r.ok) throw new Error('http ' + r.status); return r.json(); })
+    ));
+    const holidays = {};
+    const workdays = [];
+    let anyOk = false;
+    settled.forEach(res => {
+      if (res.status !== 'fulfilled') return;
+      const data = res.value;
+      if (!data || data.code !== 0 || !data.holiday) return;
+      anyOk = true;
+      for (const key in data.holiday) {
+        const h = data.holiday[key];
+        if (!h || !h.date) continue;
+        if (h.holiday === true) holidays[h.date] = h.name || '';
+        else workdays.push(h.date);
+      }
+    });
+    if (anyOk) {
+      chinaHolidays = { holidays, workdays };
+      if (holMode === 'cn') setStatus('', t('holSourceAuto'));
+    } else {
+      chinaHolidays = null;
+      if (holMode === 'cn') setStatus('err', t('holFetchFail'));
+    }
+  }
+
+  // ── Germany holidays fetch (Nager.Date public API, current year ± 1) ──
+  async function fetchGermanyHolidays() {
+    const now = new Date().getFullYear();
+    const years = [now - 1, now, now + 1];
+    const settled = await Promise.allSettled(years.map(y =>
+      fetch('https://date.nager.at/api/v3/PublicHolidays/' + y + '/DE').then(r => { if (!r.ok) throw new Error('http ' + r.status); return r.json(); })
+    ));
+    const holidays = {};
+    let anyOk = false;
+    settled.forEach(res => {
+      if (res.status !== 'fulfilled' || !Array.isArray(res.value)) return;
+      anyOk = true;
+      res.value.forEach(h => { if (h && h.date) holidays[h.date] = h.localName || h.name || ''; });
+    });
+    if (anyOk) {
+      germanyHolidays = { holidays, workdays: [] };
+      if (holMode === 'de') setStatus('', t('holSourceAutoDE'));
+    } else {
+      germanyHolidays = null;
+      if (holMode === 'de') setStatus('err', t('holFetchFailDE'));
+    }
+  }
+
+  // ── Mode / unit / holiday switching ──
+  function setMode(m) {
+    mode = m;
+    document.querySelectorAll('#mode-seg button').forEach(b => b.classList.toggle('active', b.dataset.mode === m));
+    document.getElementById('row-forward').style.display = m === 'forward' ? 'flex' : 'none';
+    document.getElementById('row-backward').style.display = m === 'backward' ? 'flex' : 'none';
+  }
+
+  function setUnit(u, segId) {
+    document.querySelectorAll('#' + segId + ' button').forEach(b => b.classList.toggle('active', b.dataset.unit === u));
+    if (segId === 'unit-seg') unit = u;
+  }
+
+  function setHolMode(h) {
+    holMode = h;
+    document.querySelectorAll('#hol-seg button').forEach(b => b.classList.toggle('active', b.dataset.hol === h));
+    if (h === 'cn') {
+      if (chinaHolidays) setStatus('', t('holSourceAuto'));
+      else { setStatus('', ''); fetchChinaHolidays(); }
+    } else if (h === 'de') {
+      if (germanyHolidays) setStatus('', t('holSourceAutoDE'));
+      else { setStatus('', ''); fetchGermanyHolidays(); }
+    } else {
+      setStatus('', t('holSourceNone'));
+    }
+  }
+
+  // ── Calculation ──
+  function calculate() {
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+
+    if (mode === 'forward') {
+      const startEl = document.getElementById('start-date');
+      if (!startEl.value) { setStatus('err', t('errNoStart')); return; }
+      const count = parseInt(document.getElementById('count').value, 10);
+      if (!count) { setStatus('err', t('errCount')); return; }
+      const start = parse(startEl.value);
+      const target = addWorkdays(start, count, unit);
+      lastResult = { type: 'forward', start, target, count, unit };
+      updateSummary();
+      renderResult();
+      return;
+    }
+
+    // backward
+    const targetEl = document.getElementById('target-date');
+    if (!targetEl.value) { setStatus('err', t('errNoTarget')); return; }
+    const target = parse(targetEl.value);
+    const start = today;
+    lastResult = { type: 'backward', start, target };
+    updateSummary();
+    renderResult();
+  }
+
+  function updateSummary() {
+    const el = document.getElementById('summary');
+    const r = lastResult;
+    if (!r) { el.classList.remove('show'); return; }
+    el.classList.add('show');
+    if (r.type === 'forward') {
+      const n = Math.abs(r.count);
+      const unitKey = 'unit' + r.unit.charAt(0).toUpperCase() + r.unit.slice(1) + (n === 1 ? 'Singular' : 'Plural');
+      const dir = r.count < 0 ? t('dirBefore') : t('dirAfter');
+      el.innerHTML = t('summaryForward').replace('{n}', n).replace('{unit}', t(unitKey)).replace('{date}', fmt(r.start)).replace('{dir}', dir);
+    } else {
+      el.innerHTML = t('summaryBackward').replace('{date}', fmt(r.start)).replace('{target}', fmt(r.target));
+    }
+  }
+
+  function addWorkdays(start, count, u) {
+    if (count === 0) return start;
+    if (u === 'calday') return addDays(start, count);
+    if (u === 'workweek') {
+      // count work weeks = count * 5 workdays (sign preserved)
+      return addWorkdays(start, count * 5, 'workday');
+    }
+    // workday — supports negative count (walks backward)
+    const dir = count < 0 ? -1 : 1;
+    const target = Math.abs(count);
+    let d = start;
+    let added = 0;
+    while (added < target) {
+      d = addDays(d, dir);
+      if (isWorkday(d)) added++;
+    }
+    return d;
+  }
+
+  function countWorkdaysBetween(a, b) {
+    let d = a, n = 0;
+    while (d < b) { d = addDays(d, 1); if (isWorkday(d)) n++; }
+    return n;
+  }
+
+  function countCalDaysBetween(a, b) {
+    return Math.round((b - a) / DAY);
+  }
+
+  // ── Render result ──
+  function renderResult() {
+    const card = document.getElementById('result-card');
+    card.classList.add('show');
+    const big = document.getElementById('result-big');
+    const sub = document.getElementById('result-sub');
+
+    const r = lastResult;
+
+    // Duration mode → output the date; target-date mode → output the duration
+    if (r.type === 'forward') {
+      big.textContent = fmt(r.target);
+      const n = Math.abs(r.count);
+      const unitKey = 'unit' + r.unit.charAt(0).toUpperCase() + r.unit.slice(1) + (n === 1 ? 'Singular' : 'Plural');
+      sub.textContent = (r.count < 0 ? '−' : '+') + n + ' ' + t(unitKey);
+    } else {
+      const workdays = countWorkdaysBetween(r.start, r.target);
+      const calDays = countCalDaysBetween(r.start, r.target);
+      if (calDays === 0) {
+        big.textContent = '0 ' + t('unitWorkdayPlural');
+        sub.textContent = fmt(r.target) + ' · ' + t('resBackwardToday');
+      } else if (calDays < 0) {
+        big.textContent = (-workdays) + ' ' + t('unitWorkdayPlural');
+        sub.textContent = fmt(r.target) + ' · ' + t('resBackwardPast').replace('{n}', -workdays);
+      } else {
+        big.textContent = workdays + ' ' + t('unitWorkdayPlural');
+        sub.textContent = fmt(r.target) + ' · ' + calDays + ' ' + t('unitCaldayPlural');
+      }
+    }
+
+    // Default calendar view to the target date's month
+    if (!calView) calView = { y: r.target.getFullYear(), m: r.target.getMonth() };
+    renderCalendar();
+    renderHolidayNote();
+  }
+
+  function renderCalendar() {
+    const cal = document.getElementById('cal');
+    const calHead = document.getElementById('cal-head');
+    const title = document.getElementById('cal-title');
+    const r = lastResult;
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const { y, m } = calView;
+    const first = new Date(y, m, 1);
+    const startDow = first.getDay();
+    const daysInMonth = new Date(y, m + 1, 0).getDate();
+
+    title.textContent = y + ' / ' + String(m + 1).padStart(2, '0');
+
+    const heads = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+    calHead.innerHTML = heads.map(h => '<span>' + h + '</span>').join('');
+    let html = '';
+    for (let i = 0; i < startDow; i++) html += '<div class="cal-day"></div>';
+    for (let d = 1; d <= daysInMonth; d++) {
+      const date = new Date(y, m, d);
+      const s = fmt(date);
+      let cls = 'cal-day';
+      if (isWorkday(date)) cls += ' work';
+      else if (isHoliday(date)) cls += ' hol';
+      else cls += ' wknd';
+      if (s === fmt(today)) cls += ' today';
+      if (s === fmt(r.target)) cls += ' target';
+      // range highlight
+      const startS = fmt(r.start), endS = fmt(r.target);
+      if (startS <= endS) {
+        if (s > startS && s < endS) cls += ' range';
+        else if (s === startS) cls += ' range-start';
+        else if (s === endS) cls += ' range-end';
+      } else {
+        if (s < startS && s > endS) cls += ' range';
+        else if (s === startS) cls += ' range-start';
+        else if (s === endS) cls += ' range-end';
+      }
+      html += '<div class="cal-day ' + cls + '">' + d + '</div>';
+    }
+    cal.innerHTML = html;
+  }
+
+  function renderHolidayNote() {
+    const note = document.getElementById('holiday-note');
+    const r = lastResult;
+    const startS = fmt(r.start), endS = fmt(r.target);
+    const lo = startS < endS ? startS : endS, hi = startS < endS ? endS : startS;
+
+    if (holMode === 'cn') {
+      note.style.display = 'block';
+      note.innerHTML = '<div class="src">' + t('holSourceAuto') + '</div>';
+      if (chinaHolidays && chinaHolidays.holidays) {
+        const chips = Object.keys(chinaHolidays.holidays)
+          .filter(s => s >= lo && s <= hi)
+          .map(s => '<span class="holiday-chip">' + s + ' · ' + chinaHolidays.holidays[s] + '</span>').join('');
+        if (chips) note.innerHTML += '<div class="holiday-list">' + chips + '</div>';
+      }
+    } else if (holMode === 'de') {
+      note.style.display = 'block';
+      note.innerHTML = '<div class="src">' + t('holSourceAutoDE') + '</div>';
+      if (germanyHolidays && germanyHolidays.holidays) {
+        const chips = Object.keys(germanyHolidays.holidays)
+          .filter(s => s >= lo && s <= hi)
+          .map(s => '<span class="holiday-chip">' + s + ' · ' + germanyHolidays.holidays[s] + '</span>').join('');
+        if (chips) note.innerHTML += '<div class="holiday-list">' + chips + '</div>';
+      }
+    } else {
+      note.style.display = 'block';
+      note.innerHTML = '<div class="src">' + t('holSourceNone') + '</div>';
+    }
+  }
+
+  function setStatus(cls, text) {
+    const el = document.getElementById('status');
+    el.className = 'status' + (cls ? ' ' + cls : '');
+    el.textContent = text;
+  }
+
+  // ── Helpers ──
+  function setToday() {
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    document.getElementById('start-date').value = fmt(today);
+    document.getElementById('target-date').value = fmt(today);
+  }
+
+  function setFieldToday(id) {
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    document.getElementById(id).value = fmt(today);
+  }
+
+  function openPicker(id) {
+    const el = document.getElementById(id);
+    if (typeof el.showPicker === 'function') {
+      try { el.showPicker(); return; } catch (e) { /* fall through */ }
+    }
+    el.focus();
+  }
+
+  function clearAll() {
+    document.getElementById('start-date').value = '';
+    document.getElementById('target-date').value = '';
+    document.getElementById('count').value = '45';
+    document.getElementById('result-card').classList.remove('show');
+    document.getElementById('summary').classList.remove('show');
+    calView = null;
+    setStatus('', '');
+  }
+
+  // ══════════════════════════════════════════════════════
+  // Init
+  // ══════════════════════════════════════════════════════
+  document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('#mode-seg button').forEach(b => b.addEventListener('click', () => setMode(b.dataset.mode)));
+    document.querySelectorAll('#unit-seg button').forEach(b => b.addEventListener('click', () => setUnit(b.dataset.unit, 'unit-seg')));
+    document.querySelectorAll('#unit-seg2 button').forEach(b => b.addEventListener('click', () => setUnit(b.dataset.unit, 'unit-seg2')));
+    document.querySelectorAll('#hol-seg button').forEach(b => b.addEventListener('click', () => setHolMode(b.dataset.hol)));
+
+    document.getElementById('start-date-pick').addEventListener('click', () => openPicker('start-date'));
+    document.getElementById('target-date-pick').addEventListener('click', () => openPicker('target-date'));
+    document.getElementById('start-date-today').addEventListener('click', () => setFieldToday('start-date'));
+    document.getElementById('target-date-today').addEventListener('click', () => setFieldToday('target-date'));
+
+    document.getElementById('cal-prev').addEventListener('click', () => { calView.m--; if (calView.m < 0) { calView.m = 11; calView.y--; } renderCalendar(); });
+    document.getElementById('cal-next').addEventListener('click', () => { calView.m++; if (calView.m > 11) { calView.m = 0; calView.y++; } renderCalendar(); });
+    document.getElementById('cal-prev-year').addEventListener('click', () => { calView.y--; renderCalendar(); });
+    document.getElementById('cal-next-year').addEventListener('click', () => { calView.y++; renderCalendar(); });
+
+    // Defaults
+    setMode('forward');
+    setUnit('workday', 'unit-seg');
+    setUnit('workday', 'unit-seg2');
+    setHolMode('cn');
+    setToday();
+
+    fetchChinaHolidays();
+  });
+</script>
+
+</body>
+</html>

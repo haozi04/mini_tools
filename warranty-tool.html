@@ -7,6 +7,7 @@
   <meta name="description" content="Decode and validate Siemens FID numbers. Extract FIDs from text, check warranty status, and export results." />
   <link rel="stylesheet" href="shared/theme.css" />
   <link rel="stylesheet" href="shared/header.css" />
+  <link rel="stylesheet" href="shared/components.css" />
   <style>
     :root {
       --border-input:  #d5dce8;
@@ -54,36 +55,6 @@
       --table-head-text: #9fb0d0;
       --table-row-alt: #0b101d;
       --table-row-bdr: #263353;
-    }
-
-    .container {
-      position: relative;
-      z-index: 1;
-      max-width: 960px;
-      margin: 0 auto;
-      padding: 20px 24px 60px;
-    }
-
-    .card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 24px;
-      box-shadow: 0 14px 34px var(--shadow);
-      margin-bottom: 20px;
-      transition: background 0.3s, box-shadow 0.3s;
-    }
-
-    .card h2 {
-      font-family: "Chakra Petch", sans-serif;
-      font-size: 12px;
-      font-weight: 600;
-      letter-spacing: 0.2em;
-      text-transform: uppercase;
-      color: var(--text-muted);
-      border-bottom: 1px solid var(--border);
-      padding-bottom: 12px;
-      margin-bottom: 16px;
     }
 
     /* ── Tab bar ── */
@@ -177,39 +148,6 @@
     textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 16%, transparent); }
 
     /* ── Buttons ── */
-    .toolbar {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      align-items: center;
-      margin-top: 14px;
-    }
-
-    .btn {
-      font-family: "Chakra Petch", sans-serif;
-      font-size: 12px;
-      font-weight: 600;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      padding: 10px 16px;
-      border-radius: 5px;
-      border: 1px solid;
-      cursor: pointer;
-      background: transparent;
-      transition: transform 0.15s, box-shadow 0.2s, background 0.2s, color 0.2s, border-color 0.2s;
-    }
-    .btn:active { transform: translateY(1px); }
-
-    .btn-primary { background: var(--accent); border-color: color-mix(in srgb, var(--accent) 70%, #fff); color: #1a1206; }
-    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 20px color-mix(in srgb, var(--accent) 35%, transparent); }
-
-    .btn-secondary { color: #9fb0d0; border-color: #33415f; }
-    .btn-secondary:hover { color: var(--text-primary); border-color: #53d8e8; box-shadow: 0 8px 20px rgba(83,216,232,.25); }
-
-    .btn-danger { color: #ff9a9a; border-color: #6b3a4a; }
-    .btn-danger:hover { color: #ff6b6b; border-color: #ff6b6b; }
-
-    /* ── Validation banner ── */
     .valid-banner {
       flex-shrink: 0;
       width: 180px;
@@ -360,8 +298,6 @@
     .empty-state .empty-icon { font-size: 2rem; margin-bottom: 8px; }
 
     @media (max-width: 640px) {
-      .container { padding: 16px 12px 40px; }
-      .card { padding: 16px; }
       .tab-bar { padding: 14px 12px 0; }
       .tab-btn { padding: 8px 14px; font-size: 0.82rem; }
       .fields-grid { grid-template-columns: 1fr; }

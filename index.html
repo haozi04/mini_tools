@@ -293,7 +293,7 @@
 </main>
 
 <footer>
-  <p><span id="footer-text">Mini Tools &copy; 2026 &mdash; Built for simplicity.</span> <a id="footer-source" href="https://github.com">Source</a></p>
+  <p><span id="footer-text">Mini Tools &copy; 2026 &mdash; Built for simplicity.</span></p>
 </footer>
 
 <script src="shared/header.js"></script>
@@ -325,8 +325,9 @@
       bboxDesc: 'Project normalized 0–1000 bounding boxes onto real image pixels as an interactive overlay.',
       chunkerTitle: 'Text Chunker &amp; Counter',
       chunkerDesc: 'Count characters and estimate tokens, then split long text into model-window-sized chunks with prompt prefixes.',
+      workdayTitle: 'Workday Calculator',
+      workdayDesc: 'Calculate delivery dates and workdays, excluding weekends and holidays. Forward and backward calculations.',
       footerText: 'Mini Tools © 2026 — Built for simplicity.',
-      footerSource: 'Source',
     },
     zh: {
       metaDescription: '一组轻量级、基于浏览器的实用工具集合。',
@@ -351,8 +352,9 @@
       bboxDesc: '将归一化的 0–1000 边界框投影到真实图像像素上，作为交互式叠加层。',
       chunkerTitle: '长文本分段与 Token 预估器',
       chunkerDesc: '统计字符数并估算 Token，然后在自然段落边界处将长文本按模型窗口大小切分，并自动添加 Prompt 前缀。',
+      workdayTitle: '工作日 / 交货期计算器',
+      workdayDesc: '计算交货日期和工作日，排除周末和节假日。支持正向与反向推算。',
       footerText: 'Mini Tools © 2026 — 以简洁为核心。',
-      footerSource: '源码',
     }
   };
 
@@ -390,8 +392,9 @@
     setText('bbox-desc', 'bboxDesc');
     setText('chunker-title', 'chunkerTitle');
     setText('chunker-desc', 'chunkerDesc');
+    setText('workday-title', 'workdayTitle');
+    setText('workday-desc', 'workdayDesc');
     setText('footer-text', 'footerText');
-    setText('footer-source', 'footerSource');
   }
 
   // ══════════════════════════════════════════════════
@@ -406,6 +409,7 @@
     { href: '3mf-stl-converter.html', icon: '🧊',   id: 'converter3d', group: '3d', titleKey: 'converter3dTitle', descKey: 'converter3dDesc' },
     { href: 'bbox-tool.html',         icon: '▭',   id: 'bbox',       group: 'misc', titleKey: 'bboxTitle',      descKey: 'bboxDesc' },
     { href: 'text-chunker.html',      icon: '✂️',   id: 'chunker',    group: 'misc', titleKey: 'chunkerTitle',   descKey: 'chunkerDesc' },
+    { href: 'workday-calculator.html', icon: '🗓️',   id: 'workday',    group: 'misc', titleKey: 'workdayTitle',   descKey: 'workdayDesc' },
   ];
 
   function renderCards() {
