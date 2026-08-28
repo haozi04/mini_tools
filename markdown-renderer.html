@@ -360,10 +360,73 @@
       .btn-clear { margin-left: 0; }
     }
 
+    /*
+      FIX: Chrome/Edge/Safari default to a "print-color-adjust: economy"
+      mode that silently drops background colors during printing (unless
+      the user manually enables "background graphics" in the print dialog).
+      Several rules below intentionally pair light/white TEXT with a
+      colored BACKGROUND (most critically the table header, which uses
+      white text on an orange background). If the background is dropped
+      but the text stays white, you get white-on-white: invisible yet
+      still selectable text. Forcing `print-color-adjust: exact` (with
+      the -webkit- prefix for broad support) makes browsers always paint
+      the backgrounds we rely on for contrast.
+    */
     @media print {
+      html, body {
+        color-scheme: light !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        color-adjust: exact !important;
+      }
       header, .toolbar, .editor-pane, .pane-header { display: none !important; }
       .main-layout { display: block; height: auto; }
-      #preview-output { border: none; padding: 20px; overflow: visible; }
+      .preview-pane { display: block; overflow: visible; }
+      #preview-output {
+        border: none; padding: 20px; overflow: visible;
+        flex: none; height: auto;
+        background: #ffffff !important;
+        color: #1a2233 !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+      #preview-output h1, #preview-output h2, #preview-output h3,
+      #preview-output h4, #preview-output h5, #preview-output h6 { color: #1a2233 !important; }
+      #preview-output p { color: #1a2233 !important; }
+      #preview-output a { color: #b06f12 !important; }
+      #preview-output blockquote {
+        background: #fbe9d0 !important; color: #1a2233 !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+      #preview-output code {
+        background: #f4f6fb !important; color: #c0392b !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+      #preview-output pre {
+        background: #f4f6fb !important; color: #1a2233 !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+      #preview-output pre code { color: inherit !important; }
+      #preview-output th {
+        background: #d98a1f !important; color: #ffffff !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+      #preview-output td { border-bottom: 1px solid #d5dce8 !important; }
+      #preview-output tr:nth-child(even) td {
+        background: #f8fafc !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+      #preview-output hr { border-top: 2px solid #d5dce8 !important; }
+      #preview-output .mermaid-error {
+        background: #fdecea !important; color: #b71c1c !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
     }
   </style>
 </head>
@@ -661,6 +724,8 @@
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       max-width: 860px; margin: 40px auto;
       padding: 0 24px 60px; color: #333; line-height: 1.75;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
     }
     h1 { font-size: 2rem; border-bottom: 2px solid #2563eb; padding-bottom: 8px; color: #1a1a2e; }
     h2 { font-size: 1.5rem; border-bottom: 1px solid #e0e0e0; padding-bottom: 6px; color: #1a1a2e; }
@@ -688,6 +753,12 @@
     hr  { border: none; border-top: 2px solid #e0e0e0; margin: 1.5em 0; }
     .mermaid { margin: 1em 0; text-align: center; overflow-x: auto; }
     .mermaid svg { max-width: 100%; height: auto; }
+    @media print {
+      body, th, tr, td, blockquote, pre, code {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+    }
     @media (max-width: 600px) {
       body { padding: 0 12px 40px; margin: 20px auto; }
       h1 { font-size: 1.5rem; }

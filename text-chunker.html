@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Text Chunker &amp; Counter</title>
+  <title>Text Chunker and Counter</title>
   <meta name="description" content="Count characters and estimate tokens, then split long text into model-window-sized chunks with prompt prefixes." />
   <link rel="stylesheet" href="shared/theme.css" />
   <link rel="stylesheet" href="shared/header.css" />
@@ -198,7 +198,7 @@
 
 <script src="shared/header.js"></script>
 <script>
-  injectHeader({ icon: '<span style="font-size:1.3rem;">✂️</span>', title: 'Text Chunker &amp; Counter' });
+  injectHeader({ icon: '<span style="font-size:1.3rem;">✂️</span>', title: 'Text Chunker and Counter' });
 </script>
 
 <div class="container">
@@ -243,7 +243,7 @@
   // ══════════════════════════════════════════════════
   const TRANSLATIONS = {
     en: {
-      pageTitle: 'Text Chunker &amp; Counter',
+      pageTitle: 'Text Chunker and Counter',
       inputHeading: 'Paste Text',
       inputPlaceholder: 'Paste your long document here...\n\nThe tool counts characters and estimates tokens, then splits the text into model-window-sized chunks at natural paragraph boundaries.',
       statCharsLbl: 'chars',
@@ -291,7 +291,7 @@
   };
 
   function pageApplyTranslations() {
-    document.title = currentLang === 'zh' ? '长文本分段与 Token 预估器' : 'Text Chunker &amp; Counter';
+    document.title = currentLang === 'zh' ? '长文本分段与 Token 预估器' : 'Text Chunker and Counter';
 
     document.getElementById('input-heading').textContent = t('inputHeading');
     document.getElementById('input-area').placeholder = t('inputPlaceholder');
