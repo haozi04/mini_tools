@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Text Chunker &amp; Counter</title>
+  <meta name="description" content="Count characters and estimate tokens, then split long text into model-window-sized chunks with prompt prefixes." />
+  <link rel="stylesheet" href="shared/theme.css" />
+  <link rel="stylesheet" href="shared/header.css" />
+  <style>
+    :root {
+      --border-input:  #d5dce8;
+      --btn-sec-bg:    #f4f6fb;
+      --btn-sec-text:  #5b6884;
+      --btn-sec-bdr:   #c9d2e2;
+      --btn-sec-hover: #e9eef7;
+      --copy-bg:       #f4f6fb;
+      --copy-bdr:      #c9d2e2;
+      --copy-text:     #5b6884;
+      --copy-done-bg:  #e6f7ec;
+      --copy-done-text:#1a7a4a;
+      --copy-done-bdr: #b9e6cd;
+      --stat-bg:       #f4f6fb;
+      --stat-bdr:      #d5dce8;
+      --stat-text:      #5b6884;
+      --stat-num:       #d98a1f;
+      --chunk-bdr:     #d5dce8;
+      --chunk-head-bg: #f4f6fb;
+      --chunk-head-text:#5b6884;
+    }
+
+    [data-theme="dark"] {
+      --border-input:  #263353;
+      --btn-sec-bg:    #1c2740;
+      --btn-sec-text:  #9fb0d0;
+      --btn-sec-bdr:   #33415f;
+      --btn-sec-hover: #263353;
+      --copy-bg:       #0b101d;
+      --copy-bdr:      #263353;
+      --copy-text:     #8b96ad;
+      --copy-done-bg:  #0f2a1c;
+      --copy-done-text:#9fe870;
+      --copy-done-bdr: #2a4a3a;
+      --stat-bg:       #1c2740;
+      --stat-bdr:      #263353;
+      --stat-text:     #9fb0d0;
+      --stat-num:      #ffb454;
+      --chunk-bdr:     #263353;
+      --chunk-head-bg: #1c2740;
+      --chunk-head-text:#9fb0d0;
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 20px 24px 60px;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 24px;
+      box-shadow: 0 14px 34px var(--shadow);
+      margin-bottom: 20px;
+      transition: background 0.3s, box-shadow 0.3s;
+    }
+
+    .card h2 {
+      font-family: "Chakra Petch", sans-serif;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 12px;
+      margin-bottom: 16px;
+    }
+
+    /* ── Stats bar ── */
+    .stats-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .stat {
+      flex: 1 1 120px;
+      background: var(--stat-bg);
+      border: 1px solid var(--stat-bdr);
+      border-radius: 6px;
+      padding: 10px 14px;
+      text-align: center;
+    }
+
+    .stat .num {
+      font-family: "Chakra Petch", sans-serif;
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--stat-num);
+      line-height: 1.2;
+    }
+
+    .stat .lbl {
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 10.5px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--stat-text);
+      margin-top: 2px;
+    }
+
+    /* ── Input ── */
+    textarea#input-area {
+      width: 100%;
+      min-height: 220px;
+      padding: 12px;
+      border: 1px solid var(--border-input);
+      border-radius: 6px;
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 13px;
+      line-height: 1.55;
+      resize: vertical;
+      outline: none;
+      background: var(--surface-alt);
+      color: var(--text-primary);
+      transition: border-color 0.18s, box-shadow 0.18s;
+      box-sizing: border-box;
+    }
+
+    textarea#input-area:focus { border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 16%, transparent); }
+
+    .toolbar {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-top: 14px;
+    }
+
+    .btn {
+      font-family: "Chakra Petch", sans-serif;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 10px 16px;
+      border-radius: 5px;
+      border: 1px solid;
+      cursor: pointer;
+      background: transparent;
+      transition: transform 0.15s, box-shadow 0.2s, background 0.2s, color 0.2s, border-color 0.2s;
+    }
+    .btn:active { transform: translateY(1px); }
+
+    .btn-primary { background: var(--accent); border-color: color-mix(in srgb, var(--accent) 70%, #fff); color: #1a1206; }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 20px color-mix(in srgb, var(--accent) 35%, transparent); }
+
+    .btn-secondary { color: #9fb0d0; border-color: #33415f; }
+    .btn-secondary:hover { color: var(--text-primary); border-color: #53d8e8; box-shadow: 0 8px 20px rgba(83,216,232,.25); }
+
+    .btn-danger { color: #ff9a9a; border-color: #6b3a4a; }
+    .btn-danger:hover { color: #ff6b6b; border-color: #ff6b6b; }
+
+    /* ── Window size segmented ── */
+    .window-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 14px;
+    }
+
+    .window-label {
+      font-family: "Chakra Petch", sans-serif;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    .segmented { display: inline-flex; gap: 8px; }
+
+    .segmented button {
+      padding: 10px 16px;
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      background: var(--surface);
+      color: var(--text-muted);
+      font-family: "Chakra Petch", sans-serif;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      cursor: pointer;
+      transition: all 0.2s;
+      line-height: 1;
+      outline: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .segmented button:hover { color: var(--accent); border-color: var(--accent); }
+    .segmented button.active { background: var(--accent); color: #1a1206; border-color: var(--accent); }
+
+    /* ── Chunks output ── */
+    .chunk {
+      border: 1px solid var(--chunk-bdr);
+      border-radius: 6px;
+      margin-bottom: 14px;
+      overflow: hidden;
+    }
+
+    .chunk-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 8px 12px;
+      background: var(--chunk-head-bg);
+      border-bottom: 1px solid var(--chunk-bdr);
+      font-family: "Chakra Petch", sans-serif;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--chunk-head-text);
+    }
+
+    .chunk-head .meta { font-family: "IBM Plex Mono", monospace; font-size: 10.5px; letter-spacing: 0; text-transform: none; }
+
+    .chunk textarea {
+      width: 100%;
+      min-height: 120px;
+      padding: 12px;
+      border: none;
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 12.5px;
+      line-height: 1.55;
+      resize: vertical;
+      outline: none;
+      background: var(--surface-alt);
+      color: var(--text-primary);
+      box-sizing: border-box;
+    }
+
+    .copy-btn {
+      padding: 5px 10px;
+      font-family: "Chakra Petch", sans-serif;
+      font-size: 10.5px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      background: var(--copy-bg);
+      border: 1px solid var(--copy-bdr);
+      border-radius: 5px;
+      cursor: pointer;
+      color: var(--copy-text);
+      transition: all 0.15s;
+    }
+
+    .copy-btn:hover { background: var(--btn-sec-bg); color: var(--btn-sec-text); border-color: var(--btn-sec-bdr); }
+    .copy-btn.copied { background: var(--copy-done-bg); color: var(--copy-done-text); border-color: var(--copy-done-bdr); }
+
+    .empty-note {
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 11.5px;
+      color: var(--text-muted);
+      padding: 8px 2px;
+    }
+
+    @media (max-width: 640px) {
+      .container { padding: 16px 12px 40px; }
+      .card { padding: 16px; }
+      textarea#input-area { min-height: 160px; }
+    }
+  </style>
+</head>
+<body>
+
+<script src="shared/header.js"></script>
+<script>
+  injectHeader({ icon: '<span style="font-size:1.3rem;">✂️</span>', title: 'Text Chunker &amp; Counter' });
+</script>
+
+<div class="container">
+
+  <!-- Input -->
+  <div class="card">
+    <h2 id="input-heading">Paste Text</h2>
+    <div class="stats-bar">
+      <div class="stat"><div class="num" id="statChars">0</div><div class="lbl" id="statCharsLbl">chars</div></div>
+      <div class="stat"><div class="num" id="statTokens">0</div><div class="lbl" id="statTokensLbl">est. tokens</div></div>
+      <div class="stat"><div class="num" id="statChunks">0</div><div class="lbl" id="statChunksLbl">chunks</div></div>
+    </div>
+    <textarea id="input-area" spellcheck="false"
+      placeholder="Paste your long document here...&#10;&#10;The tool counts characters and estimates tokens, then splits the text into model-window-sized chunks at natural paragraph boundaries."></textarea>
+    <div class="window-row">
+      <span class="window-label" id="window-label">Model window:</span>
+      <div class="segmented" id="window-seg">
+        <button type="button" data-window="8000" id="win-8k">8k</button>
+        <button type="button" data-window="16000" id="win-16k">16k</button>
+        <button type="button" data-window="32000" id="win-32k">32k</button>
+        <button type="button" data-window="128000" id="win-128k">128k</button>
+      </div>
+    </div>
+    <div class="toolbar">
+      <button class="btn btn-primary" id="btn-chunk" onclick="chunkText()">✂️ Chunk</button>
+      <button class="btn btn-secondary" onclick="loadSample()" id="btn-sample">📋 Sample</button>
+      <button class="btn btn-danger" onclick="clearAll()" id="btn-clear">🗑 Clear</button>
+    </div>
+  </div>
+
+  <!-- Output -->
+  <div class="card" id="output-card" style="display:none;">
+    <h2 id="output-heading">Chunks</h2>
+    <div id="chunks"></div>
+  </div>
+
+</div>
+
+<script>
+  // ══════════════════════════════════════════════════
+  // i18n (dark mode handled by shared/header.js)
+  // ══════════════════════════════════════════════════
+  const TRANSLATIONS = {
+    en: {
+      pageTitle: 'Text Chunker &amp; Counter',
+      inputHeading: 'Paste Text',
+      inputPlaceholder: 'Paste your long document here...\n\nThe tool counts characters and estimates tokens, then splits the text into model-window-sized chunks at natural paragraph boundaries.',
+      statCharsLbl: 'chars',
+      statTokensLbl: 'est. tokens',
+      statChunksLbl: 'chunks',
+      windowLabel: 'Model window:',
+      win8k: '8k',
+      win16k: '16k',
+      win32k: '32k',
+      win128k: '128k',
+      btnChunk: '✂️ Chunk',
+      btnSample: '📋 Sample',
+      btnClear: '🗑 Clear',
+      outputHeading: 'Chunks',
+      copyBtn: '📋 Copy',
+      copiedBtn: '✅ Copied',
+      chunkPrefix: 'This is part {i} of {n}. Continue the document from here.',
+      emptyNote: 'Paste text above and click “Chunk” to split it.',
+      noChunks: 'Nothing to chunk — paste some text first.',
+      chunkMeta: 'part {i}/{n} · {chars} chars · ~{tokens} tokens',
+    },
+    zh: {
+      pageTitle: '长文本分段与 Token 预估器',
+      inputHeading: '粘贴文本',
+      inputPlaceholder: '在此粘贴您的长文档...\n\n工具会统计字符数并估算 Token，然后在自然段落边界处将文本按模型窗口大小切分。',
+      statCharsLbl: '字符数',
+      statTokensLbl: '估算 Token',
+      statChunksLbl: '分段数',
+      windowLabel: '模型窗口：',
+      win8k: '8k',
+      win16k: '16k',
+      win32k: '32k',
+      win128k: '128k',
+      btnChunk: '✂️ 分段',
+      btnSample: '📋 示例',
+      btnClear: '🗑 清除',
+      outputHeading: '分段结果',
+      copyBtn: '📋 复制',
+      copiedBtn: '✅ 已复制',
+      chunkPrefix: '这是第 {i} 部分，共 {n} 部分。请从这里继续文档。',
+      emptyNote: '请在上方粘贴文本，然后点击“分段”。',
+      noChunks: '没有可分段的内容 —— 请先粘贴文本。',
+      chunkMeta: '第 {i}/{n} 部分 · {chars} 字符 · ~{tokens} Token',
+    }
+  };
+
+  function pageApplyTranslations() {
+    document.title = currentLang === 'zh' ? '长文本分段与 Token 预估器' : 'Text Chunker &amp; Counter';
+
+    document.getElementById('input-heading').textContent = t('inputHeading');
+    document.getElementById('input-area').placeholder = t('inputPlaceholder');
+    document.getElementById('statCharsLbl').textContent = t('statCharsLbl');
+    document.getElementById('statTokensLbl').textContent = t('statTokensLbl');
+    document.getElementById('statChunksLbl').textContent = t('statChunksLbl');
+    document.getElementById('window-label').textContent = t('windowLabel');
+    document.getElementById('win-8k').textContent = t('win8k');
+    document.getElementById('win-16k').textContent = t('win16k');
+    document.getElementById('win-32k').textContent = t('win32k');
+    document.getElementById('win-128k').textContent = t('win128k');
+    document.getElementById('btn-chunk').textContent = t('btnChunk');
+    document.getElementById('btn-sample').textContent = t('btnSample');
+    document.getElementById('btn-clear').textContent = t('btnClear');
+    document.getElementById('output-heading').textContent = t('outputHeading');
+    updateStats();
+    renderChunks();
+  }
+
+  // ══════════════════════════════════════════════════
+  // Logic
+  // ══════════════════════════════════════════════════
+  let currentWindow = 8000;
+  let chunks = [];
+
+  // Rough token estimate: ~4 chars per token for Latin, ~1.5 chars per CJK char.
+  function estimateTokens(text) {
+    if (!text) return 0;
+    const cjk = (text.match(/[\u4e00-\u9fff\u3400-\u4dbf]/g) || []).length;
+    const other = text.length - cjk;
+    return Math.round(cjk / 1.5 + other / 4);
+  }
+
+  function countChars(text) {
+    return text.length;
+  }
+
+  // Split into paragraphs (split on blank lines), then greedily pack into chunks
+  // up to the window budget (in tokens). Each chunk gets a prompt prefix.
+  function chunkText() {
+    const text = document.getElementById('input-area').value;
+    if (!text.trim()) {
+      chunks = [];
+      renderChunks();
+      return;
+    }
+
+    // Budget: reserve ~10% of the window for the prefix + safety margin.
+    const budget = Math.floor(currentWindow * 0.9);
+
+    // Split into logical units: paragraphs (blocks separated by blank lines).
+    // Keep single newlines within a paragraph.
+    const paragraphs = text.split(/\n\s*\n/).map(p => p.trim()).filter(p => p.length > 0);
+
+    const result = [];
+    let current = '';
+    let currentTokens = 0;
+
+    const flush = () => {
+      if (!current.trim()) return;
+      result.push(current.trim());
+      current = '';
+      currentTokens = 0;
+    };
+
+    for (const para of paragraphs) {
+      const paraTokens = estimateTokens(para);
+      // If a single paragraph exceeds the budget, hard-split it by sentences.
+      if (paraTokens > budget) {
+        flush();
+        const sentences = para.match(/[^.!?。！？]+[.!?。！？]*/g) || [para];
+        let part = '';
+        let partTokens = 0;
+        for (const s of sentences) {
+          const st = estimateTokens(s);
+          if (partTokens + st > budget && part) {
+            result.push(part.trim());
+            part = '';
+            partTokens = 0;
+          }
+          part += s;
+          partTokens += st;
+        }
+        if (part.trim()) result.push(part.trim());
+        continue;
+      }
+
+      // Normal paragraph: add to current chunk if it fits, else flush.
+      if (currentTokens + paraTokens > budget && current) {
+        flush();
+      }
+      current += (current ? '\n\n' : '') + para;
+      currentTokens += paraTokens;
+    }
+    flush();
+
+    // Add prompt prefixes.
+    chunks = result.map((body, i) => ({
+      body,
+      prefix: t('chunkPrefix').replace('{i}', i + 1).replace('{n}', result.length),
+      chars: countChars(body),
+      tokens: estimateTokens(body),
+    }));
+    renderChunks();
+  }
+
+  function renderChunks() {
+    const container = document.getElementById('chunks');
+    const outputCard = document.getElementById('output-card');
+    if (!chunks.length) {
+      outputCard.style.display = 'none';
+      return;
+    }
+    outputCard.style.display = 'block';
+    container.innerHTML = '';
+    chunks.forEach((c, i) => {
+      const div = document.createElement('div');
+      div.className = 'chunk';
+      div.innerHTML = `
+        <div class="chunk-head">
+          <span>${t('chunkPrefix').replace('{i}', i + 1).replace('{n}', chunks.length)}</span>
+          <span class="meta">${t('chunkMeta').replace('{i}', i + 1).replace('{n}', chunks.length).replace('{chars}', c.chars).replace('{tokens}', c.tokens)}</span>
+          <button class="copy-btn" data-i="${i}">${t('copyBtn')}</button>
+        </div>
+        <textarea readonly spellcheck="false">${c.prefix}\n\n${c.body}</textarea>`;
+      container.appendChild(div);
+    });
+    container.querySelectorAll('.copy-btn').forEach(btn => {
+      btn.addEventListener('click', () => copyChunk(btn));
+    });
+  }
+
+  async function copyChunk(btn) {
+    const i = btn.dataset.i;
+    const text = chunks[i].prefix + '\n\n' + chunks[i].body;
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch {
+      const ta = btn.closest('.chunk').querySelector('textarea');
+      ta.select();
+      document.execCommand('copy');
+    }
+    btn.textContent = t('copiedBtn');
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = t('copyBtn'); btn.classList.remove('copied'); }, 2000);
+  }
+
+  function updateStats() {
+    const text = document.getElementById('input-area').value;
+    document.getElementById('statChars').textContent = countChars(text).toLocaleString();
+    document.getElementById('statTokens').textContent = estimateTokens(text).toLocaleString();
+    document.getElementById('statChunks').textContent = chunks.length;
+  }
+
+  // ── Sample ──
+  function loadSample() {
+    document.getElementById('input-area').value =
+`# Technical Proposal — Smart Factory Automation
+
+## 1. Executive Summary
+
+This proposal outlines a complete smart factory automation solution for the client's production lines. The system integrates IoT sensors, edge computing, and a centralized MES platform to deliver real-time visibility and control.
+
+## 2. Scope of Work
+
+The project covers hardware installation, software deployment, network infrastructure, and operator training. We will deliver a turnkey solution with a 24-month warranty and 99.9% uptime guarantee.
+
+## 3. Technical Architecture
+
+The architecture is built on a three-tier model: the field layer collects data from sensors and PLCs; the edge layer performs local processing and buffering; the cloud layer hosts analytics, dashboards, and long-term storage.
+
+## 4. Implementation Plan
+
+Phase one focuses on site survey and network readiness. Phase two covers sensor installation and controller commissioning. Phase three delivers the MES integration and user acceptance testing.
+
+## 5. Quality Assurance
+
+All deliverables follow ISO 9001 processes. Each subsystem undergoes factory acceptance testing before shipment and site acceptance testing after installation. Comprehensive documentation is provided in both English and Chinese.
+
+## 6. Pricing and Timeline
+
+The total budget is estimated at 1.2 million RMB with a delivery timeline of 18 weeks. Payment is structured in milestones tied to project phases.`;
+    updateStats();
+  }
+
+  // ── Clear ──
+  function clearAll() {
+    document.getElementById('input-area').value = '';
+    chunks = [];
+    renderChunks();
+    updateStats();
+  }
+
+  // ══════════════════════════════════════════════════
+  // Init
+  // ══════════════════════════════════════════════════
+  document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('#window-seg button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        currentWindow = parseInt(btn.dataset.window, 10);
+        document.querySelectorAll('#window-seg button').forEach(b => b.classList.toggle('active', b === btn));
+      });
+    });
+    document.getElementById('input-area').addEventListener('input', updateStats);
+    document.getElementById('btn-chunk').addEventListener('click', chunkText);
+    // Default active window
+    document.getElementById('win-8k').classList.add('active');
+  });
+</script>
+
+</body>
+</html>

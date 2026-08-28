@@ -323,6 +323,8 @@
       mlfbDesc: 'Paste Excel data with MLFB codes and option codes, validate and normalize them for PMD.',
       bboxTitle: 'bbox·lab',
       bboxDesc: 'Project normalized 0–1000 bounding boxes onto real image pixels as an interactive overlay.',
+      chunkerTitle: 'Text Chunker &amp; Counter',
+      chunkerDesc: 'Count characters and estimate tokens, then split long text into model-window-sized chunks with prompt prefixes.',
       footerText: 'Mini Tools © 2026 — Built for simplicity.',
       footerSource: 'Source',
     },
@@ -347,6 +349,8 @@
       mlfbDesc: '粘贴包含 MLFB 编码和选型代码的 Excel 数据，验证并规范化为 PMD 格式。',
       bboxTitle: 'bbox·lab',
       bboxDesc: '将归一化的 0–1000 边界框投影到真实图像像素上，作为交互式叠加层。',
+      chunkerTitle: '长文本分段与 Token 预估器',
+      chunkerDesc: '统计字符数并估算 Token，然后在自然段落边界处将长文本按模型窗口大小切分，并自动添加 Prompt 前缀。',
       footerText: 'Mini Tools © 2026 — 以简洁为核心。',
       footerSource: '源码',
     }
@@ -384,6 +388,8 @@
     setText('mlfb-desc', 'mlfbDesc');
     setText('bbox-title', 'bboxTitle');
     setText('bbox-desc', 'bboxDesc');
+    setText('chunker-title', 'chunkerTitle');
+    setText('chunker-desc', 'chunkerDesc');
     setText('footer-text', 'footerText');
     setText('footer-source', 'footerSource');
   }
@@ -399,6 +405,7 @@
     { href: 'city-map-wallpaper.html', icon: '🗺️',   id: 'map',      group: 'misc', titleKey: 'mapTitle',      descKey: 'mapDesc' },
     { href: '3mf-stl-converter.html', icon: '🧊',   id: 'converter3d', group: '3d', titleKey: 'converter3dTitle', descKey: 'converter3dDesc' },
     { href: 'bbox-tool.html',         icon: '▭',   id: 'bbox',       group: 'misc', titleKey: 'bboxTitle',      descKey: 'bboxDesc' },
+    { href: 'text-chunker.html',      icon: '✂️',   id: 'chunker',    group: 'misc', titleKey: 'chunkerTitle',   descKey: 'chunkerDesc' },
   ];
 
   function renderCards() {
