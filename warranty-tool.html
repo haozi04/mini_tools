@@ -9,6 +9,69 @@
   <link rel="stylesheet" href="shared/header.css" />
   <link rel="stylesheet" href="shared/components.css" />
   <style>
+    /* ── PIN lock screen ── */
+    .pin-lock {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg, #0c111d);
+      padding: 24px;
+    }
+    .pin-lock.hidden { display: none; }
+    .pin-card {
+      width: 100%;
+      max-width: 360px;
+      background: var(--surface, #121a2c);
+      border: 1px solid var(--border, #263353);
+      border-radius: 12px;
+      padding: 32px 28px;
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(0,0,0,.45);
+    }
+    .pin-icon { font-size: 2.4rem; margin-bottom: 8px; }
+    .pin-title {
+      font-family: "Chakra Petch", sans-serif;
+      font-size: 1.3rem;
+      font-weight: 600;
+      letter-spacing: .04em;
+      color: var(--text-primary, #e8ecf6);
+      margin: 0 0 4px;
+    }
+    .pin-sub {
+      font-size: .85rem;
+      color: var(--text-muted, #8b96ad);
+      margin: 0 0 20px;
+    }
+    .pin-input {
+      width: 100%;
+      box-sizing: border-box;
+      text-align: center;
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 1.4rem;
+      letter-spacing: .5em;
+      padding: 12px;
+      border: 1px solid var(--border-input, #d5dce8);
+      border-radius: 6px;
+      background: var(--surface-alt, #0b101d);
+      color: var(--text-primary, #e8ecf6);
+      outline: none;
+      transition: border-color .2s, box-shadow .2s;
+    }
+    .pin-input:focus {
+      border-color: var(--accent, #ffb454);
+      box-shadow: 0 0 0 3px rgba(255,180,84,.18);
+    }
+    .pin-error {
+      min-height: 18px;
+      font-size: .8rem;
+      color: var(--fail-text, #c0392b);
+      margin: 8px 0 4px;
+    }
+    .pin-btn { width: 100%; margin-top: 6px; }
+
     :root {
       --border-input:  #d5dce8;
       --btn-sec-bg:    #f4f6fb;
@@ -312,9 +375,50 @@
 </head>
 <body>
 
+<!-- ════════════════════════════════════════════════
+     PIN LOCK SCREEN
+     ════════════════════════════════════════════════ -->
+<div id="pinLock" class="pin-lock">
+  <div class="pin-card">
+    <div class="pin-icon">🔒</div>
+    <h1 class="pin-title">FID Toolkit</h1>
+    <p class="pin-sub">Enter PIN to unlock</p>
+    <input type="password" id="pinInput" class="pin-input" inputmode="numeric"
+           maxlength="6" placeholder="••••••" autocomplete="off" />
+    <div class="pin-error" id="pinError"></div>
+    <button class="btn btn-primary pin-btn" id="pinUnlockBtn">Unlock</button>
+  </div>
+</div>
+
 <script src="shared/header.js"></script>
 <script>
   injectHeader({ icon: '<span style="font-size:1.3rem;">🔧</span>', title: 'FID Toolkit' });
+</script>
+
+<script>
+  // ── PIN lock ────────────────────────────────────────────────────
+  const PIN = '998811';
+  const pinLockEl   = document.getElementById('pinLock');
+  const pinInputEl  = document.getElementById('pinInput');
+  const pinErrorEl  = document.getElementById('pinError');
+  const pinUnlockEl = document.getElementById('pinUnlockBtn');
+
+  function attemptUnlock() {
+    const entered = pinInputEl.value.trim();
+    if (entered === PIN) {
+      pinLockEl.classList.add('hidden');
+      pinErrorEl.textContent = '';
+      pinInputEl.value = '';
+    } else {
+      pinErrorEl.textContent = 'Incorrect PIN. Please try again.';
+      pinInputEl.value = '';
+      pinInputEl.focus();
+    }
+  }
+
+  pinUnlockEl.addEventListener('click', attemptUnlock);
+  pinInputEl.addEventListener('keydown', (e) => { if (e.key === 'Enter') attemptUnlock(); });
+  pinInputEl.focus();
 </script>
 
 <div class="tab-bar">
