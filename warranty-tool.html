@@ -71,6 +71,7 @@
       margin: 8px 0 4px;
     }
     .pin-btn { width: 100%; margin-top: 6px; }
+    .pin-cancel { margin-top: 8px; }
 
     :root {
       --border-input:  #d5dce8;
@@ -387,6 +388,7 @@
            maxlength="6" placeholder="••••••" autocomplete="off" />
     <div class="pin-error" id="pinError"></div>
     <button class="btn btn-primary pin-btn" id="pinUnlockBtn">Unlock</button>
+    <button class="btn btn-secondary pin-btn pin-cancel" id="pinCancelBtn">Cancel</button>
   </div>
 </div>
 
@@ -402,6 +404,7 @@
   const pinInputEl  = document.getElementById('pinInput');
   const pinErrorEl  = document.getElementById('pinError');
   const pinUnlockEl = document.getElementById('pinUnlockBtn');
+  const pinCancelEl = document.getElementById('pinCancelBtn');
 
   function attemptUnlock() {
     const entered = pinInputEl.value.trim();
@@ -416,7 +419,12 @@
     }
   }
 
+  function cancelLock() {
+    window.location.href = 'index.html';
+  }
+
   pinUnlockEl.addEventListener('click', attemptUnlock);
+  pinCancelEl.addEventListener('click', cancelLock);
   pinInputEl.addEventListener('keydown', (e) => { if (e.key === 'Enter') attemptUnlock(); });
   pinInputEl.focus();
 </script>
