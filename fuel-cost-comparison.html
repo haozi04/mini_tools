@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Fuel Cost Comparison</title>
+  <meta name="description" content="Compare the running cost of petrol and electric vehicles. Petrol prices from gas.chahuo.com." />
+  <link rel="stylesheet" href="shared/theme.css" />
+  <link rel="stylesheet" href="shared/header.css" />
+  <link rel="stylesheet" href="shared/components.css" />
+  <style>
+    :root {
+      --border-input:  #d5dce8;
+      --btn-sec-bg:    #f4f6fb;
+      --btn-sec-text:  #5b6884;
+      --btn-sec-bdr:   #c9d2e2;
+      --btn-sec-hover: #e9eef7;
+      --petrol-bg:     #fdecec;
+      --petrol-bdr:    #f5c6c6;
+      --petrol-text:   #c0392b;
+      --electric-bg:   #e6f7ec;
+      --electric-bdr:  #b9e6cd;
+      --electric-text: #1a7a4a;
+      color-scheme: light;
+    }
+
+    [data-theme="dark"] {
+      --border-input:  #263353;
+      --btn-sec-bg:    #1c2740;
+      --btn-sec-text:  #9fb0d0;
+      --btn-sec-bdr:   #33415f;
+      --btn-sec-hover: #263353;
+      --petrol-bg:     #2d0a0a;
+      --petrol-bdr:    #6b3a4a;
+      --petrol-text:   #ff9a9a;
+      --electric-bg:   #0f2a1c;
+      --electric-bdr:  #2a4a3a;
+      --electric-text: #9fe870;
+      color-scheme: dark;
+    }
+
+    input[type="number"], select {
+      padding: 10px 12px;
+      border: 1px solid var(--border-input);
+      border-radius: 6px;
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 13px;
+      background: var(--surface-alt);
+      color: var(--text-primary);
+      outline: none;
+      transition: border-color 0.18s, box-shadow 0.18s;
+      box-sizing: border-box;
+      color-scheme: inherit;
+    }
+
+    input[type="number"]:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 16%, transparent); }
+
+    select { cursor: pointer; }
+
+    .field input[type="number"], .field select { width: 100%; min-width: 150px; }
+
+    /* ── Vehicle cards ── */
+    .vehicle-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+
+    .vehicle-card {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 18px;
+      background: var(--surface-alt);
+    }
+
+    .vehicle-card h3 {
+      font-family: "Chakra Petch", sans-serif;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .vehicle-card.petrol h3 { color: var(--petrol-text); }
+    .vehicle-card.electric h3 { color: var(--electric-text); }
+
+    .vehicle-card .row { margin-bottom: 12px; }
+    .vehicle-card .row:last-child { margin-bottom: 0; }
+
+    /* ── Results ── */
+    .result-card { display: none; }
+    .result-card.show { display: block; }
+
+    .result-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-bottom: 16px;
+    }
+
+    .result-box {
+      border-radius: 8px;
+      padding: 16px 18px;
+      border: 1px solid var(--border);
+    }
+
+    .result-box.petrol { background: var(--petrol-bg); border-color: var(--petrol-bdr); }
+    .result-box.electric { background: var(--electric-bg); border-color: var(--electric-bdr); }
+
+    .result-box .rb-label {
+      font-family: "Chakra Petch", sans-serif;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+
+    .result-box .rb-value {
+      font-family: "Chakra Petch", sans-serif;
+      font-size: 26px;
+      font-weight: 700;
+    }
+
+    .result-box.petrol .rb-value { color: var(--petrol-text); }
+    .result-box.electric .rb-value { color: var(--electric-text); }
+
+    .result-box .rb-sub {
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 11.5px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .savings-box {
+      border-radius: 8px;
+      padding: 18px;
+      background: var(--accent-light);
+      border: 1px solid var(--border);
+      text-align: center;
+      margin-bottom: 16px;
+    }
+
+    .savings-box .sv-label {
+      font-family: "Chakra Petch", sans-serif;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    .savings-box .sv-value {
+      font-family: "Chakra Petch", sans-serif;
+      font-size: 30px;
+      font-weight: 700;
+      color: var(--accent);
+      margin: 4px 0 2px;
+    }
+
+    .savings-box .sv-sub {
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    /* ── Comparison table ── */
+    .cmp-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 12.5px;
+      margin-top: 4px;
+    }
+
+    .cmp-table th, .cmp-table td {
+      padding: 8px 10px;
+      border-bottom: 1px solid var(--border);
+      text-align: right;
+    }
+
+    .cmp-table th:first-child, .cmp-table td:first-child { text-align: left; }
+
+    .cmp-table th {
+      font-family: "Chakra Petch", sans-serif;
+      font-size: 10.5px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-faint);
+    }
+
+    .cmp-table td.petrol { color: var(--petrol-text); }
+    .cmp-table td.electric { color: var(--electric-text); }
+
+    .break-even {
+      margin-top: 14px;
+      padding: 12px 14px;
+      border-radius: 6px;
+      background: var(--surface-alt);
+      border: 1px dashed var(--border);
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 12px;
+      line-height: 1.7;
+      color: var(--text-primary);
+    }
+
+    .break-even b { color: var(--accent); }
+
+    /* ── Field hint (right of input) ── */
+    .field-hint {
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 11.5px;
+      color: var(--text-muted);
+      padding-bottom: 10px;
+      max-width: 280px;
+      line-height: 1.5;
+    }
+
+    .price-note {
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 11px;
+      color: var(--text-faint);
+      margin-top: 12px;
+      line-height: 1.6;
+    }
+
+    @media (max-width: 720px) {
+      .vehicle-grid, .result-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<script src="shared/header.js"></script>
+<script>
+  injectHeader({ icon: '<span style="font-size:1.3rem;">⛽</span>', title: 'Fuel Cost Comparison' });
+</script>
+
+<div class="container">
+
+  <!-- Usage -->
+  <div class="card">
+    <h2 id="usage-heading">Usage</h2>
+    <div class="row">
+      <div class="field">
+        <label for="distance" id="distance-label">Distance (km)</label>
+        <input type="number" id="distance" min="0" step="50" value="1000">
+      </div>
+      <div class="field">
+        <label for="period" id="period-label">Period</label>
+        <div class="segmented" id="period-seg">
+          <button type="button" data-period="month" id="period-month">Per month</button>
+          <button type="button" data-period="year" id="period-year">Per year</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Vehicles -->
+  <div class="vehicle-grid">
+    <!-- Petrol -->
+    <div class="vehicle-card petrol">
+      <h3 id="petrol-title">⛽ Petrol Vehicle</h3>
+      <div class="row">
+        <div class="field">
+          <label id="fuel-type-label">Fuel type</label>
+          <div class="segmented" id="fuel-type-seg">
+            <button type="button" data-fuel="p92" id="fuel-p92">92#</button>
+            <button type="button" data-fuel="p95" id="fuel-p95">95#</button>
+            <button type="button" data-fuel="p98" id="fuel-p98">98#</button>
+            <button type="button" data-fuel="p0" id="fuel-p0">Diesel</button>
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="field">
+          <label for="province" id="province-label">Province</label>
+          <select id="province"></select>
+        </div>
+      </div>
+      <div class="row">
+        <div class="field">
+          <label for="petrol-price" id="petrol-price-label">Petrol price (¥/L)</label>
+          <input type="number" id="petrol-price" min="0" step="0.01">
+        </div>
+      </div>
+      <div class="row">
+        <div class="field">
+          <label for="consumption" id="consumption-label">Fuel consumption (L/100km)</label>
+          <input type="number" id="consumption" min="0" step="0.1" value="7.5">
+        </div>
+      </div>
+    </div>
+
+    <!-- Electric -->
+    <div class="vehicle-card electric">
+      <h3 id="electric-title">🔋 Electric Vehicle</h3>
+      <div class="row">
+        <div class="field">
+          <label id="charge-type-label">Charging</label>
+          <div class="segmented" id="charge-type-seg">
+            <button type="button" data-charge="home" id="charge-home">Home</button>
+            <button type="button" data-charge="public" id="charge-public">Public</button>
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="field">
+          <label for="elec-price" id="elec-price-label">Electricity price (¥/kWh)</label>
+          <input type="number" id="elec-price" min="0" step="0.01">
+        </div>
+      </div>
+      <div class="row">
+        <div class="field">
+          <label for="energy" id="energy-label">Energy consumption (kWh/100km)</label>
+          <input type="number" id="energy" min="0" step="0.1" value="15">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Break-even -->
+  <div class="card">
+    <h2 id="breakeven-heading">Break-even Analysis</h2>
+    <div class="row">
+      <div class="field">
+        <label for="price-diff" id="price-diff-label">Vehicle price difference (EV − Petrol, ¥)</label>
+        <input type="number" id="price-diff" min="0" step="1000" value="0" placeholder="e.g. 30000">
+      </div>
+      <span class="field-hint" id="price-diff-hint">Enter a vehicle price difference to see how long it takes to break even.</span>
+    </div>
+    <div class="action-bar">
+      <button class="btn btn-primary" id="btn-calc" onclick="calculate()">🧮 Calculate</button>
+      <button class="btn btn-danger" id="btn-clear" onclick="clearAll()">🗑 Clear</button>
+    </div>
+    <div class="status" id="status"></div>
+  </div>
+
+  <!-- Results -->
+  <div class="card result-card" id="result-card">
+    <h2 id="result-heading">Result</h2>
+    <div class="result-grid">
+      <div class="result-box petrol">
+        <div class="rb-label" id="rb-petrol-label">Petrol</div>
+        <div class="rb-value" id="rb-petrol-value">—</div>
+        <div class="rb-sub" id="rb-petrol-sub"></div>
+      </div>
+      <div class="result-box electric">
+        <div class="rb-label" id="rb-electric-label">Electric</div>
+        <div class="rb-value" id="rb-electric-value">—</div>
+        <div class="rb-sub" id="rb-electric-sub"></div>
+      </div>
+    </div>
+    <div class="savings-box">
+      <div class="sv-label" id="sv-label">You save</div>
+      <div class="sv-value" id="sv-value">—</div>
+      <div class="sv-sub" id="sv-sub"></div>
+    </div>
+    <table class="cmp-table">
+      <thead>
+        <tr>
+          <th id="th-metric">Metric</th>
+          <th id="th-petrol">Petrol</th>
+          <th id="th-electric">Electric</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td id="td-cost-month">Cost / month</td>
+          <td class="petrol" id="td-petrol-month"></td>
+          <td class="electric" id="td-electric-month"></td>
+        </tr>
+        <tr>
+          <td id="td-cost-year">Cost / year</td>
+          <td class="petrol" id="td-petrol-year"></td>
+          <td class="electric" id="td-electric-year"></td>
+        </tr>
+        <tr>
+          <td id="td-cost-km">Cost / km</td>
+          <td class="petrol" id="td-petrol-km"></td>
+          <td class="electric" id="td-electric-km"></td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="break-even" id="break-even"></div>
+    <div class="price-note" id="price-note"></div>
+  </div>
+
+</div>
+
+<script>
+  // ══════════════════════════════════════════════════
+  // i18n (dark mode handled by shared/header.js)
+  // ══════════════════════════════════════════════════
+  const TRANSLATIONS = {
+    en: {
+      pageTitle: 'Fuel Cost Comparison',
+      usageHeading: 'Usage',
+      distanceLabel: 'Distance (km)',
+      periodLabel: 'Period',
+      periodMonth: 'Per month',
+      periodYear: 'Per year',
+      petrolTitle: '⛽ Petrol Vehicle',
+      fuelTypeLabel: 'Fuel type',
+      fuelP92: '92#',
+      fuelP95: '95#',
+      fuelP98: '98#',
+      fuelP0: 'Diesel',
+      provinceLabel: 'Province',
+      petrolPriceLabel: 'Petrol price (¥/L)',
+      consumptionLabel: 'Fuel consumption (L/100km)',
+      electricTitle: '🔋 Electric Vehicle',
+      chargeTypeLabel: 'Charging',
+      chargeHome: 'Home',
+      chargePublic: 'Public',
+      elecPriceLabel: 'Electricity price (¥/kWh)',
+      energyLabel: 'Energy consumption (kWh/100km)',
+      breakevenHeading: 'Break-even Analysis',
+      priceDiffLabel: 'Vehicle price difference (EV − Petrol, ¥)',
+      btnCalc: '🧮 Calculate',
+      btnClear: '🗑 Clear',
+      resultHeading: 'Result',
+      rbPetrolLabel: 'Petrol',
+      rbElectricLabel: 'Electric',
+      svLabel: 'You save',
+      thMetric: 'Metric',
+      thPetrol: 'Petrol',
+      thElectric: 'Electric',
+      tdCostMonth: 'Cost / month',
+      tdCostYear: 'Cost / year',
+      tdCostKm: 'Cost / km',
+      perMonth: 'per month',
+      perYear: 'per year',
+      errDistance: 'Please enter a distance greater than 0.',
+      errPetrolPrice: 'Please enter a petrol price greater than 0.',
+      errConsumption: 'Please enter a fuel consumption greater than 0.',
+      errElecPrice: 'Please enter an electricity price greater than 0.',
+      errEnergy: 'Please enter an energy consumption greater than 0.',
+      beNone: 'Enter a vehicle price difference to see how long it takes to break even.',
+      beMonths: 'With a price difference of <b>{diff}</b>, the electric vehicle pays for itself after about <b>{months} months</b> (~<b>{years} years</b>), or <b>{km} km</b> of driving.',
+      beNoSavings: 'The electric vehicle is not cheaper at these settings — no break-even point.',
+      priceNote: 'Petrol prices from gas.chahuo.com (2026-09-08). Select your province or edit the price manually. Electricity: home ≈ ¥0.55/kWh, public ≈ ¥1.20/kWh.',
+    },
+    zh: {
+      pageTitle: '燃油 / 电费成本对比',
+      usageHeading: '使用情况',
+      distanceLabel: '行驶里程（公里）',
+      periodLabel: '周期',
+      periodMonth: '每月',
+      periodYear: '每年',
+      petrolTitle: '⛽ 燃油车',
+      fuelTypeLabel: '燃油类型',
+      fuelP92: '92#',
+      fuelP95: '95#',
+      fuelP98: '98#',
+      fuelP0: '柴油',
+      provinceLabel: '省份',
+      petrolPriceLabel: '油价（元/升）',
+      consumptionLabel: '油耗（升/百公里）',
+      electricTitle: '🔋 电动车',
+      chargeTypeLabel: '充电方式',
+      chargeHome: '家用',
+      chargePublic: '公共',
+      elecPriceLabel: '电价（元/度）',
+      energyLabel: '电耗（度/百公里）',
+      breakevenHeading: '回本分析',
+      priceDiffLabel: '车辆价差（电动车 − 燃油车，元）',
+      btnCalc: '🧮 计算',
+      btnClear: '🗑 清除',
+      resultHeading: '计算结果',
+      rbPetrolLabel: '燃油车',
+      rbElectricLabel: '电动车',
+      svLabel: '每月节省',
+      thMetric: '指标',
+      thPetrol: '燃油车',
+      thElectric: '电动车',
+      tdCostMonth: '每月成本',
+      tdCostYear: '每年成本',
+      tdCostKm: '每公里成本',
+      perMonth: '每月',
+      perYear: '每年',
+      errDistance: '请输入大于 0 的行驶里程。',
+      errPetrolPrice: '请输入大于 0 的油价。',
+      errConsumption: '请输入大于 0 的油耗。',
+      errElecPrice: '请输入大于 0 的电价。',
+      errEnergy: '请输入大于 0 的电耗。',
+      beNone: '输入车辆价差即可查看多久能回本。',
+      beMonths: '价差为 <b>{diff}</b> 时，电动车约 <b>{months} 个月</b>（约 <b>{years} 年</b>）或行驶 <b>{km} 公里</b> 后回本。',
+      beNoSavings: '在当前设置下电动车并不更省钱 —— 无法回本。',
+      priceNote: '油价来自查获网 gas.chahuo.com（2026-09-08）。可选择省份或手动修改价格。电价：家用约 0.55 元/度，公共约 1.20 元/度。',
+    }
+  };
+
+  function pageApplyTranslations() {
+    document.title = currentLang === 'zh' ? '燃油 / 电费成本对比' : 'Fuel Cost Comparison';
+    const setText = (id, key) => { const el = document.getElementById(id); if (el) el.textContent = t(key); };
+    setText('usage-heading', 'usageHeading');
+    setText('distance-label', 'distanceLabel');
+    setText('period-label', 'periodLabel');
+    setText('period-month', 'periodMonth');
+    setText('period-year', 'periodYear');
+    setText('petrol-title', 'petrolTitle');
+    setText('fuel-type-label', 'fuelTypeLabel');
+    setText('fuel-p92', 'fuelP92');
+    setText('fuel-p95', 'fuelP95');
+    setText('fuel-p98', 'fuelP98');
+    setText('fuel-p0', 'fuelP0');
+    setText('province-label', 'provinceLabel');
+    setText('petrol-price-label', 'petrolPriceLabel');
+    setText('consumption-label', 'consumptionLabel');
+    setText('electric-title', 'electricTitle');
+    setText('charge-type-label', 'chargeTypeLabel');
+    setText('charge-home', 'chargeHome');
+    setText('charge-public', 'chargePublic');
+    setText('elec-price-label', 'elecPriceLabel');
+    setText('energy-label', 'energyLabel');
+    setText('breakeven-heading', 'breakevenHeading');
+    setText('price-diff-label', 'priceDiffLabel');
+    document.getElementById('price-diff-hint').textContent = t('beNone');
+    setText('btn-calc', 'btnCalc');
+    setText('btn-clear', 'btnClear');
+    setText('result-heading', 'resultHeading');
+    setText('rb-petrol-label', 'rbPetrolLabel');
+    setText('rb-electric-label', 'rbElectricLabel');
+    setText('sv-label', 'svLabel');
+    setText('th-metric', 'thMetric');
+    setText('th-petrol', 'thPetrol');
+    setText('th-electric', 'thElectric');
+    setText('td-cost-month', 'tdCostMonth');
+    setText('td-cost-year', 'tdCostYear');
+    setText('td-cost-km', 'tdCostKm');
+    document.getElementById('price-note').textContent = t('priceNote');
+    buildProvinceOptions();
+    updatePetrolPrice();
+    updateResultLabels();
+  }
+
+  // ══════════════════════════════════════════════════
+  // Petrol price data — fixed defaults from gas.chahuo.com (2026-09-08)
+  // p92 / p95 / p98 = gasoline grades, p0 = diesel (¥/L)
+  // ══════════════════════════════════════════════════
+  const PETROL_PRICES = {
+    beijing:      { en: 'Beijing',        zh: '北京',   p92: 8.09, p95: 8.61, p98: 10.11, p0: 7.81 },
+    tianjin:      { en: 'Tianjin',        zh: '天津',   p92: 8.08, p95: 8.54, p98: 10.04, p0: 7.76 },
+    hebei:        { en: 'Hebei',          zh: '河北',   p92: 8.08, p95: 8.54, p98: 9.36,  p0: 7.76 },
+    shanxi:       { en: 'Shanxi',         zh: '山西',   p92: 8.03, p95: 8.67, p98: 9.85,  p0: 7.83 },
+    neimenggu:    { en: 'Inner Mongolia', zh: '内蒙古', p92: 8.09, p95: 8.59, p98: 9.39,  p0: 7.60 },
+    liaoning:     { en: 'Liaoning',       zh: '辽宁',   p92: 8.15, p95: 8.72, p98: 9.55,  p0: 7.65 },
+    jilin:        { en: 'Jilin',          zh: '吉林',   p92: 8.05, p95: 8.68, p98: 9.80,  p0: 7.67 },
+    heilongjiang: { en: 'Heilongjiang',   zh: '黑龙江', p92: 8.05, p95: 8.62, p98: 9.78,  p0: 7.55 },
+    shanghai:     { en: 'Shanghai',       zh: '上海',   p92: 8.05, p95: 8.56, p98: 10.56, p0: 7.74 },
+    jiangsu:      { en: 'Jiangsu',        zh: '江苏',   p92: 8.05, p95: 8.57, p98: 10.64, p0: 7.72 },
+    zhejiang:     { en: 'Zhejiang',       zh: '浙江',   p92: 8.05, p95: 8.57, p98: 10.57, p0: 7.74 },
+    anhui:        { en: 'Anhui',          zh: '安徽',   p92: 8.03, p95: 8.60, p98: 10.10, p0: 7.80 },
+    fujian:       { en: 'Fujian',         zh: '福建',   p92: 8.05, p95: 8.59, p98: 10.09, p0: 7.75 },
+    jiangxi:      { en: 'Jiangxi',        zh: '江西',   p92: 8.04, p95: 8.63, p98: 10.13, p0: 7.81 },
+    shandong:     { en: 'Shandong',       zh: '山东',   p92: 8.05, p95: 8.63, p98: 9.63,  p0: 7.67 },
+    henan:        { en: 'Henan',          zh: '河南',   p92: 8.09, p95: 8.64, p98: 9.89,  p0: 7.74 },
+    hubei:        { en: 'Hubei',          zh: '湖北',   p92: 8.10, p95: 8.67, p98: 9.99,  p0: 7.75 },
+    hunan:        { en: 'Hunan',          zh: '湖南',   p92: 8.03, p95: 8.54, p98: 9.54,  p0: 7.83 },
+    guangdong:    { en: 'Guangdong',      zh: '广东',   p92: 8.10, p95: 8.78, p98: 10.78, p0: 7.76 },
+    guangxi:      { en: 'Guangxi',        zh: '广西',   p92: 8.14, p95: 8.80, p98: 10.08, p0: 7.81 },
+    hainan:       { en: 'Hainan',         zh: '海南',   p92: 9.20, p95: 9.77, p98: 10.77, p0: 7.84 },
+    chongqing:    { en: 'Chongqing',      zh: '重庆',   p92: 8.14, p95: 8.61, p98: 9.69,  p0: 7.82 },
+    sichuan:      { en: 'Sichuan',        zh: '四川',   p92: 8.18, p95: 8.74, p98: 9.98,  p0: 7.80 },
+    guizhou:      { en: 'Guizhou',        zh: '贵州',   p92: 8.22, p95: 8.68, p98: 9.68,  p0: 7.86 },
+    yunnan:       { en: 'Yunnan',         zh: '云南',   p92: 8.23, p95: 8.84, p98: 9.52,  p0: 7.83 },
+    xizang:       { en: 'Tibet',          zh: '西藏',   p92: 8.96, p95: 9.48, p98: null,  p0: 8.29 },
+    shaanxi:      { en: 'Shaanxi',        zh: '陕西',   p92: 7.97, p95: 8.42, p98: 9.63,  p0: 7.65 },
+    gansu:        { en: 'Gansu',          zh: '甘肃',   p92: 8.09, p95: 8.63, p98: 9.20,  p0: 7.66 },
+    qinghai:      { en: 'Qinghai',        zh: '青海',   p92: 8.04, p95: 8.62, p98: 9.39,  p0: 7.68 },
+    ningxia:      { en: 'Ningxia',        zh: '宁夏',   p92: 7.98, p95: 8.43, p98: 9.61,  p0: 7.64 },
+    xinjiang:     { en: 'Xinjiang',       zh: '新疆',   p92: 7.86, p95: 8.42, p98: null,  p0: 7.50 },
+  };
+
+  // National average computed from the province data (ignores missing grades)
+  function nationalAverage(fuel) {
+    const vals = Object.values(PETROL_PRICES).map(p => p[fuel]).filter(v => v != null);
+    if (vals.length === 0) return null;
+    return vals.reduce((a, b) => a + b, 0) / vals.length;
+  }
+
+  // ══════════════════════════════════════════════════
+  // State
+  // ══════════════════════════════════════════════════
+  let fuelType = 'p92';
+  let chargeType = 'home';
+  let period = 'month';
+
+  const ELECTRIC_PRICES = { home: 0.55, public: 1.20 };
+
+  const fmtMoney = n => '¥' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const fmtNum = (n, d) => n.toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
+
+  function setStatus(type, msg) {
+    const el = document.getElementById('status');
+    el.className = 'status' + (type === 'err' ? ' err' : '');
+    el.textContent = msg;
+  }
+
+  // ── Province dropdown ──
+  function buildProvinceOptions() {
+    const sel = document.getElementById('province');
+    if (!sel) return;
+    sel.innerHTML = '';
+    const add = (key, label) => {
+      const opt = document.createElement('option');
+      opt.value = key;
+      opt.textContent = label;
+      sel.appendChild(opt);
+    };
+    add('national', currentLang === 'zh' ? '全国平均' : 'National average');
+    Object.keys(PETROL_PRICES).forEach(key => {
+      add(key, currentLang === 'zh' ? PETROL_PRICES[key].zh : PETROL_PRICES[key].en);
+    });
+    sel.value = 'national';
+  }
+
+  // ── Auto-fill petrol price from province + fuel type ──
+  function updatePetrolPrice() {
+    const sel = document.getElementById('province');
+    const input = document.getElementById('petrol-price');
+    let price;
+    if (sel.value === 'national') {
+      price = nationalAverage(fuelType);
+    } else {
+      price = PETROL_PRICES[sel.value][fuelType];
+      if (price == null) price = nationalAverage(fuelType);
+    }
+    if (price != null) input.value = price.toFixed(2);
+    else input.value = '';
+  }
+
+  // ── Segmented helpers ──
+  function bindSegmented(segId, onSelect) {
+    const seg = document.getElementById(segId);
+    seg.querySelectorAll('button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        seg.querySelectorAll('button').forEach(b => b.classList.toggle('active', b === btn));
+        onSelect(btn.dataset);
+      });
+    });
+  }
+
+  // ── Result labels (period-aware) ──
+  function updateResultLabels() {
+    const per = period === 'year' ? t('perYear') : t('perMonth');
+    document.getElementById('rb-petrol-label').textContent = t('rbPetrolLabel') + ' — ' + per;
+    document.getElementById('rb-electric-label').textContent = t('rbElectricLabel') + ' — ' + per;
+    document.getElementById('sv-label').textContent = t('svLabel') + ' (' + per + ')';
+  }
+
+  // ══════════════════════════════════════════════════
+  // Calculation
+  // ══════════════════════════════════════════════════
+  function calculate() {
+    const distance = parseFloat(document.getElementById('distance').value);
+    const petrolPrice = parseFloat(document.getElementById('petrol-price').value);
+    const consumption = parseFloat(document.getElementById('consumption').value);
+    const elecPrice = parseFloat(document.getElementById('elec-price').value);
+    const energy = parseFloat(document.getElementById('energy').value);
+    const priceDiff = parseFloat(document.getElementById('price-diff').value) || 0;
+
+    if (!(distance > 0)) { setStatus('err', t('errDistance')); return; }
+    if (!(petrolPrice > 0)) { setStatus('err', t('errPetrolPrice')); return; }
+    if (!(consumption > 0)) { setStatus('err', t('errConsumption')); return; }
+    if (!(elecPrice > 0)) { setStatus('err', t('errElecPrice')); return; }
+    if (!(energy > 0)) { setStatus('err', t('errEnergy')); return; }
+
+    // Normalize everything to a monthly basis
+    const monthlyDistance = period === 'year' ? distance / 12 : distance;
+
+    const petrolMonthly = (monthlyDistance / 100) * consumption * petrolPrice;
+    const electricMonthly = (monthlyDistance / 100) * energy * elecPrice;
+    const savingsMonthly = petrolMonthly - electricMonthly;
+
+    const petrolYearly = petrolMonthly * 12;
+    const electricYearly = electricMonthly * 12;
+    const savingsYearly = savingsMonthly * 12;
+
+    const petrolPerKm = monthlyDistance > 0 ? petrolMonthly / monthlyDistance : 0;
+    const electricPerKm = monthlyDistance > 0 ? electricMonthly / monthlyDistance : 0;
+
+    // Period-aware headline values
+    const petrolHead = period === 'year' ? petrolYearly : petrolMonthly;
+    const electricHead = period === 'year' ? electricYearly : electricMonthly;
+    const savingsHead = period === 'year' ? savingsYearly : savingsMonthly;
+
+    document.getElementById('rb-petrol-value').textContent = fmtMoney(petrolHead);
+    document.getElementById('rb-electric-value').textContent = fmtMoney(electricHead);
+    document.getElementById('rb-petrol-sub').textContent =
+      fmtNum(petrolPrice, 2) + ' ¥/L × ' + fmtNum(consumption, 1) + ' L/100km';
+    document.getElementById('rb-electric-sub').textContent =
+      fmtNum(elecPrice, 2) + ' ¥/kWh × ' + fmtNum(energy, 1) + ' kWh/100km';
+
+    const svValue = document.getElementById('sv-value');
+    const svSub = document.getElementById('sv-sub');
+    if (savingsHead > 0) {
+      svValue.textContent = fmtMoney(savingsHead);
+      svSub.textContent = '≈ ' + fmtMoney(savingsMonthly) + ' / month · ' + fmtMoney(savingsYearly) + ' / year';
+    } else if (savingsHead < 0) {
+      svValue.textContent = '−' + fmtMoney(Math.abs(savingsHead));
+      svSub.textContent = t('beNoSavings');
+    } else {
+      svValue.textContent = fmtMoney(0);
+      svSub.textContent = '—';
+    }
+
+    document.getElementById('td-petrol-month').textContent = fmtMoney(petrolMonthly);
+    document.getElementById('td-electric-month').textContent = fmtMoney(electricMonthly);
+    document.getElementById('td-petrol-year').textContent = fmtMoney(petrolYearly);
+    document.getElementById('td-electric-year').textContent = fmtMoney(electricYearly);
+    document.getElementById('td-petrol-km').textContent = fmtNum(petrolPerKm, 3) + ' ¥/km';
+    document.getElementById('td-electric-km').textContent = fmtNum(electricPerKm, 3) + ' ¥/km';
+
+    // Break-even
+    const beEl = document.getElementById('break-even');
+    if (priceDiff > 0) {
+      beEl.style.display = 'block';
+      if (savingsMonthly > 0) {
+        const beMonths = priceDiff / savingsMonthly;
+        const beYears = beMonths / 12;
+        const beKm = priceDiff / (savingsMonthly / monthlyDistance);
+        beEl.innerHTML = t('beMonths')
+          .replace('{diff}', fmtMoney(priceDiff))
+          .replace('{months}', fmtNum(Math.ceil(beMonths), 0))
+          .replace('{years}', fmtNum(beYears, 1))
+          .replace('{km}', fmtNum(Math.round(beKm), 0));
+      } else {
+        beEl.textContent = t('beNoSavings');
+      }
+    } else {
+      beEl.style.display = 'none';
+    }
+
+    document.getElementById('result-card').classList.add('show');
+    setStatus('', '');
+  }
+
+  function clearAll() {
+    document.getElementById('distance').value = 1000;
+    document.getElementById('consumption').value = 7.5;
+    document.getElementById('energy').value = 15;
+    document.getElementById('price-diff').value = 0;
+    document.getElementById('province').value = 'national';
+    updatePetrolPrice();
+    document.getElementById('elec-price').value = ELECTRIC_PRICES[chargeType].toFixed(2);
+    document.getElementById('result-card').classList.remove('show');
+    setStatus('', '');
+  }
+
+  // ══════════════════════════════════════════════════
+  // Init
+  // ══════════════════════════════════════════════════
+  document.addEventListener('DOMContentLoaded', () => {
+    buildProvinceOptions();
+
+    bindSegmented('period-seg', d => { period = d.period; updateResultLabels(); });
+    bindSegmented('fuel-type-seg', d => { fuelType = d.fuel; updatePetrolPrice(); });
+    bindSegmented('charge-type-seg', d => {
+      chargeType = d.charge;
+      document.getElementById('elec-price').value = ELECTRIC_PRICES[chargeType].toFixed(2);
+    });
+
+    document.getElementById('province').addEventListener('change', updatePetrolPrice);
+
+    // Defaults
+    document.getElementById('elec-price').value = ELECTRIC_PRICES[chargeType].toFixed(2);
+    updatePetrolPrice();
+    updateResultLabels();
+
+    // Active states
+    document.querySelectorAll('#period-seg button').forEach(b => b.classList.toggle('active', b.dataset.period === period));
+    document.querySelectorAll('#fuel-type-seg button').forEach(b => b.classList.toggle('active', b.dataset.fuel === fuelType));
+    document.querySelectorAll('#charge-type-seg button').forEach(b => b.classList.toggle('active', b.dataset.charge === chargeType));
+  });
+</script>
+
+</body>
+</html>

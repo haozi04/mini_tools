@@ -327,6 +327,8 @@
       chunkerDesc: 'Count characters and estimate tokens, then split long text into model-window-sized chunks with prompt prefixes.',
       workdayTitle: 'Workday Calculator',
       workdayDesc: 'Calculate delivery dates and workdays, excluding weekends and holidays. Forward and backward calculations.',
+      fuelTitle: 'Fuel Cost Comparison',
+      fuelDesc: 'Compare the running cost of petrol and electric vehicles. Petrol prices from gas.chahuo.com.',
       footerText: 'Mini Tools © 2026 — Built for simplicity.',
     },
     zh: {
@@ -354,6 +356,8 @@
       chunkerDesc: '统计字符数并估算 Token，然后在自然段落边界处将长文本按模型窗口大小切分，并自动添加 Prompt 前缀。',
       workdayTitle: '工作日 / 交货期计算器',
       workdayDesc: '计算交货日期和工作日，排除周末和节假日。支持正向与反向推算。',
+      fuelTitle: '燃油 / 电费成本对比',
+      fuelDesc: '对比燃油车与电动车的运行成本。油价来自查获网 gas.chahuo.com。',
       footerText: 'Mini Tools © 2026 — 以简洁为核心。',
     }
   };
@@ -394,6 +398,8 @@
     setText('chunker-desc', 'chunkerDesc');
     setText('workday-title', 'workdayTitle');
     setText('workday-desc', 'workdayDesc');
+    setText('fuel-title', 'fuelTitle');
+    setText('fuel-desc', 'fuelDesc');
     setText('footer-text', 'footerText');
   }
 
@@ -410,6 +416,7 @@
     { href: 'bbox-tool.html',         icon: '▭',   id: 'bbox',       group: 'misc', titleKey: 'bboxTitle',      descKey: 'bboxDesc' },
     { href: 'text-chunker.html',      icon: '✂️',   id: 'chunker',    group: 'misc', titleKey: 'chunkerTitle',   descKey: 'chunkerDesc' },
     { href: 'workday-calculator.html', icon: '🗓️',   id: 'workday',    group: 'misc', titleKey: 'workdayTitle',   descKey: 'workdayDesc' },
+    { href: 'fuel-cost-comparison.html', icon: '⛽',   id: 'fuel',       group: 'misc', titleKey: 'fuelTitle',      descKey: 'fuelDesc' },
   ];
 
   function renderCards() {
