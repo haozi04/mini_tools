@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Image Watermark</title>
+  <meta name="description" content="Add text watermarks to images entirely in your browser. No uploads — everything stays on your device." />
+  <link rel="stylesheet" href="shared/theme.css" />
+  <link rel="stylesheet" href="shared/header.css" />
+  <link rel="stylesheet" href="shared/components.css" />
+  <style>
+    /* ── Drop zone ── */
+    .drop-zone {
+      border: 1.5px dashed var(--border);
+      border-radius: 8px;
+      padding: 28px 20px;
+      text-align: center;
+      cursor: pointer;
+      background: var(--surface-alt);
+      color: var(--text-muted);
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 12.5px;
+      line-height: 1.7;
+      transition: border-color 0.2s, background 0.2s, color 0.2s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .drop-zone:hover, .drop-zone.dragover {
+      border-color: var(--accent);
+      color: var(--text-primary);
+      background: color-mix(in srgb, var(--accent) 8%, var(--surface-alt));
+    }
+    .drop-zone .dz-icon { font-size: 1.6rem; display: block; margin-bottom: 6px; }
+    .drop-zone input[type="file"] { display: none; }
+
+    /* ── Thumbnail ── */
+    .thumb-wrap { margin-top: 14px; display: none; }
+    .thumb-wrap.show { display: block; }
+    .thumb-wrap img {
+      max-width: 100%;
+      max-height: 260px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      display: block;
+    }
+
+    /* ── Range rows ── */
+    .range-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+    .range-row label {
+      font-family: "Chakra Petch", sans-serif;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      min-width: 130px;
+    }
+    .range-row input[type="range"] {
+      flex: 1;
+      min-width: 140px;
+      accent-color: var(--accent);
+    }
+    .range-row .val {
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 12px;
+      color: var(--accent);
+      min-width: 44px;
+      text-align: right;
+    }
+
+    /* ── Text / font / color row ── */
+    .wm-text-input {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 13px;
+      background: var(--surface-alt);
+      color: var(--text-primary);
+      outline: none;
+      box-sizing: border-box;
+      transition: border-color 0.18s, box-shadow 0.18s;
+      margin-bottom: 12px;
+    }
+    .wm-text-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 16%, transparent); }
+
+    .inline-field {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+    .inline-field label {
+      font-family: "Chakra Petch", sans-serif;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      min-width: 130px;
+    }
+    .inline-field select, .inline-field input[type="color"] {
+      background: var(--surface-alt);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      color: var(--text-primary);
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 12px;
+      padding: 6px 8px;
+      outline: none;
+    }
+    .inline-field select:focus { border-color: var(--accent); }
+    .inline-field input[type="color"] {
+      width: 46px;
+      height: 32px;
+      padding: 2px;
+      cursor: pointer;
+    }
+
+    /* ── Position grid ── */
+    .pos-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 44px);
+      gap: 6px;
+      margin-bottom: 12px;
+    }
+    .pos-grid button {
+      width: 44px;
+      height: 32px;
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      background: var(--surface);
+      color: var(--text-muted);
+      font-family: "Chakra Petch", sans-serif;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      cursor: pointer;
+      transition: all 0.2s;
+      line-height: 1;
+    }
+    .pos-grid button:hover { color: var(--accent); border-color: var(--accent); }
+    .pos-grid button.active { background: var(--accent); color: #1a1206; border-color: var(--accent); }
+
+    /* ── Tiled toggle ── */
+    .tiled-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+    .tiled-row label {
+      font-family: "Chakra Petch", sans-serif;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      min-width: 130px;
+    }
+    .tiled-row input[type="checkbox"] { accent-color: var(--accent); width: 16px; height: 16px; cursor: pointer; }
+    .tiled-row .spacing-wrap { display: none; align-items: center; gap: 8px; }
+    .tiled-row .spacing-wrap.show { display: flex; }
+    .tiled-row .spacing-wrap input[type="range"] { accent-color: var(--accent); width: 120px; }
+    .tiled-row .spacing-wrap .val { font-family: "IBM Plex Mono", monospace; font-size: 12px; color: var(--accent); min-width: 40px; }
+
+    /* ── Preview ── */
+    .preview-canvas {
+      width: 100%;
+      height: auto;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: repeating-conic-gradient(#1a2233 0% 25%, #121a2c 0% 50%) 50% / 20px 20px;
+      display: none;
+    }
+    .preview-canvas.show { display: block; }
+
+    .export-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+  </style>
+</head>
+<body>
+
+<script src="shared/header.js"></script>
+<script>
+  injectHeader({ icon: '<span style="font-size:1.3rem;">💧</span>', title: 'Image Watermark' });
+</script>
+
+<div class="container">
+
+  <!-- Image -->
+  <div class="card">
+    <h2 id="file-heading">Image</h2>
+    <div class="drop-zone" id="drop-zone">
+      <span class="dz-icon">🖼️</span>
+      <span id="file-hint">Drop an image here, click to browse, or paste (Ctrl+V)</span>
+      <input type="file" id="file-input" accept="image/*" />
+    </div>
+    <div class="thumb-wrap" id="thumb-wrap"><img id="thumb" alt="" /></div>
+    <div class="toolbar">
+      <button class="btn btn-secondary" onclick="loadSample()" id="btn-sample">🎨 Sample</button>
+      <button class="btn btn-danger" onclick="clearAll()" id="btn-clear">🗑 Clear</button>
+    </div>
+    <div class="status" id="status">No image loaded</div>
+  </div>
+
+  <!-- Watermark settings -->
+  <div class="card" id="settings-card" style="display:none;">
+    <h2 id="wm-heading">Watermark</h2>
+
+    <input type="text" class="wm-text-input" id="wm-text" maxlength="200"
+      placeholder="Watermark text..." value="© 2026" />
+
+    <div class="inline-field">
+      <label id="wm-font-label">Font</label>
+      <select id="wm-font">
+        <option value="sans-serif">Sans-serif</option>
+        <option value="serif">Serif</option>
+        <option value="monospace">Monospace</option>
+        <option value="'Chakra Petch', sans-serif">Chakra Petch</option>
+        <option value="'IBM Plex Mono', monospace">IBM Plex Mono</option>
+      </select>
+    </div>
+
+    <div class="inline-field">
+      <label id="wm-color-label">Color</label>
+      <input type="color" id="wm-color" value="#ffffff" />
+    </div>
+
+    <div class="range-row">
+      <label id="wm-size-label">Size (% of width)</label>
+      <input type="range" id="wm-size" min="1" max="20" step="0.5" value="5" />
+      <span class="val" id="wm-size-val">5%</span>
+    </div>
+
+    <div class="range-row">
+      <label id="wm-opacity-label">Opacity</label>
+      <input type="range" id="wm-opacity" min="0" max="100" step="1" value="35" />
+      <span class="val" id="wm-opacity-val">35%</span>
+    </div>
+
+    <div class="range-row">
+      <label id="wm-rotate-label">Rotation</label>
+      <input type="range" id="wm-rotate" min="-90" max="90" step="1" value="-30" />
+      <span class="val" id="wm-rotate-val">-30°</span>
+    </div>
+
+    <div class="inline-field">
+      <label id="wm-pos-label">Position</label>
+      <div class="pos-grid" id="pos-grid">
+        <button type="button" data-pos="tl" id="pos-tl">TL</button>
+        <button type="button" data-pos="tc" id="pos-tc">TC</button>
+        <button type="button" data-pos="tr" id="pos-tr">TR</button>
+        <button type="button" data-pos="ml" id="pos-ml">ML</button>
+        <button type="button" data-pos="mc" id="pos-mc" class="active">MC</button>
+        <button type="button" data-pos="mr" id="pos-mr">MR</button>
+        <button type="button" data-pos="bl" id="pos-bl">BL</button>
+        <button type="button" data-pos="bc" id="pos-bc">BC</button>
+        <button type="button" data-pos="br" id="pos-br">BR</button>
+      </div>
+    </div>
+
+    <div class="tiled-row">
+      <label id="wm-tiled-label">Tile across image</label>
+      <input type="checkbox" id="wm-tiled" />
+      <span class="spacing-wrap" id="spacing-wrap">
+        <label id="wm-spacing-label" style="min-width:auto;">Spacing</label>
+        <input type="range" id="wm-spacing" min="0" max="200" step="5" value="60" />
+        <span class="val" id="wm-spacing-val">60</span>
+      </span>
+    </div>
+  </div>
+
+  <!-- Preview & export -->
+  <div class="card" id="preview-card" style="display:none;">
+    <h2 id="preview-heading">Preview &amp; Export</h2>
+    <canvas class="preview-canvas" id="preview"></canvas>
+    <div class="export-row">
+      <button class="btn btn-primary" onclick="download('png')" id="btn-png">⬇ PNG</button>
+      <button class="btn btn-secondary" onclick="download('jpeg')" id="btn-jpg">⬇ JPG</button>
+      <button class="btn btn-secondary" onclick="download('webp')" id="btn-webp">⬇ WebP</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // ══════════════════════════════════════════════════
+  // i18n (dark mode handled by shared/header.js)
+  // ══════════════════════════════════════════════════
+  const TRANSLATIONS = {
+    en: {
+      pageTitle: 'Image Watermark',
+      fileHeading: 'Image',
+      fileHint: 'Drop an image here, click to browse, or paste (Ctrl+V)',
+      btnSample: '🎨 Sample',
+      btnClear: '🗑 Clear',
+      statusNoImage: 'No image loaded',
+      statusLoaded: 'Loaded {w}×{h}px',
+      wmHeading: 'Watermark',
+      wmTextPlaceholder: 'Watermark text...',
+      wmFontLabel: 'Font',
+      wmColorLabel: 'Color',
+      wmSizeLabel: 'Size (% of width)',
+      wmOpacityLabel: 'Opacity',
+      wmRotateLabel: 'Rotation',
+      wmPosLabel: 'Position',
+      wmTiledLabel: 'Tile across image',
+      wmSpacingLabel: 'Spacing',
+      previewHeading: 'Preview & Export',
+      btnPng: '⬇ PNG',
+      btnJpg: '⬇ JPG',
+      btnWebp: '⬇ WebP',
+      posTl: 'TL', posTc: 'TC', posTr: 'TR',
+      posMl: 'ML', posMc: 'MC', posMr: 'MR',
+      posBl: 'BL', posBc: 'BC', posBr: 'BR',
+    },
+    zh: {
+      pageTitle: '图片水印',
+      fileHeading: '图片',
+      fileHint: '将图片拖放到此处、点击选择，或按 Ctrl+V 粘贴',
+      btnSample: '🎨 示例',
+      btnClear: '🗑 清除',
+      statusNoImage: '未加载图片',
+      statusLoaded: '已加载 {w}×{h}px',
+      wmHeading: '水印',
+      wmTextPlaceholder: '水印文字...',
+      wmFontLabel: '字体',
+      wmColorLabel: '颜色',
+      wmSizeLabel: '字号（占宽度 %）',
+      wmOpacityLabel: '不透明度',
+      wmRotateLabel: '旋转',
+      wmPosLabel: '位置',
+      wmTiledLabel: '平铺整个图片',
+      wmSpacingLabel: '间距',
+      previewHeading: '预览与导出',
+      btnPng: '⬇ PNG',
+      btnJpg: '⬇ JPG',
+      btnWebp: '⬇ WebP',
+      posTl: '左上', posTc: '上中', posTr: '右上',
+      posMl: '左中', posMc: '居中', posMr: '右中',
+      posBl: '左下', posBc: '下中', posBr: '右下',
+    }
+  };
+
+  function pageApplyTranslations() {
+    document.title = currentLang === 'zh' ? '图片水印' : 'Image Watermark';
+
+    const setText = (id, key) => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = t(key);
+    };
+
+    setText('file-heading', 'fileHeading');
+    setText('file-hint', 'fileHint');
+    setText('btn-sample', 'btnSample');
+    setText('btn-clear', 'btnClear');
+    setText('wm-heading', 'wmHeading');
+    document.getElementById('wm-text').placeholder = t('wmTextPlaceholder');
+    setText('wm-font-label', 'wmFontLabel');
+    setText('wm-color-label', 'wmColorLabel');
+    setText('wm-size-label', 'wmSizeLabel');
+    setText('wm-opacity-label', 'wmOpacityLabel');
+    setText('wm-rotate-label', 'wmRotateLabel');
+    setText('wm-pos-label', 'wmPosLabel');
+    setText('wm-tiled-label', 'wmTiledLabel');
+    setText('wm-spacing-label', 'wmSpacingLabel');
+    setText('preview-heading', 'previewHeading');
+    setText('btn-png', 'btnPng');
+    setText('btn-jpg', 'btnJpg');
+    setText('btn-webp', 'btnWebp');
+    ['tl','tc','tr','ml','mc','mr','bl','bc','br'].forEach(p => {
+      setText('pos-' + p, 'pos' + p.charAt(0).toUpperCase() + p.charAt(1));
+    });
+
+    updateStatus();
+  }
+
+  // ══════════════════════════════════════════════════
+  // State
+  // ══════════════════════════════════════════════════
+  let img = null; // HTMLImageElement
+  const canvas = document.getElementById('preview');
+  const ctx = canvas.getContext('2d');
+
+  // ── Image loading ──
+  function loadImageFromFile(file) {
+    if (!file || !file.type.startsWith('image/')) {
+      updateStatus(t('statusNoImage'));
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = e => {
+      const image = new Image();
+      image.onload = () => {
+        img = image;
+        showImage();
+      };
+      image.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function showImage() {
+    document.getElementById('thumb').src = img.src;
+    document.getElementById('thumb-wrap').classList.add('show');
+    document.getElementById('settings-card').style.display = 'block';
+    document.getElementById('preview-card').style.display = 'block';
+    canvas.classList.add('show');
+    updateStatus();
+    renderWatermark();
+  }
+
+  function updateStatus() {
+    const el = document.getElementById('status');
+    if (!img) {
+      el.textContent = t('statusNoImage');
+      el.classList.remove('err');
+      return;
+    }
+    el.textContent = t('statusLoaded').replace('{w}', img.naturalWidth).replace('{h}', img.naturalHeight);
+    el.classList.remove('err');
+  }
+
+  // ── Sample image (generated in-memory, no upload) ──
+  function loadSample() {
+    const c = document.createElement('canvas');
+    c.width = 1200; c.height = 800;
+    const g = c.getContext('2d');
+    const grad = g.createLinearGradient(0, 0, c.width, c.height);
+    grad.addColorStop(0, '#1b2a4a');
+    grad.addColorStop(0.5, '#2e4a7a');
+    grad.addColorStop(1, '#0c111d');
+    g.fillStyle = grad;
+    g.fillRect(0, 0, c.width, c.height);
+    // decorative circles
+    for (let i = 0; i < 8; i++) {
+      g.beginPath();
+      g.arc(120 + i * 140, 400 + Math.sin(i * 1.3) * 180, 60 + (i % 3) * 30, 0, Math.PI * 2);
+      g.fillStyle = `rgba(255,180,84,${0.06 + (i % 4) * 0.03})`;
+      g.fill();
+    }
+    // grid lines
+    g.strokeStyle = 'rgba(255,255,255,0.08)';
+    g.lineWidth = 1;
+    for (let x = 0; x <= c.width; x += 100) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x, c.height); g.stroke(); }
+    for (let y = 0; y <= c.height; y += 100) { g.beginPath(); g.moveTo(0, y); g.lineTo(c.width, y); g.stroke(); }
+    c.toBlob(blob => {
+      loadImageFromFile(new File([blob], 'sample.png', { type: 'image/png' }));
+    }, 'image/png');
+  }
+
+  function clearAll() {
+    img = null;
+    document.getElementById('thumb').src = '';
+    document.getElementById('thumb-wrap').classList.remove('show');
+    document.getElementById('settings-card').style.display = 'none';
+    document.getElementById('preview-card').style.display = 'none';
+    canvas.classList.remove('show');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    updateStatus();
+  }
+
+  // ── Watermark rendering ──
+  function renderWatermark() {
+    if (!img) return;
+    const W = img.naturalWidth, H = img.naturalHeight;
+    canvas.width = W;
+    canvas.height = H;
+    ctx.drawImage(img, 0, 0);
+
+    const text = document.getElementById('wm-text').value.trim() || 'Watermark';
+    const sizePct = parseFloat(document.getElementById('wm-size').value);
+    const fontSize = Math.max(6, W * sizePct / 100);
+    const fontFamily = document.getElementById('wm-font').value;
+    const color = document.getElementById('wm-color').value;
+    const opacity = parseInt(document.getElementById('wm-opacity').value, 10) / 100;
+    const rotation = parseInt(document.getElementById('wm-rotate').value, 10);
+    const tiled = document.getElementById('wm-tiled').checked;
+    const spacing = parseInt(document.getElementById('wm-spacing').value, 10);
+
+    ctx.font = `bold ${fontSize}px ${fontFamily}`;
+    ctx.fillStyle = color;
+    ctx.globalAlpha = opacity;
+    ctx.textBaseline = 'middle';
+    ctx.textAlign = 'center';
+
+    const textW = ctx.measureText(text).width;
+    const textH = fontSize;
+
+    const anchors = [];
+    if (tiled) {
+      const stepX = textW + spacing;
+      const stepY = textH + spacing;
+      for (let y = textH / 2; y < H; y += stepY) {
+        for (let x = textW / 2; x < W; x += stepX) {
+          anchors.push([x, y]);
+        }
+      }
+    } else {
+      const active = document.querySelector('#pos-grid button.active');
+      const pos = active ? active.dataset.pos : 'mc';
+      const margin = fontSize * 0.6;
+      const col = pos[1], row = pos[0];
+      const x = col === 'l' ? textW / 2 + margin
+              : col === 'c' ? W / 2
+              : W - textW / 2 - margin;
+      const y = row === 't' ? textH / 2 + margin
+              : row === 'm' ? H / 2
+              : H - textH / 2 - margin;
+      anchors.push([x, y]);
+    }
+
+    const rad = rotation * Math.PI / 180;
+    for (const [x, y] of anchors) {
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(rad);
+      ctx.fillText(text, 0, 0);
+      ctx.restore();
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  // ── Export ──
+  function download(format) {
+    if (!img) return;
+    const mime = format === 'jpeg' ? 'image/jpeg' : format === 'webp' ? 'image/webp' : 'image/png';
+    const ext = format === 'jpeg' ? 'jpg' : format;
+    canvas.toBlob(blob => {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `watermarked.${ext}`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }, mime, 0.92);
+  }
+
+  // ── Events ──
+  const dropZone = document.getElementById('drop-zone');
+  const fileInput = document.getElementById('file-input');
+
+  dropZone.addEventListener('click', () => fileInput.click());
+  fileInput.addEventListener('change', e => {
+    if (e.target.files && e.target.files[0]) loadImageFromFile(e.target.files[0]);
+    fileInput.value = '';
+  });
+
+  ['dragenter', 'dragover'].forEach(ev => {
+    dropZone.addEventListener(ev, e => { e.preventDefault(); dropZone.classList.add('dragover'); });
+  });
+  ['dragleave', 'drop'].forEach(ev => {
+    dropZone.addEventListener(ev, e => { e.preventDefault(); dropZone.classList.remove('dragover'); });
+  });
+  dropZone.addEventListener('drop', e => {
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) loadImageFromFile(e.dataTransfer.files[0]);
+  });
+
+  document.addEventListener('paste', e => {
+    const items = e.clipboardData && e.clipboardData.items;
+    if (!items) return;
+    for (const item of items) {
+      if (item.type.startsWith('image/')) {
+        loadImageFromFile(item.getAsFile());
+        break;
+      }
+    }
+  });
+
+  // Position grid
+  document.getElementById('pos-grid').addEventListener('click', e => {
+    const btn = e.target.closest('button');
+    if (!btn) return;
+    document.querySelectorAll('#pos-grid button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderWatermark();
+  });
+
+  // Live re-render on any setting change
+  ['wm-text', 'wm-font', 'wm-color', 'wm-size', 'wm-opacity', 'wm-rotate', 'wm-tiled', 'wm-spacing']
+    .forEach(id => {
+      const el = document.getElementById(id);
+      el.addEventListener('input', () => {
+        if (id === 'wm-size') document.getElementById('wm-size-val').textContent = el.value + '%';
+        if (id === 'wm-opacity') document.getElementById('wm-opacity-val').textContent = el.value + '%';
+        if (id === 'wm-rotate') document.getElementById('wm-rotate-val').textContent = el.value + '°';
+        if (id === 'wm-spacing') document.getElementById('wm-spacing-val').textContent = el.value;
+        document.getElementById('spacing-wrap').classList.toggle('show', document.getElementById('wm-tiled').checked);
+        renderWatermark();
+      });
+    });
+</script>
+
+</body>
+</html>

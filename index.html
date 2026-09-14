@@ -329,6 +329,8 @@
       workdayDesc: 'Calculate delivery dates and workdays, excluding weekends and holidays. Forward and backward calculations.',
       fuelTitle: 'Fuel Cost Comparison',
       fuelDesc: 'Compare the running cost of petrol and electric vehicles. Petrol prices from gas.chahuo.com.',
+      watermarkTitle: 'Image Watermark',
+      watermarkDesc: 'Add text watermarks to images entirely in your browser. No uploads — everything stays on your device.',
       footerText: 'Mini Tools © 2026 — Built for simplicity.',
     },
     zh: {
@@ -358,6 +360,8 @@
       workdayDesc: '计算交货日期和工作日，排除周末和节假日。支持正向与反向推算。',
       fuelTitle: '燃油 / 电费成本对比',
       fuelDesc: '对比燃油车与电动车的运行成本。油价来自查获网 gas.chahuo.com。',
+      watermarkTitle: '图片水印',
+      watermarkDesc: '在浏览器中为图片添加文字水印。无需上传 —— 所有处理都在本地完成。',
       footerText: 'Mini Tools © 2026 — 以简洁为核心。',
     }
   };
@@ -400,6 +404,8 @@
     setText('workday-desc', 'workdayDesc');
     setText('fuel-title', 'fuelTitle');
     setText('fuel-desc', 'fuelDesc');
+    setText('watermark-title', 'watermarkTitle');
+    setText('watermark-desc', 'watermarkDesc');
     setText('footer-text', 'footerText');
   }
 
@@ -417,6 +423,7 @@
     { href: 'text-chunker.html',      icon: '✂️',   id: 'chunker',    group: 'misc', titleKey: 'chunkerTitle',   descKey: 'chunkerDesc' },
     { href: 'workday-calculator.html', icon: '🗓️',   id: 'workday',    group: 'misc', titleKey: 'workdayTitle',   descKey: 'workdayDesc' },
     { href: 'fuel-cost-comparison.html', icon: '⛽',   id: 'fuel',       group: 'misc', titleKey: 'fuelTitle',      descKey: 'fuelDesc' },
+    { href: 'image-watermark.html',      icon: '💧',   id: 'watermark',  group: 'misc', titleKey: 'watermarkTitle', descKey: 'watermarkDesc' },
   ];
 
   function renderCards() {
