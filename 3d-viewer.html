@@ -1,0 +1,948 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>3D Viewer</title>
+  <meta name="description" content="Open and inspect 3D model files (STL, OBJ, 3MF, GLB/GLTF) entirely in your browser. Orbit, zoom, wireframe, and export snapshots — no uploads." />
+  <link rel="stylesheet" href="shared/theme.css" />
+  <link rel="stylesheet" href="shared/header.css" />
+  <link rel="stylesheet" href="shared/components.css" />
+  <style>
+    .container { max-width: 1180px; }
+
+    /* ── Viewer layout ── */
+    .viewer-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 300px;
+      gap: 20px;
+      align-items: start;
+    }
+
+    .viewer-main { min-width: 0; }
+
+    /* ── Canvas / viewport ── */
+    .viewport {
+      position: relative;
+      width: 100%;
+      height: min(64vh, 620px);
+      min-height: 340px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 50% 40%, color-mix(in srgb, var(--accent) 6%, transparent), transparent 70%),
+        var(--surface-alt);
+      cursor: grab;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .viewport:active { cursor: grabbing; }
+    .viewport canvas { display: block; width: 100%; height: 100%; }
+
+    /* ── Drop overlay ── */
+    .drop-overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 20px;
+      text-align: center;
+      pointer-events: none;
+      transition: background 0.2s;
+    }
+    .drop-overlay.hidden { display: none; }
+    .drop-overlay .dz-icon { font-size: 2.6rem; }
+    .drop-overlay .dz-title {
+      font-family: "Chakra Petch", sans-serif;
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    .drop-overlay .dz-sub {
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 12px;
+      color: var(--text-muted);
+      max-width: 360px;
+      line-height: 1.7;
+    }
+    .viewport.dragover .drop-overlay { background: color-mix(in srgb, var(--accent) 12%, transparent); }
+    .viewport.dragover { border-color: var(--accent); }
+
+    /* ── Viewport HUD badges ── */
+    .hud {
+      position: absolute;
+      left: 12px;
+      bottom: 12px;
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      pointer-events: none;
+    }
+    .hud-badge {
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 10.5px;
+      letter-spacing: 0.04em;
+      color: var(--text-muted);
+      background: color-mix(in srgb, var(--surface) 82%, transparent);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 3px 8px;
+      backdrop-filter: blur(3px);
+    }
+
+    /* ── File bar above viewport ── */
+    .dz-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+    }
+    .dz-bar input[type="file"] { display: none; }
+
+    /* ── Side panel ── */
+    .panel h3 {
+      font-family: "Chakra Petch", sans-serif;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+    }
+    .panel-section {
+      padding-bottom: 16px;
+      margin-bottom: 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    .panel-section:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+
+    .ctrl-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .ctrl-row:last-child { margin-bottom: 0; }
+    .ctrl-row label {
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .ctrl-row select {
+      background: var(--surface-alt);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      color: var(--text-primary);
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 12px;
+      padding: 6px 8px;
+      outline: none;
+      max-width: 150px;
+    }
+    .ctrl-row select:focus { border-color: var(--accent); }
+
+    .ctrl-row input[type="color"] {
+      width: 42px;
+      height: 30px;
+      padding: 2px;
+      background: var(--surface-alt);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 10px;
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 12px;
+      color: var(--text-muted);
+      cursor: pointer;
+    }
+    .toggle-row:last-child { margin-bottom: 0; }
+    .toggle-row input { accent-color: var(--accent); width: 15px; height: 15px; cursor: pointer; }
+
+    /* ── Stats table ── */
+    .stats { font-family: "IBM Plex Mono", monospace; font-size: 11.5px; color: var(--text-muted); line-height: 1.9; }
+    .stats .k { color: var(--text-faint); }
+    .stats .v { color: var(--text-primary); float: right; }
+    .stats .row { display: block; overflow: hidden; }
+
+    .info-box {
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 12px;
+      color: var(--text-muted);
+      line-height: 1.8;
+    }
+    .info-box code {
+      background: var(--surface-alt);
+      border: 1px solid var(--border);
+      padding: 1px 6px;
+      border-radius: 4px;
+    }
+
+    @media (max-width: 860px) {
+      .viewer-grid { grid-template-columns: 1fr; }
+      .viewport { height: 52vh; }
+      .ctrl-row select { max-width: none; }
+    }
+  </style>
+</head>
+<body>
+
+<script src="shared/header.js"></script>
+<script>
+  injectHeader({ icon: '<span style="font-size:1.3rem;">🛠️</span>', title: '3D Viewer' });
+</script>
+
+<div class="container">
+
+  <!-- Viewer -->
+  <div class="card">
+    <h2 id="viewer-heading">Viewer</h2>
+
+    <div class="dz-bar">
+      <button class="btn btn-primary" id="btn-open" onclick="document.getElementById('file-input').click()">📁 Open File</button>
+      <button class="btn btn-secondary" id="btn-sample" onclick="loadSample()">📋 Sample</button>
+      <button class="btn btn-secondary" id="btn-reset" onclick="resetView()">⟲ Reset View</button>
+      <button class="btn btn-secondary" id="btn-shot" onclick="snapshot()">📷 Snapshot</button>
+      <input type="file" id="file-input" accept=".stl,.obj,.3mf,.glb,.gltf" />
+    </div>
+
+    <div class="viewer-grid">
+      <div class="viewer-main">
+        <div class="viewport" id="viewport">
+          <div class="drop-overlay" id="drop-overlay">
+            <div class="dz-icon">🧊</div>
+            <div class="dz-title" id="dz-title">Drop a 3D file here</div>
+            <div class="dz-sub" id="dz-sub">Supports STL · OBJ · 3MF · GLB / GLTF — or click “Open File”. Nothing is uploaded.</div>
+          </div>
+          <div class="hud">
+            <span class="hud-badge" id="hud-file">—</span>
+            <span class="hud-badge" id="hud-tris">—</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-section">
+          <h3 id="panel-appearance">Appearance</h3>
+          <div class="ctrl-row">
+            <label id="lbl-mode">Shading</label>
+            <select id="sel-mode">
+              <option value="solid" data-i18n="modeSolid">Solid</option>
+              <option value="wireframe" data-i18n="modeWire">Wireframe</option>
+              <option value="normals" data-i18n="modeNormals">Normals</option>
+            </select>
+          </div>
+          <div class="ctrl-row">
+            <label id="lbl-color">Color</label>
+            <input type="color" id="inp-color" value="#d98a1f" />
+          </div>
+          <label class="toggle-row"><input type="checkbox" id="chk-flat" /> <span id="lbl-flat">Flat shading</span></label>
+          <label class="toggle-row"><input type="checkbox" id="chk-grid" checked /> <span id="lbl-grid">Ground grid</span></label>
+          <label class="toggle-row"><input type="checkbox" id="chk-axes" /> <span id="lbl-axes">Axes helper</span></label>
+          <label class="toggle-row"><input type="checkbox" id="chk-auto" checked /> <span id="lbl-auto">Auto-rotate</span></label>
+        </div>
+
+        <div class="panel-section">
+          <h3 id="panel-lighting">Lighting</h3>
+          <div class="ctrl-row">
+            <label id="lbl-bg">Background</label>
+            <select id="sel-bg">
+              <option value="dark" data-i18n="bgDark">Dark</option>
+              <option value="light" data-i18n="bgLight">Light</option>
+              <option value="canvas" data-i18n="bgCanvas">Canvas</option>
+            </select>
+          </div>
+          <div class="ctrl-row">
+            <label id="lbl-env">Lighting</label>
+            <select id="sel-env">
+              <option value="studio" data-i18n="envStudio">Studio</option>
+              <option value="flat" data-i18n="envFlat">Flat</option>
+              <option value="none" data-i18n="envNone">None</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="panel-section">
+          <h3 id="panel-stats">Model Info</h3>
+          <div class="stats">
+            <span class="row"><span class="k" id="sk-tri">Triangles</span><span class="v" id="sv-tri">—</span></span>
+            <span class="row"><span class="k" id="sk-vert">Vertices</span><span class="v" id="sv-vert">—</span></span>
+            <span class="row"><span class="k" id="sk-dim">Size</span><span class="v" id="sv-dim">—</span></span>
+            <span class="row"><span class="k" id="sk-fmt">Format</span><span class="v" id="sv-fmt">—</span></span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="status" id="status"></div>
+  </div>
+
+  <!-- Info -->
+  <div class="card">
+    <h2 id="info-heading">About</h2>
+    <div class="info-box">
+      <p id="info-p1">A local 3D previewer powered by <b>three.js</b>. Open or drop a model file to inspect it — nothing leaves your device.</p>
+      <p id="info-p2" style="margin-top:8px;">Supported formats: <code>.stl</code> (binary &amp; ASCII), <code>.obj</code> (geometry only), <code>.3mf</code>, and <code>.glb</code> / <code>.gltf</code> (embedded geometry). Drag to orbit, scroll to zoom, right-drag to pan.</p>
+    </div>
+  </div>
+
+</div>
+
+<!-- three.js loaded via import map (official CDN pattern) -->
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+
+<script type="module">
+  import * as THREE from 'three';
+  import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+  import { STLLoader } from 'three/addons/loaders/STLLoader.js';
+  import { OBJLoader } from 'three/addons/loaders/OBJLoader.js';
+  import { ThreeMFLoader } from 'three/addons/loaders/3MFLoader.js';
+  import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+
+  // Expose the bits other inline scripts / handlers need.
+  window.THREE = THREE;
+
+  // ══════════════════════════════════════════════════
+  // i18n (dark mode handled by shared/header.js)
+  // ══════════════════════════════════════════════════
+  const TRANSLATIONS = {
+    en: {
+      pageTitle: '3D Viewer',
+      viewerHeading: 'Viewer',
+      btnOpen: '📁 Open File',
+      btnSample: '📋 Sample',
+      btnReset: '⟲ Reset View',
+      btnShot: '📷 Snapshot',
+      dzTitle: 'Drop a 3D file here',
+      dzSub: 'Supports STL · OBJ · 3MF · GLB / GLTF — or click “Open File”. Nothing is uploaded.',
+      panelAppearance: 'Appearance',
+      panelLighting: 'Lighting',
+      panelStats: 'Model Info',
+      lblMode: 'Shading',
+      modeSolid: 'Solid',
+      modeWire: 'Wireframe',
+      modeNormals: 'Normals',
+      lblColor: 'Color',
+      lblFlat: 'Flat shading',
+      lblGrid: 'Ground grid',
+      lblAxes: 'Axes helper',
+      lblAuto: 'Auto-rotate',
+      lblBg: 'Background',
+      bgDark: 'Dark',
+      bgLight: 'Light',
+      bgCanvas: 'Canvas',
+      lblEnv: 'Lighting',
+      envStudio: 'Studio',
+      envFlat: 'Flat',
+      envNone: 'None',
+      skTri: 'Triangles',
+      skVert: 'Vertices',
+      skDim: 'Size',
+      skFmt: 'Format',
+      infoHeading: 'About',
+      infoP1: 'A local 3D previewer powered by <b>three.js</b>. Open or drop a model file to inspect it — nothing leaves your device.',
+      infoP2: 'Supported formats: <code>.stl</code> (binary &amp; ASCII), <code>.obj</code> (geometry only), <code>.3mf</code>, and <code>.glb</code> / <code>.gltf</code> (embedded geometry). Drag to orbit, scroll to zoom, right-drag to pan.',
+      statusReady: 'Ready — open a model to begin.',
+      statusLoading: 'Loading model…',
+      statusLoaded: '✅ Loaded.',
+      statusError: '❌ Could not load this file. Check that it is a valid STL, OBJ, 3MF or GLB/GLTF.',
+      statusUnsupported: '❌ Unsupported file type.',
+      statusShot: '📷 Snapshot saved.',
+      statusNoModel: 'No model loaded yet.',
+    },
+    zh: {
+      pageTitle: '3D 查看器',
+      viewerHeading: '查看器',
+      btnOpen: '📁 打开文件',
+      btnSample: '📋 示例',
+      btnReset: '⟲ 重置视角',
+      btnShot: '📷 截图',
+      dzTitle: '将 3D 文件拖放到此处',
+      dzSub: '支持 STL · OBJ · 3MF · GLB / GLTF —— 或点击“打开文件”。文件不会上传。',
+      panelAppearance: '外观',
+      panelLighting: '光照',
+      panelStats: '模型信息',
+      lblMode: '着色',
+      modeSolid: '实体',
+      modeWire: '线框',
+      modeNormals: '法线',
+      lblColor: '颜色',
+      lblFlat: '平面着色',
+      lblGrid: '地面网格',
+      lblAxes: '坐标轴',
+      lblAuto: '自动旋转',
+      lblBg: '背景',
+      bgDark: '深色',
+      bgLight: '浅色',
+      bgCanvas: '画布',
+      lblEnv: '光照',
+      envStudio: '影棚',
+      envFlat: '均匀',
+      envNone: '关闭',
+      skTri: '三角形',
+      skVert: '顶点',
+      skDim: '尺寸',
+      skFmt: '格式',
+      infoHeading: '关于',
+      infoP1: '由 <b>three.js</b> 驱动的本地 3D 预览器。打开或拖放模型文件即可查看 —— 文件不会离开你的设备。',
+      infoP2: '支持的格式：<code>.stl</code>（二进制与 ASCII）、<code>.obj</code>（仅几何）、<code>.3mf</code>，以及 <code>.glb</code> / <code>.gltf</code>（内嵌几何）。拖动旋转，滚轮缩放，右键拖动平移。',
+      statusReady: '就绪 —— 打开模型开始。',
+      statusLoading: '正在加载模型…',
+      statusLoaded: '✅ 已加载。',
+      statusError: '❌ 无法加载该文件。请确认它是有效的 STL、OBJ、3MF 或 GLB/GLTF。',
+      statusUnsupported: '❌ 不支持的文件类型。',
+      statusShot: '📷 截图已保存。',
+      statusNoModel: '尚未加载模型。',
+    }
+  };
+  window.TRANSLATIONS = TRANSLATIONS;
+
+  let statusKey = 'statusReady';
+  let statusIsError = false;
+
+  window.pageApplyTranslations = function pageApplyTranslations() {
+    document.title = currentLang === 'zh' ? '3D 查看器' : '3D Viewer';
+
+    const setText = (id, key) => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = t(key);
+    };
+    const setHtml = (id, key) => {
+      const el = document.getElementById(id);
+      if (el) el.innerHTML = t(key);
+    };
+
+    setText('viewer-heading', 'viewerHeading');
+    setText('btn-open', 'btnOpen');
+    setText('btn-sample', 'btnSample');
+    setText('btn-reset', 'btnReset');
+    setText('btn-shot', 'btnShot');
+    setText('dz-title', 'dzTitle');
+    setText('dz-sub', 'dzSub');
+    setText('panel-appearance', 'panelAppearance');
+    setText('panel-lighting', 'panelLighting');
+    setText('panel-stats', 'panelStats');
+    setText('lbl-mode', 'lblMode');
+    setText('lbl-color', 'lblColor');
+    setText('lbl-flat', 'lblFlat');
+    setText('lbl-grid', 'lblGrid');
+    setText('lbl-axes', 'lblAxes');
+    setText('lbl-auto', 'lblAuto');
+    setText('lbl-bg', 'lblBg');
+    setText('lbl-env', 'lblEnv');
+    setText('sk-tri', 'skTri');
+    setText('sk-vert', 'skVert');
+    setText('sk-dim', 'skDim');
+    setText('sk-fmt', 'skFmt');
+    setText('info-heading', 'infoHeading');
+    setHtml('info-p1', 'infoP1');
+    setHtml('info-p2', 'infoP2');
+
+    document.querySelectorAll('option[data-i18n]').forEach(opt => {
+      opt.textContent = t(opt.dataset.i18n);
+    });
+
+    if (statusKey) setStatus(t(statusKey), statusIsError, statusKey);
+  };
+
+  // ══════════════════════════════════════════════════
+  // Status helper
+  // ══════════════════════════════════════════════════
+  function setStatus(text, isError, key) {
+    const el = document.getElementById('status');
+    el.textContent = text;
+    el.classList.toggle('err', !!isError);
+    if (key !== undefined) { statusKey = key; statusIsError = !!isError; }
+  }
+
+  // ══════════════════════════════════════════════════
+  // Settings + scene state
+  // ══════════════════════════════════════════════════
+  const SETTINGS = {
+    mode: 'solid', color: '#d98a1f', flat: false,
+    grid: true, axes: false, auto: true,
+    bg: 'dark', env: 'studio',
+  };
+
+  const BG_COLOR = { dark: 0x0c111d, light: 0xeef1f7, canvas: null };
+
+  let renderer, scene, camera, controls, pivot, gridHelper, axesHelper;
+  let currentObject = null;   // THREE.Object3D shown inside the pivot group
+  let currentFormat = null;
+  let currentFileName = '';   // name of the model currently being shown
+  let currentObjectURL = null;
+
+  function getViewport() { return document.getElementById('viewport'); }
+
+  // ══════════════════════════════════════════════════
+  // Scene setup
+  // ══════════════════════════════════════════════════
+  function initThree() {
+    const viewport = getViewport();
+
+    renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setSize(viewport.clientWidth, viewport.clientHeight, false);
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    viewport.appendChild(renderer.domElement);
+
+    scene = new THREE.Scene();
+
+    camera = new THREE.PerspectiveCamera(45, viewport.clientWidth / viewport.clientHeight, 0.01, 100000);
+    camera.position.set(4, 4, 6);
+
+    controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.09;
+    controls.autoRotateSpeed = 1.4;
+
+    const hemi = new THREE.HemisphereLight(0xffffff, 0x445066, 1.0);
+    hemi.name = 'hemi';
+    scene.add(hemi);
+
+    const key = new THREE.DirectionalLight(0xffffff, 2.2);
+    key.position.set(6, 10, 7);
+    key.name = 'key';
+    scene.add(key);
+
+    const fill = new THREE.DirectionalLight(0xffffff, 0.7);
+    fill.position.set(-7, -3, -6);
+    fill.name = 'fill';
+    scene.add(fill);
+
+    // Grid + axes live outside the pivot so they don't rotate with the model.
+    gridHelper = new THREE.GridHelper(10, 20, 0x53d8e8, 0x2a3450);
+    scene.add(gridHelper);
+
+    axesHelper = new THREE.AxesHelper(5);
+    axesHelper.visible = false;
+    scene.add(axesHelper);
+
+    // The model is parented to the pivot so we can normalise scale/orientation.
+    pivot = new THREE.Group();
+    scene.add(pivot);
+
+    applyBackground();
+    applyEnv();
+
+    window.addEventListener('resize', onResize);
+    renderer.setAnimationLoop(animate);
+
+    setStatus(t('statusReady'), false, 'statusReady');
+  }
+
+  function animate() {
+    controls.update();
+    renderer.render(scene, camera);
+  }
+
+  function onResize() {
+    const viewport = getViewport();
+    const w = viewport.clientWidth, h = viewport.clientHeight;
+    if (!w || !h || !renderer) return;
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+    renderer.setSize(w, h, false);
+  }
+
+  // ══════════════════════════════════════════════════
+  // Background / lighting presets
+  // ══════════════════════════════════════════════════
+  function applyBackground() {
+    scene.background = SETTINGS.bg === 'canvas' ? null : new THREE.Color(BG_COLOR[SETTINGS.bg]);
+  }
+
+  function applyEnv() {
+    const hemi = scene.getObjectByName('hemi');
+    const key = scene.getObjectByName('key');
+    const fill = scene.getObjectByName('fill');
+    if (!hemi) return;
+
+    if (SETTINGS.env === 'studio') {
+      hemi.intensity = 1.0; key.intensity = 2.2; fill.intensity = 0.7;
+    } else if (SETTINGS.env === 'flat') {
+      hemi.intensity = 2.6; key.intensity = 0.6; fill.intensity = 0.6;
+    } else { // none — rely on emissive-ish flat look
+      hemi.intensity = 0.4; key.intensity = 0.35; fill.intensity = 0.2;
+    }
+  }
+
+  // ══════════════════════════════════════════════════
+  // Material for the current model (driven by SETTINGS)
+  // ══════════════════════════════════════════════════
+  function makeMaterial() {
+    const color = new THREE.Color(SETTINGS.color);
+    if (SETTINGS.mode === 'wireframe') {
+      return new THREE.MeshBasicMaterial({ color, wireframe: true });
+    }
+    if (SETTINGS.mode === 'normals') {
+      return new THREE.MeshNormalMaterial({ flatShading: SETTINGS.flat });
+    }
+    return new THREE.MeshStandardMaterial({
+      color,
+      metalness: 0.15,
+      roughness: 0.55,
+      flatShading: SETTINGS.flat,
+      side: THREE.DoubleSide,
+    });
+  }
+
+  function applyMaterial() {
+    if (!currentObject) return;
+    currentObject.traverse(o => {
+      if (!o.isMesh) return;
+      // Dispose the material we previously assigned (not the loader's originals).
+      if (o.material && o.material.userData && o.material.userData.managed) {
+        o.material.dispose();
+      }
+      const mat = makeMaterial();
+      mat.userData.managed = true;
+      o.material = mat;
+    });
+  }
+
+  function applyVisibility() {
+    if (gridHelper) gridHelper.visible = SETTINGS.grid && SETTINGS.mode !== 'wireframe';
+    if (axesHelper) axesHelper.visible = SETTINGS.axes;
+    if (controls) controls.autoRotate = SETTINGS.auto;
+  }
+
+  // ══════════════════════════════════════════════════
+  // Loading a model
+  // ══════════════════════════════════════════════════
+  function clearModel() {
+    if (!pivot) return;
+    while (pivot.children.length) {
+      const child = pivot.children.pop();
+      child.traverse(o => {
+        if (o.geometry) o.geometry.dispose();
+        if (o.material) {
+          const mats = Array.isArray(o.material) ? o.material : [o.material];
+          mats.forEach(m => m.dispose && m.dispose());
+        }
+      });
+    }
+    currentObject = null;
+  }
+
+  function loadModel() {
+    return new Promise((resolve, reject) => {
+      const ext = (currentFileName.split('.').pop() || '').toLowerCase();
+      currentFormat = ext.toUpperCase();
+      let loader;
+
+      if (ext === 'stl') loader = new STLLoader();
+      else if (ext === 'obj') loader = new OBJLoader();
+      else if (ext === '3mf') loader = new ThreeMFLoader();
+      else if (ext === 'glb' || ext === 'gltf') loader = new GLTFLoader();
+      else return reject(new Error('unsupported'));
+
+      loader.load(
+        currentObjectURL,
+        (result) => resolve(result),
+        undefined,
+        (err) => reject(err)
+      );
+    });
+  }
+
+  // ══════════════════════════════════════════════════
+  // Fit / frame the model in view
+  // ══════════════════════════════════════════════════
+  function fitObject(object) {
+    const box = new THREE.Box3().setFromObject(object);
+    const size = new THREE.Vector3();
+    const center = new THREE.Vector3();
+    box.getSize(size);
+    box.getCenter(center);
+
+    // Recenter geometry so orbiting pivots around the model centre.
+    object.position.sub(center);
+
+    const maxDim = Math.max(size.x, size.y, size.z) || 1;
+    const fitDist = maxDim / (2 * Math.tan((camera.fov * Math.PI) / 180 / 2));
+
+    camera.near = maxDim / 500;
+    camera.far = maxDim * 500;
+    camera.updateProjectionMatrix();
+
+    const dir = new THREE.Vector3(1, 0.8, 1).normalize();
+    camera.position.copy(dir.multiplyScalar(fitDist * 1.9));
+    controls.target.set(0, 0, 0);
+    controls.update();
+
+    // Scale grid to roughly match the model footprint.
+    if (gridHelper) {
+      const gs = 10;
+      gridHelper.scale.setScalar(Math.max(1, (maxDim * 3) / gs));
+    }
+
+    return size;
+  }
+
+  function resetView() {
+    if (!currentObject) { setStatus(t('statusNoModel'), false); return; }
+    fitObject(currentObject);
+  }
+
+  // ══════════════════════════════════════════════════
+  // File handling
+  // ══════════════════════════════════════════════════
+  function revokeObjectURL() {
+    if (currentObjectURL) { URL.revokeObjectURL(currentObjectURL); currentObjectURL = null; }
+  }
+
+  async function handleFile(file) {
+    const ext = (file.name.split('.').pop() || '').toLowerCase();
+    if (!['stl', 'obj', '3mf', 'glb', 'gltf'].includes(ext)) {
+      setStatus(t('statusUnsupported'), true, 'statusUnsupported');
+      return;
+    }
+
+    setStatus(t('statusLoading'), false, 'statusLoading');
+    revokeObjectURL();
+    currentObjectURL = URL.createObjectURL(file);
+    currentFileName = file.name;
+
+    try {
+      const result = await loadModel();
+      const object = normaliseResult(result, ext);
+      attachObject(object, file.name);
+      setStatus(t('statusLoaded'), false, 'statusLoaded');
+    } catch (err) {
+      console.error(err);
+      const key = err && err.message === 'unsupported' ? 'statusUnsupported' : 'statusError';
+      setStatus(t(key), true, key);
+    }
+  }
+
+  // Different loaders return different shapes — normalise to an Object3D.
+  function normaliseResult(result, ext) {
+    if (ext === 'stl') {
+      const geo = result;
+      geo.computeVertexNormals();
+      return new THREE.Mesh(geo, makeMaterial());
+    }
+    if (ext === 'glb' || ext === 'gltf') {
+      return result.scene || result.scenes[0];
+    }
+    return result; // OBJ → Group, 3MF → Group
+  }
+
+  function attachObject(object, name) {
+    clearModel();
+    currentObject = object;
+
+    // Show the drop overlay only while nothing is loaded.
+    document.getElementById('drop-overlay').classList.add('hidden');
+
+    pivot.add(object);
+    applyMaterial();
+    applyVisibility();
+    const size = fitObject(object);
+    updateStats(object, size);
+    document.getElementById('hud-file').textContent = name;
+  }
+
+  function updateStats(object, size) {
+    let tris = 0, verts = 0;
+    object.traverse(o => {
+      if (!o.isMesh || !o.geometry) return;
+      const g = o.geometry;
+      verts += g.attributes.position ? g.attributes.position.count : 0;
+      if (g.index) tris += g.index.count / 3;
+      else if (g.attributes.position) tris += g.attributes.position.count / 3;
+    });
+
+    document.getElementById('sv-tri').textContent = formatInt(Math.round(tris));
+    document.getElementById('sv-vert').textContent = formatInt(verts);
+    document.getElementById('sv-dim').textContent =
+      size ? `${fmtNum(size.x)} × ${fmtNum(size.y)} × ${fmtNum(size.z)}` : '—';
+    document.getElementById('sv-fmt').textContent = currentFormat || '—';
+    document.getElementById('hud-tris').textContent = formatInt(Math.round(tris)) + ' tris';
+  }
+
+  function formatInt(n) { return n.toLocaleString('en-US'); }
+  function fmtNum(n) {
+    if (Math.abs(n) >= 100) return n.toFixed(0);
+    if (Math.abs(n) >= 1) return n.toFixed(2);
+    return n.toFixed(3);
+  }
+
+  // ══════════════════════════════════════════════════
+  // Snapshot (export current view as PNG)
+  // ══════════════════════════════════════════════════
+  function snapshot() {
+    if (!currentObject) { setStatus(t('statusNoModel'), false); return; }
+    renderer.render(scene, camera);
+    const url = renderer.domElement.toDataURL('image/png');
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = (currentFileName.replace(/\.[^.]+$/, '') || 'model') + '.png';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setStatus(t('statusShot'), false, 'statusShot');
+  }
+
+  // ══════════════════════════════════════════════════
+  // Sample (in-memory STL of a rounded "print-like" part)
+  // ══════════════════════════════════════════════════
+  function loadSample() {
+    // Build a simple two-box ASCII STL in memory so the viewer has something
+    // to show without any network or file access.
+    const tris = [];
+    const addBox = (cx, cy, cz, sx, sy, sz) => {
+      const x0 = cx - sx / 2, x1 = cx + sx / 2;
+      const y0 = cy - sy / 2, y1 = cy + sy / 2;
+      const z0 = cz - sz / 2, z1 = cz + sz / 2;
+      const v = [
+        [x0, y0, z0], [x1, y0, z0], [x1, y1, z0], [x0, y1, z0],
+        [x0, y0, z1], [x1, y0, z1], [x1, y1, z1], [x0, y1, z1],
+      ];
+      const quad = (a, b, c, d) => { tris.push([a, b, c], [a, c, d]); };
+      quad(v[0], v[1], v[2], v[3]); // bottom
+      quad(v[4], v[5], v[6], v[7]); // top
+      quad(v[0], v[1], v[5], v[4]); // front
+      quad(v[2], v[3], v[7], v[6]); // back
+      quad(v[1], v[2], v[6], v[5]); // right
+      quad(v[3], v[0], v[4], v[7]); // left
+    };
+    addBox(0, 0, 0, 2, 2, 2);
+    addBox(0, 1.4, 0, 1, 0.8, 1);   // little "riser" on top
+
+    let stl = 'solid sample\n';
+    for (const [a, b, c] of tris) {
+      stl += `facet normal 0 0 0\n outer loop\n`;
+      stl += `  vertex ${a[0]} ${a[1]} ${a[2]}\n`;
+      stl += `  vertex ${b[0]} ${b[1]} ${b[2]}\n`;
+      stl += `  vertex ${c[0]} ${c[1]} ${c[2]}\n`;
+      stl += ` endloop\nendfacet\n`;
+    }
+    stl += 'endsolid sample\n';
+
+    const blob = new Blob([stl], { type: 'model/stl' });
+    revokeObjectURL();
+    currentObjectURL = URL.createObjectURL(blob);
+    currentFileName = 'sample.stl';
+
+    setStatus(t('statusLoading'), false, 'statusLoading');
+    loadModel()
+      .then(result => {
+        const object = normaliseResult(result, 'stl');
+        attachObject(object, 'sample.stl');
+        setStatus(t('statusLoaded'), false, 'statusLoaded');
+      })
+      .catch(err => {
+        console.error(err);
+        setStatus(t('statusError'), true, 'statusError');
+      });
+  }
+
+  // ══════════════════════════════════════════════════
+  // Drag & drop
+  // ══════════════════════════════════════════════════
+  function wireDragDrop() {
+    const viewport = getViewport();
+    ['dragover', 'dragenter'].forEach(evt =>
+      viewport.addEventListener(evt, e => { e.preventDefault(); viewport.classList.add('dragover'); })
+    );
+    ['dragleave', 'drop'].forEach(evt =>
+      viewport.addEventListener(evt, e => { e.preventDefault(); viewport.classList.remove('dragover'); })
+    );
+    viewport.addEventListener('drop', e => {
+      if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+    });
+
+    document.getElementById('file-input').addEventListener('change', e => {
+      if (e.target.files.length) handleFile(e.target.files[0]);
+      e.target.value = '';
+    });
+  }
+
+  // ══════════════════════════════════════════════════
+  // Control wiring
+  // ══════════════════════════════════════════════════
+  function wireControls() {
+    document.getElementById('sel-mode').addEventListener('change', e => {
+      SETTINGS.mode = e.target.value;
+      applyMaterial();
+      applyVisibility();
+    });
+    document.getElementById('inp-color').addEventListener('input', e => {
+      SETTINGS.color = e.target.value;
+      if (SETTINGS.mode === 'solid' || SETTINGS.mode === 'wireframe') applyMaterial();
+    });
+    document.getElementById('chk-flat').addEventListener('change', e => {
+      SETTINGS.flat = e.target.checked;
+      applyMaterial();
+    });
+    document.getElementById('chk-grid').addEventListener('change', e => {
+      SETTINGS.grid = e.target.checked;
+      applyVisibility();
+    });
+    document.getElementById('chk-axes').addEventListener('change', e => {
+      SETTINGS.axes = e.target.checked;
+      applyVisibility();
+    });
+    document.getElementById('chk-auto').addEventListener('change', e => {
+      SETTINGS.auto = e.target.checked;
+      applyVisibility();
+    });
+    document.getElementById('sel-bg').addEventListener('change', e => {
+      SETTINGS.bg = e.target.value;
+      applyBackground();
+    });
+    document.getElementById('sel-env').addEventListener('change', e => {
+      SETTINGS.env = e.target.value;
+      applyEnv();
+    });
+  }
+
+  // ══════════════════════════════════════════════════
+  // Expose handlers used by inline onclick attributes
+  // (module scope is not global, so we publish them).
+  // ══════════════════════════════════════════════════
+  window.loadSample = loadSample;
+  window.resetView = resetView;
+  window.snapshot = snapshot;
+
+  // ══════════════════════════════════════════════════
+  // Init
+  // ══════════════════════════════════════════════════
+  function boot() {
+    initThree();
+    wireDragDrop();
+    wireControls();
+    applyVisibility();
+  }
+
+  // Module scripts are deferred and may execute after DOMContentLoaded has
+  // already fired (the CDN import can resolve late), so guard on readyState.
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', boot);
+  } else {
+    boot();
+  }
+</script>
+
+</body>
+</html>
