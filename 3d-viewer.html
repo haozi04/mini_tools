@@ -299,7 +299,9 @@
 
 </div>
 
-<!-- three.js loaded via import map (official CDN pattern) -->
+<!-- three.js loaded via import map (official CDN pattern). The import map is
+     required so the three.js addons below can resolve their internal bare
+     "three" imports. -->
 <script type="importmap">
 {
   "imports": {
