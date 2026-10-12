@@ -240,7 +240,7 @@
 
   // ── Format detection ──
   function detectFormat(text) {
-    const lines = text.split('\n').filter(l => l.trim() !== '');
+    const lines = text.split(/\r?\n/).filter(l => l.trim() !== '');
     if (lines.length === 0) return 'excel';
 
     // Markdown table: most lines contain a pipe AND the second line is a separator
@@ -263,23 +263,30 @@
 
   // ── Parsing into a 2D array ──
   function parseText(text, format) {
-    const lines = text.split('\n').filter(l => l.trim() !== '');
-    if (lines.length === 0) return [];
+    // Preserve blank rows: an empty row is a meaningful (single empty cell) row,
+    // and stripping it would silently drop rows pasted from Excel/CSV.
+    const rawLines = text.split(/\r?\n/);
+    // Drop the trailing empty line produced by a final newline, keep interior blanks.
+    while (rawLines.length && rawLines[rawLines.length - 1].trim() === '') rawLines.pop();
+    if (rawLines.length === 0) return [];
 
     if (format === 'markdown') {
       // Skip the separator row (second line)
-      const dataLines = lines.filter((l, i) => !(i === 1 && /^\s*\|?[\s:-]+\|/.test(l)));
+      const dataLines = rawLines.filter((l, i) => !(i === 1 && /^\s*\|?[\s:-]+\|/.test(l)));
       return dataLines.map(line =>
-        line.split('|').map(cell => cell.trim()).filter(c => c !== '')
+        line.split('|').map(cell => cell.trim())
+          // Remove the empty cells produced by leading/trailing pipes, but keep
+          // genuine interior empty cells so column positions stay aligned.
+          .filter((c, i, arr) => c !== '' || (i > 0 && i < arr.length - 1))
       );
     }
 
     if (format === 'excel') {
-      return lines.map(line => line.split('\t').map(cell => cell.trim()));
+      return rawLines.map(line => line.split('\t').map(cell => cell.trim()));
     }
 
     // CSV — handle quoted fields
-    return lines.map(line => parseCsvLine(line));
+    return rawLines.map(line => parseCsvLine(line));
   }
 
   function parseCsvLine(line) {
@@ -360,8 +367,8 @@
 
   function autoConvert() {
     const input = document.getElementById('input-area');
-    const text = input.value.trim();
-    if (!text) {
+    const text = input.value;
+    if (!text.trim()) {
       document.getElementById('output-card').style.display = 'none';
       document.getElementById('detected').style.display = 'none';
       currentData = [];
