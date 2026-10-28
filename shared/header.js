@@ -131,6 +131,46 @@ function injectHeader(config) {
   document.body.insertBefore(header, document.body.firstChild);
 }
 
+// ── Usage Tracking ────────────────────────────────
+const USAGE_KEY = 'miniToolsUsage';
+
+function trackToolUsage() {
+  // Only track on tool pages (not index)
+  const path = window.location.pathname;
+  if (path.endsWith('index.html') || path === '/' || path === '') return;
+
+  // Extract tool ID from filename
+  const filename = path.split('/').pop().replace('.html', '');
+  if (!filename) return;
+
+  // Map filenames to tool IDs used in TOOL_CARDS
+  const toolIdMap = {
+    'warranty-tool': 'warranty',
+    'mlfb-option-code-processor': 'mlfb',
+    'markdown-renderer': 'markdown',
+    'format-converter': 'format',
+    'city-map-wallpaper': 'map',
+    '3mf-stl-converter': 'converter3d',
+    '3d-viewer': 'viewer3d',
+    'bbox-tool': 'bbox',
+    'text-chunker': 'chunker',
+    'workday-calculator': 'workday',
+    'fuel-cost-comparison': 'fuel',
+    'image-watermark': 'watermark'
+  };
+
+  const toolId = toolIdMap[filename];
+  if (!toolId) return;
+
+  // Increment usage count
+  const counts = JSON.parse(localStorage.getItem(USAGE_KEY) || '{}');
+  counts[toolId] = (counts[toolId] || 0) + 1;
+  localStorage.setItem(USAGE_KEY, JSON.stringify(counts));
+}
+
+// Track usage when page loads
+trackToolUsage();
+
 // ── Init ──────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
   applyTheme(isDark);

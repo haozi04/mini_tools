@@ -441,7 +441,15 @@
     grid3d.innerHTML = '';
     gridMisc.innerHTML = '';
 
-    TOOL_CARDS.forEach(card => {
+    // Get usage counts and sort cards by frequency (most used first)
+    const usageCounts = JSON.parse(localStorage.getItem('miniToolsUsage') || '{}');
+    const sortedCards = [...TOOL_CARDS].sort((a, b) => {
+      const countA = usageCounts[a.id] || 0;
+      const countB = usageCounts[b.id] || 0;
+      return countB - countA; // Descending order (most used first)
+    });
+
+    sortedCards.forEach(card => {
       const a = document.createElement('a');
       a.href = card.href;
       a.className = 'tool-card markdown';
