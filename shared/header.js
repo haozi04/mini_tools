@@ -137,11 +137,17 @@ const USAGE_KEY = 'miniToolsUsage';
 function trackToolUsage() {
   // Only track on tool pages (not index)
   const path = window.location.pathname;
-  if (path.endsWith('index.html') || path === '/' || path === '' || path.endsWith('/')) return;
-
+  
+  // Skip index page (various forms)
+  if (path === '/' || path === '' || path.endsWith('/')) return;
+  if (path.endsWith('index.html') || path.endsWith('/index.html')) return;
+  
   // Extract tool ID from filename (handle both .html and extensionless URLs)
   let filename = path.split('/').pop();
   if (!filename) return;
+  
+  // Remove query parameters and hash fragments
+  filename = filename.split('?')[0].split('#')[0];
   
   // Remove .html extension if present
   filename = filename.replace(/\.html$/, '');
@@ -164,11 +170,16 @@ function trackToolUsage() {
   };
 
   const toolId = toolIdMap[filename];
-  if (!toolId) return;
+  
+  // Fallback: check for data-tool-id attribute on body or main element
+  const explicitToolId = document.body?.dataset?.toolId || document.querySelector('main')?.dataset?.toolId;
+  const finalToolId = toolId || explicitToolId;
+  
+  if (!finalToolId) return;
 
   // Increment usage count
   const counts = JSON.parse(localStorage.getItem(USAGE_KEY) || '{}');
-  counts[toolId] = (counts[toolId] || 0) + 1;
+  counts[finalToolId] = (counts[finalToolId] || 0) + 1;
   localStorage.setItem(USAGE_KEY, JSON.stringify(counts));
 }
 
