@@ -137,10 +137,14 @@ const USAGE_KEY = 'miniToolsUsage';
 function trackToolUsage() {
   // Only track on tool pages (not index)
   const path = window.location.pathname;
-  if (path.endsWith('index.html') || path === '/' || path === '') return;
+  if (path.endsWith('index.html') || path === '/' || path === '' || path.endsWith('/')) return;
 
-  // Extract tool ID from filename
-  const filename = path.split('/').pop().replace('.html', '');
+  // Extract tool ID from filename (handle both .html and extensionless URLs)
+  let filename = path.split('/').pop();
+  if (!filename) return;
+  
+  // Remove .html extension if present
+  filename = filename.replace(/\.html$/, '');
   if (!filename) return;
 
   // Map filenames to tool IDs used in TOOL_CARDS
@@ -168,11 +172,9 @@ function trackToolUsage() {
   localStorage.setItem(USAGE_KEY, JSON.stringify(counts));
 }
 
-// Track usage when page loads
-trackToolUsage();
-
 // ── Init ──────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
+  trackToolUsage();
   applyTheme(isDark);
   applyTranslations();
 });
